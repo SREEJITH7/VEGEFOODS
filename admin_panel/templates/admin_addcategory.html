@@ -1,0 +1,133 @@
+{% extends "admin_base.html" %} 
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'admin_category' %}">Category</a></li>
+<li class="breadcrumb-item active" aria-current="page"> add Category</li>
+{% endblock %}
+
+
+{% block css %}
+<style>
+  .container {
+    margin-top: 20px; /* Space from the top */
+    margin-left: 20px; /* Space from the left */
+    display: flex;
+    justify-content: flex-start; /* Align to the left */
+    align-items: flex-start; /* Align to the top */
+  }
+
+  .card {
+    border: none;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    padding: 30px; 
+    width: 800px;
+  }
+
+  .card-title {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  /* Button styles */
+  .btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+  }
+
+  .btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #004d99;
+  }
+
+  /* Input and textarea styles for larger boxes */
+  .form-control {
+    height: 50px; /* Increased height */
+    font-size: 16px; /* Larger text */
+    color: #000; /* Text color remains black */
+    padding: 10px 15px; /* Spacing inside the fields */
+    border-radius: 8px; /* Rounded corners */
+  }
+
+  textarea.form-control {
+    height: 200px; /* Increased height for textarea */
+  }
+
+  /* Prevent text dimming while typing */
+  .form-control:focus {
+    color: #000;
+    background-color: #fff;
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="card">
+    <div class="card-body">
+      <h3 class="card-title">Add Category</h3>
+      <form method="POST" action="{% url 'add_submit_category' %}">
+        {% csrf_token %}
+        <!-- Name Field -->
+        <div class="form-group">
+          <label for="categoryName">Category Name</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            id="categoryName" 
+            name="name" 
+            placeholder="Enter category name" 
+            required>
+          <!-- Error message placeholder -->
+          <div id="nameError" style="color: red; font-size: 14px; margin-top: 5px;"></div>
+        </div>
+        <!-- Description Field -->
+        <div class="form-group">
+          <label for="categoryDescription">Description</label>
+          <textarea 
+            class="form-control" 
+            id="categoryDescription" 
+            name="description" 
+            rows="3" 
+            placeholder="Enter category description"></textarea>
+        </div>
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary">Add Category</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const nameField = document.getElementById("categoryName");
+        const nameError = document.getElementById("nameError");
+
+        nameField.addEventListener("input", function () {
+            const value = nameField.value.trim(); // Remove leading/trailing spaces
+            if (!/^[a-zA-Z\s]*$/.test(value)) {
+                nameError.textContent = "Only alphabets and spaces are allowed.";
+            } else {
+                nameError.textContent = ""; // Clear the error if input is valid
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+

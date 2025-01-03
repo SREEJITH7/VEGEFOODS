@@ -1,0 +1,202 @@
+{% extends "admin_base.html" %} 
+
+
+{% block breadcrumbs %}
+            <li class="breadcrumb-item"><a href="{% url 'coupons' %}">coupons</a></li>
+            <li class="breadcrumb-item active" aria-current="page"> add coupons</li>
+
+{% endblock %} 
+
+
+{% block content %}
+<div class="coupon-management-container">
+    <h3>Coupon Management</h3>
+    <form id="couponForm" method="POST">
+        {% csrf_token %}
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="couponCode">Coupon Code</label>
+                <input type="text" class="form-control" id="couponCode" name="couponCode" required>
+            </div>
+            <div class="form-group col-md-6">
+                <label for="discountType">Discount Type</label>
+                <select class="form-control" id="discountType" name="discountType" required>
+                    <option value="">Select Discount Type</option>
+                    <option value="percentage">Percentage</option>
+                    <option value="fixed">Fixed Amount</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="discountValue">Discount Value</label>
+                <input type="number" class="form-control" id="discountValue" name="discountValue" min="0" required>
+                <div class="invalid-feedback">Discount value must be a positive number.</div>
+            </div>
+            <div class="form-group col-md-6">
+                <label for="minPurchaseAmount">Min Purchase Amount</label>
+                <input type="number" class="form-control" id="minPurchaseAmount" name="minPurchaseAmount" min="0" required>
+                <div class="invalid-feedback">Min purchase amount must be a positive value.</div>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="validFrom">Valid From</label>
+                <input type="date" class="form-control" id="validFrom" name="validFrom" required>
+            </div>
+            <div class="form-group col-md-6">
+                <label for="validUntil">Valid Until</label>
+                <input type="date" class="form-control" id="validUntil" name="validUntil" required>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="maxUses">Max Uses</label>
+                <input type="number" class="form-control" id="maxUses" name="maxUses" required>
+            </div>
+            <div class="form-group col-md-6">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="isActive" name="isActive">
+                    <label class="form-check-label" for="isActive">
+                        Is Active
+                    </label>
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Create Coupon</button>
+    </form>
+</div>
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+{% endblock %}
+
+
+
+
+{% block css %}
+
+<style>
+.coupon-management-container {
+    background-color: #1b1b1b;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.coupon-management-container h3 {
+    color: #fff;
+    margin-bottom: 20px;
+}
+
+.coupon-management-container .form-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-right: -15px;
+    margin-left: -15px;
+}
+
+.coupon-management-container .form-group {
+    flex: 0 0 50%;
+    max-width: 50%;
+    padding-right: 15px;
+    padding-left: 15px;
+    margin-bottom: 20px;
+}
+
+.coupon-management-container label {
+    color: #ccc;
+    font-weight: bold;
+}
+
+.coupon-management-container .form-control {
+    background-color: #2b2b2b;
+    border-color: #3b3b3b;
+    color: #ccc;
+}
+
+.coupon-management-container .btn-primary {
+    background-color: #4e73df;
+    border-color: #4e73df;
+}
+.coupon-management-container .form-control.is-invalid {
+    border-color: #dc3545;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    padding-right: calc(0.75em + 0.375rem);
+}
+
+.coupon-management-container .invalid-feedback {
+    color: #dc3545;
+    font-size: 0.875em;
+    margin-top: 0.25rem;
+}
+
+.coupon-management-container .form-control.is-invalid {
+    border-color: #dc3545;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    padding-right: calc(0.75em + 0.375rem);
+}
+
+.coupon-management-container .invalid-feedback {
+    color: #dc3545;
+    font-size: 0.875em;
+    margin-top: 0.25rem;
+}
+
+</style>
+{% endblock %}
+
+
+
+
+
+
+{% block extra_js%}
+
+<script>
+
+    document.getElementById('couponForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+    
+        var formData = new FormData(event.target);
+    
+        fetch("{% url 'create_coupon' %}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            if (data.success) {
+                Swal.fire({
+                    title: 'Success',
+                    text: data.success,
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                });
+    
+                // Reset the form
+                event.target.reset();
+            } else {
+                // Handle errors
+                console.error('Error:', data);
+            }
+        })
+        .catch(function(error) {
+            console.error('Error:', error);
+        });
+    });
+{% comment %} -------debugging------------------------------------- {% endcomment %}
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,151 @@
+{% extends "admin_base.html" %}
+
+
+{% block breadcrumbs %}
+            <li class="breadcrumb-item"><a href="{% url 'coupons' %}">coupons</a></li>
+            <li class="breadcrumb-item active" aria-current="page"> edit coupons</li>
+
+{% endblock %} 
+
+{% block content %}
+<div class="coupon-management-container">
+    <h3>Edit Coupon: {{ coupon.code }}</h3>
+    <form id="editCouponForm">
+        {% csrf_token %}
+        <input type="hidden" id="couponId" name="id" value="{{ coupon.id }}">
+        
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="couponCode">Coupon Code</label>
+                <input type="text" class="form-control" id="couponCode" name="code" 
+                       placeholder="{{ coupon.code }}" value="{{ coupon.code }}" required>
+            </div>
+            
+            <div class="form-group col-md-6">
+                <label for="discountType">Discount Type</label>
+                <select class="form-control" id="discountType" name="discountType" required>
+                    <option value="percentage" {% if coupon.discount_type == 'percentage' %}selected{% endif %}>
+                        Percentage
+                    </option>
+                    <option value="fixed" {% if coupon.discount_type == 'fixed' %}selected{% endif %}>
+                        Fixed Amount
+                    </option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="discountValue">Discount Value</label>
+                <input type="number" class="form-control" id="discountValue" name="discountValue" 
+                       placeholder="{{ coupon.discount_value }}" 
+                       value="{{ coupon.discount_value }}" 
+                       step="0.01" required>
+            </div>
+            
+            <div class="form-group col-md-6">
+                <label for="validUntil">Valid Until</label>
+                <input type="date" class="form-control" id="validUntil" name="validUntil" 
+                       placeholder="{{ coupon.valid_until|date:'Y-m-d' }}"
+                       value="{{ coupon.valid_until|date:'Y-m-d' }}" required>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="usesLeft">Uses Left</label>
+                <input type="number" class="form-control" id="usesLeft" name="usesLeft" 
+                       placeholder="{{ coupon.uses_left }}" 
+                       value="{{ coupon.uses_left }}" required>
+            </div>
+            
+            <div class="form-group col-md-6">
+                <div class="form-check mt-4">
+                    <input type="checkbox" class="form-check-input" id="isActive" name="isActive"
+                           {% if coupon.is_active %}checked{% endif %}>
+                    <label class="form-check-label" for="isActive">
+                        Is Active
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-actions">
+            <button type="button" id="updateCouponBtn" class="btn btn-primary">Update Coupon</button>
+            <a href="{% url 'coupons' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+
+
+
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('#updateCouponBtn').on('click', function() {
+            const formData = {
+                id: $('#couponId').val(),
+                code: $('#couponCode').val(),
+                discountType: $('#discountType').val(),
+                discountValue: $('#discountValue').val(),
+                validUntil: $('#validUntil').val(),
+                usesLeft: $('#usesLeft').val(),
+                isActive: $('#isActive').is(':checked')
+            };
+    
+            $.ajax({
+                url: "{% url 'update_coupon' %}",
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Coupon Updated!',
+                        text: response.message,
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        window.location.href = "{% url 'coupons' %}";
+                    });
+                },
+                error: function(xhr) {
+                    console.error('Full error response:', xhr);
+                    const errorMessage = xhr.responseJSON 
+                        ? (xhr.responseJSON.message || 'An error occurred')
+                        : 'An unexpected error occurred';
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Update Failed',
+                        text: errorMessage,
+                        confirmButtonText: 'Okay'
+                    });
+                }
+            });
+        });
+    });
+    </script>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

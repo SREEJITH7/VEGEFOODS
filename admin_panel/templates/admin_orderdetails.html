@@ -1,0 +1,603 @@
+{% extends "admin_base.html" %} 
+
+{% block breadcrumbs %}
+            <li class="breadcrumb-item active" aria-current="page">Order Details</li>
+            {% endblock %} <!-- Dynamic breadcrumbs for child templates -->
+
+{% block content%}
+
+{% comment %} -------- {% endcomment %}
+<!-- Add these before the table -->
+
+
+<div class="header">
+    {% comment %} --------- {% endcomment %}
+
+    <div class="header-boxes">
+        <div class="box pending">
+            <div class="icon">🕰️</div>
+          <div class="count">{{ pending_orders }}</div>
+          <div class="label">Pending Orders</div>
+        </div>
+        <div class="box completed">
+            <div class="icon">✅</div>
+          <div class="count">{{ completed_orders }}</div>
+          <div class="label">Completed</div>
+        </div>
+        <div class="box refunded">
+            <div class="icon">💰</div>
+          <div class="count">{{ refunded_orders }}</div>
+          <div class="label">Refunded</div>
+        </div>
+        <div class="box cancelled">
+            <div class="icon">❌</div>
+          <div class="count">{{ cancelled_orders }}</div>
+          <div class="label">Cancelled</div>
+        </div>
+      </div>
+
+{% comment %} ------ {% endcomment %}
+    <div class="search-container">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Search">
+        
+    </div>
+
+    <div class="dropdown">  {% comment %} -- css for drown is not given and drop down is not in function ---- {% endcomment %}
+        <button class="btn btn-light border dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            Filter
+        </button>
+        <ul class="dropdown-menu shadow-sm" aria-labelledby="filterDropdown">
+            <li><a class="dropdown-item" href="?filter=pending">Pending</a></li>
+            <li><a class="dropdown-item" href="?filter=completed">Completed</a></li>
+            <li><a class="dropdown-item" href="?filter=refunded">Refunded</a></li>
+            <li><a class="dropdown-item" href="?filter=cancelled">Cancelled</a></li>
+            <li><a class="dropdown-item" href="?filter=all">All</a></li>
+        </ul>
+    </div>
+    
+</div>
+
+{% comment %} -------- {% endcomment %}
+<div class="table-container">
+ {% comment %} <table>
+        <thead>
+            <tr>
+                <th>Sl No</th>
+                <th>Order ID</th>
+                <th>Customer Name</th>
+                <th>Order Date</th>
+                <th>Payment Method</th>
+                <th>Total Amount</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="orderTableBody">
+            {% for order in page_obj %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ order.id }}</td>
+                <td>{{ order.user.username }}</td>
+                <td>{{ order.order_date|date:"M d, Y" }}</td>
+                <td>{{ order.get_payment_method_display }}</td>
+                <td>₹{{ order.total_amount|floatformat:2 }}</td>
+                
+                <td>
+                    <span class="status {% if order.order_status == 'delivered' %}status-active{% elif order.order_status == 'cancelled' %}status-inactive{% else %}status-pending{% endif %}">
+                        {{ order.get_order_status_display }}
+                    </span>
+                </td>
+                <td class="action-cell">
+                    
+                    <a href="{% url 'admin_orderdetails' order_id=order.id %}" class="action-btn" title="View Order Details">👁️</a>
+                    <a href="{% url 'admin_edit_order' order.id %}" class="action-btn" title="Edit Order">✏️</a> 
+
+</td>
+            </tr>
+            {% comment %} {% endfor %} {% endcomment %}
+        {% comment %} </tbody>
+    </table>  {% endcomment %} 
+
+{% comment %} <a href="{% url 'admin_edit_order' order.id %}" class="action-btn" title="Edit Order">✏️</a>  {% endcomment %}
+
+{% comment %} --------for adding return request button ---------------------------------------------------------------------------------------- {% endcomment %}
+
+
+<table>
+  <thead>
+      <tr>
+          <th>Sl No</th>
+          <th>Order ID</th>
+          <th>Customer Name</th>
+          <th>Order Date</th>
+          <th>Payment Method</th>
+          <th>Total Amount</th>
+          <th>Status</th>
+          <th>Action</th>
+      </tr>
+  </thead>
+  <tbody id="orderTableBody">
+      {% for order in page_obj %}
+      <tr class="{% if order.has_return_request %}return-request-pending{% endif %}">
+          <td>{{ forloop.counter }}</td>
+          <td>{{ order.id }}</td>
+          <td>{{ order.user.username }}</td>
+          <td>{{ order.order_date|date:"M d, Y" }}</td>
+          <td>{{ order.get_payment_method_display }}</td>
+          <td>₹{{ order.total_amount|floatformat:2 }}</td>
+          
+          <td>
+            <span class="status {% if order.order_status == 'delivered' %}status-active{% elif order.order_status == 'cancelled' %}status-inactive{% else %}status-pending{% endif %}">
+                {% if order.is_returning %}
+                    Returning
+                {% else %}
+                    {{ order.get_order_status_display }}
+                {% endif %}
+            </span>
+            {% if order.has_return_request %}
+                <span class="return-request-badge">Return Requested</span>
+            {% endif %}
+        </td>
+        
+          <td class="action-cell">
+              <a href="{% url 'admin_orderdetails' order_id=order.id %}" class="action-btn" title="View Order Details">👁️</a>
+              <a href="{% url 'admin_edit_order' order.id %}" class="action-btn" title="Edit Order">✏️</a>
+              
+              {% if order.has_return_request %}
+              <a href="{% url 'admin_return_requests' order_id=order.id %}" class="return-request-btn" title="View Return Requests">🔄</a>
+
+              {% endif %}
+          </td>
+      </tr>
+      {% endfor %}
+  </tbody>
+</table>
+
+
+
+
+</div>
+
+<!-- Pagination Section -->
+<div class="pagination">
+    <div class="show-entries">
+        <span>Showing</span>
+        <select>
+            <option>15</option>
+            <option>25</option>
+            <option>50</option>
+            <option>100</option>
+        </select>
+    </div>
+
+    <div>
+        Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} out of {{ total_orders }} records
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="pagination-controls">
+        {% if page_obj.has_previous %}
+            <button class="page-btn" onclick="window.location.href='?page=1'">First</button>
+            <button class="page-btn" onclick="window.location.href='?page={{ page_obj.previous_page_number }}'">Previous</button>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+            {% if num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                {% if page_obj.number == num %}
+                    <button class="page-btn active">{{ num }}</button>
+                {% else %}
+                    <button class="page-btn" onclick="window.location.href='?page={{ num }}'">{{ num }}</button>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+            <button class="page-btn" onclick="window.location.href='?page={{ page_obj.next_page_number }}'">Next</button>
+            <button class="page-btn" onclick="window.location.href='?page={{ page_obj.paginator.num_pages }}'">Last</button>
+        {% endif %}
+    </div>
+</div>
+
+<p>Total Pages: {{ page_obj.paginator.num_pages }}</p>
+<p>Current Page: {{ page_obj.number }}</p>
+
+{% endblock %}
+
+{% block script %}
+
+{% endblock %}
+
+{% block css %}
+
+
+
+<style>
+
+
+
+  {% comment %} .return-request-pending {
+    background-color: #fff3f3 !important;
+} {% endcomment %}
+
+.return-request-badge {
+    background-color: #ff4d4d;
+    color: white;
+    padding: 2px 5px;
+    border-radius: 3px;
+    margin-left: 5px;
+    font-size: 0.8em;
+}
+
+.return-request-btn {
+    background-color: #ff6b6b;
+    color: white;
+    padding: 2px 5px;
+    border-radius: 3px;
+    text-decoration: none;
+}
+
+
+
+    .header-boxes {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 1rem;
+        gap: 1rem;
+      }
+      
+      .header-boxes .box {
+        background-color: #f1f1f1;
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+        width: 150px;
+      }
+      
+      .header-boxes .box.pending {
+        background-color: #cce5ff;
+      }
+      
+      .header-boxes .box.completed {
+        background-color: #d4edda;
+      }
+      
+      .header-boxes .box.refunded {
+        background-color: #fff3cd;
+      }
+      
+      .header-boxes .box.cancelled {
+        background-color: #f8d7da;
+      }
+      
+      .header-boxes .box .count {
+        font-size: 2rem;
+        font-weight: bold;
+      }
+      
+      .header-boxes .box .label {
+        font-size: 0.9rem;
+        color: #666;
+      }
+
+      .header-boxes .box .icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+      }
+
+/* Messages Container Styles */
+.messages-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+    max-width: 400px;
+    width: 100%;
+}
+
+.messages-container .alert {
+    margin-bottom: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    animation: slideIn 0.3s ease-out;
+}
+
+/* Different alert types */
+.alert-success {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+.alert-error,
+.alert-danger {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+.alert-warning {
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+    color: #856404;
+}
+
+.alert-info {
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+    color: #0c5460;
+}
+
+/* Animation for alerts */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Animation for alert dismissal */
+.alert.fade {
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+.alert.fade.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.alert.fade.hide {
+    opacity: 0;
+    transform: translateX(100%);
+}
+
+/* Close button styles */
+.alert .btn-close {
+    padding: 0.5rem;
+    margin: -0.5rem -0.5rem -0.5rem auto;
+}
+
+.alert .btn-close:focus {
+    box-shadow: none;
+    outline: none;
+}
+
+{% comment %} ------------------------------------ {% endcomment %}
+
+{% comment %} ##########################################################3333 {% endcomment %}
+
+/* Basic Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+  background-color: #000;
+  color: #fff;
+  padding: 20px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header Styles */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.search-container {
+  position: relative;
+  flex: 1;
+  max-width: 300px;
+}
+
+.search-container input {
+  width: 100%;
+  padding: 8px 12px 8px 35px;
+  border: none;
+  border-radius: 5px;
+  background-color: #1a1a1a;
+  color: #fff;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+}
+
+/* Button Styles */
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-secondary {
+  background-color: #2a2a2a;
+  color: white;
+}
+
+/* Table Styles */
+.table-container {
+  overflow-x: auto;
+  background-color: #1a1a1a;
+  border-radius: 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+th,
+td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #2a2a2a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+th:nth-child(1),
+td:nth-child(1) {
+  width: 5%;
+}
+
+th:nth-child(2),
+td:nth-child(2) {
+  width: 15%;
+}
+
+th {
+  background-color: #0d0d0d;
+  color: #fff;
+}
+
+tr:hover {
+  background-color: #2a2a2a;
+}
+
+/* Status Styles */
+.status {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.status-active {
+  color: #28a745;
+}
+
+.status-blocked {
+  color: #dc3545;
+}
+
+/* Action Button Styles */
+.action-cell {
+  display: flex;
+  gap: 10px;
+}
+
+.action-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.action-btn:hover {
+  opacity: 1;
+}
+
+/* Pagination Styles */
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  color: #888;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 5px;
+
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.page-btn {
+  padding: 5px 10px;
+  background-color: #2a2a2a;
+  border: none;
+  border-radius: 3px;
+  color: #fff;
+  cursor: pointer;
+
+  opacity: 0.8;
+}
+
+.page-btn.active {
+  background-color: #007bff;
+
+  opacity: 1;
+}
+
+.page-btn:hover {
+    opacity: 1;
+}
+
+.show-entries {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.show-entries select {
+  background-color: #2a2a2a;
+  color: #fff;
+  border: none;
+  padding: 5px;
+  border-radius: 3px;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .search-container {
+    max-width: 100%;
+  }
+
+  .pagination {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  th,
+  td {
+    font-size: 14px;
+  }
+
+
+  
+}
+
+</style>
+{% endblock %}

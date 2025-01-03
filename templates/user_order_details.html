@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+  <head>
+{% comment %} ############################################################################## {% endcomment %}
+
+
+
+<style>
+    .contact-form {
+        width: 100%;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        border-radius: 8px;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        color: #333;
+    }
+    
+    .form-control {
+        height: 45px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 0.375rem 0.75rem;
+    }
+    
+    .form-control:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    }
+    
+    .btn {
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #5a6268;
+        border-color: #545b62;
+    }
+    
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+    
+    .btn-primary:hover {
+        background-color: #0069d9;
+        border-color: #0062cc;
+    }
+
+
+
+    .manage-account {
+        background-color: #f9f9f9;
+        border: 1px solid #e5e5e5;
+        border-radius: 5px;
+        padding: 20px;
+        width: 300px;
+      }
+      
+      .manage-account h2 {
+        margin-top: 0;
+        font-size: 18px;
+        font-weight: bold;
+      }
+      
+      .account-options {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .account-options .option {
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        color: #333;
+        padding: 10px;
+        border-radius: 5px;
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: box-shadow 0.3s ease;
+      }
+      
+      .account-options .option:hover {
+        background-color: #e6f2ff; /* Light blue on hover */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      
+      .account-options .option i {
+        margin-right: 10px;
+        font-size: 20px;
+      }
+
+
+
+      h1.mb-0.bread {
+        font-size: 50rem; /* Increase the font size */
+        font-weight: bold; /* Make the text bold */
+        margin-top: 1rem; /* Add some top margin */
+      }
+
+
+
+
+</style>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% comment %} #################################################################################################### {% endcomment %}
+
+    <title>Vegefoods - Free Bootstrap 4 Template by Colorlib</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <link href="https://fonts.googleapis.com/css?family=Poppins:200,300,400,500,600,700,800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Lora:400,400i,700,700i&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Amatic+SC:400,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'user/css/open-iconic-bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'user/css/animate.css' %}">
+    
+    <link rel="stylesheet" href="{% static 'user/css/owl.carousel.min.css' %}">
+    <link rel="stylesheet" href="{% static 'user/css/owl.theme.default.min.css' %}">
+    <link rel="stylesheet" href="{% static 'user/css/magnific-popup.css' %}">
+
+    <link rel="stylesheet" href="{% static 'user/css/aos.css' %}">
+
+    <link rel="stylesheet" href="{% static 'user/css/ionicons.min.css' %}">
+
+    <link rel="stylesheet" href="{% static 'user/css/bootstrap-datepicker.css' %}">
+    <link rel="stylesheet" href="{% static 'user/css/jquery.timepicker.css' %}">
+
+    
+    <link rel="stylesheet" href="{% static 'user/css/flaticon.css' %}">
+    <link rel="stylesheet" href="{% static 'user/css/icomoon.css' %}">
+    <link rel="stylesheet" href="{% static 'user/css/style.css' %}">
+  </head>
+  <body class="goto-here">
+		<div class="py-1 bg-primary">
+    	<div class="container">
+    		<div class="row no-gutters d-flex align-items-start align-items-center px-md-0">
+	    		<div class="col-lg-12 d-block">
+		    		<div class="row d-flex">
+		    			<div class="col-md pr-4 d-flex topper align-items-center">
+					    	<div class="icon mr-2 d-flex justify-content-center align-items-center"><span class="icon-phone2"></span></div>
+						    <span class="text">+ 1235 2355 98</span>
+					    </div>
+					    <div class="col-md pr-4 d-flex topper align-items-center">
+					    	<div class="icon mr-2 d-flex justify-content-center align-items-center"><span class="icon-paper-plane"></span></div>
+						    <span class="text">youremail@email.com</span>
+					    </div>
+					    <div class="col-md-5 pr-4 d-flex topper align-items-center text-lg-right">
+						    <span class="text">3-5 Business days delivery &amp; Free Returns</span>
+					    </div>
+				    </div>
+			    </div>
+		    </div>
+		  </div>
+    </div>
+    <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light" id="ftco-navbar">
+	    <div class="container">
+	      <a class="navbar-brand" href="index.html">Vegefoods</a>
+	      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav" aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
+	        <span class="oi oi-menu"></span> Menu
+	      </button>
+
+	      <div class="collapse navbar-collapse" id="ftco-nav">
+	        <ul class="navbar-nav ml-auto">
+	          <li class="nav-item"><a href="{% url 'welcome' %}" class="nav-link">Home</a></li>
+	          <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="dropdown04" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Shop</a>
+              <div class="dropdown-menu" aria-labelledby="dropdown04">
+              	<a class="dropdown-item" href="{% url 'shopsection'%}">Shop</a>
+				  <a class="dropdown-item" href="{% url 'wishlist' %}">Wishlist</a>
+				  <a class="dropdown-item" href="product-single.html">Single Product</a>
+				  <a class="dropdown-item" href="{% url 'cart' %}">Cart</a>
+				  <a class="dropdown-item" href="checkout.html">Checkout</a>
+              </div>
+            </li>
+	          <li class="nav-item"><a href="about.html" class="nav-link">About</a></li>
+	          <li class="nav-item"><a href="blog.html" class="nav-link">Blog</a></li>
+	          <li class="nav-item active"><a href="contact.html" class="nav-link">Contact</a></li>
+	          <li class="nav-item"><a href="{% url 'wishlist' %}" class="nav-link"><i class="fas fa-heart"></i></a></li>
+			  <li class="nav-item"><a href="{% url 'cart' %}" class="nav-link"><i class="fas fa-shopping-cart"></i> [0]</a></li>
+
+	        </ul>
+	      </div>
+	    </div>
+	  </nav>
+    <!-- END nav -->
+
+    <div class="hero-wrap hero-bread" style="background-image: url('{% static 'user/images/bg_1.jpg'%}');">
+      <div class="container">
+        <div class="row no-gutters slider-text align-items-center justify-content-center">
+          <div class="col-md-9 ftco-animate text-center">
+          	<p class="breadcrumbs"><span class="mr-2"><a href="index.html">Home</a></span> <span>Your Profile</span></p>
+            <h1 class="mb-0 bread">Your Profile</h1>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="ftco-section contact-section bg-light">
+      <div class="container">
+      	<div class="row d-flex mb-5 contact-info">
+          <div class="w-100"></div>
+          <div class="col-md-3 d-flex">
+          	<div class="info bg-white p-4">
+	            <p><span>Address:</span> 198 West 21th Street, Suite 721 New York NY 10016</p>
+	          </div>
+          </div>
+          <div class="col-md-3 d-flex">
+          	<div class="info bg-white p-4">
+	            <p><span>Phone:</span> <a href="tel://1234567920">+ 1235 2355 98</a></p>
+	          </div>
+          </div>
+          <div class="col-md-3 d-flex">
+          	<div class="info bg-white p-4">
+	            <p><span>Email:</span> <a href="mailto:info@yoursite.com">info@yoursite.com</a></p>
+	          </div>
+          </div>
+          <div class="col-md-3 d-flex">
+          	<div class="info bg-white p-4">
+	            <p><span>Website</span> <a href="#">yoursite.com</a></p>
+	          </div>
+          </div>
+        </div>
+
+{% comment %} ------user  form -------------------------------------------------------------------- {% endcomment %}
+
+{% comment %} <div class="row block-9"> <!-- Opening div for row block-9 -->
+    <div class="col-md-6 order-md-last d-flex"> <!-- First column inside row block-9 -->
+      <div class="bg-white p-5">
+        <h3 class="mb-4">Your Orders</h3>
+        {% if orders %}
+        <table class="table table-bordered table-hover">
+          <thead class="thead-light">
+            <tr>
+              <th>Order ID</th>
+              <th>Product Image</th>
+              <th>Date</th>
+              <th>Total Amount</th>
+              <th>Status</th>
+              <th>Payment Method</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for order in orders %}
+            <tr>
+              <td>{{ order.id }}</td>
+
+              <td>
+                {% for item in order.order_items.all %}
+                    {% if forloop.first %}
+                        <!-- Display only the first primary image -->
+                        <img src="{{ item.primary_image.images.url }}" alt="Product Image" style="width: 50px; height: 50px;">
+                    {% endif %}
+                {% endfor %}
+            </td>
+            
+            
+
+              <td>{{ order.order_date|date:"Y-m-d H:i" }}</td>
+              <td>${{ order.total_amount }}</td>
+              <td>{{ order.get_order_status_display }}</td>
+              <td>{{ order.get_payment_method_display }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p>You have no orders.</p>
+        {% endif %}
+      </div>
+    </div> {% endcomment %}
+
+{% comment %} --------------new implementations----------------------------------- {% endcomment %}
+
+{% comment %} <div class="manage-account">
+  <h2>Manage Account</h2>
+  <div class="account-options">
+      <a href="{% url 'profile'%}" class="option">
+          <i class="fa fa-user"></i>
+          <span>My Profile</span>
+        </a>
+    <a href="{% url 'addressbook' %}" class="option">
+      <i class="fa fa-address-book"></i>
+      <span>Address Book</span>
+    </a>
+    <a href="#" class="option">
+      <i class="fa fa-shopping-cart"></i>
+      <span>My Orders</span>
+    </a>
+    <a href="#" class="option">
+      <i class="fa fa-credit-card"></i>
+      <span>Payment Options</span>
+    </a>
+   
+  </div>
+</div>
+
+
+<div class="row block-9">
+  <div class="col-md-12">
+      <div class="bg-white p-5">
+          <h3 class="mb-4">Your Orders</h3>
+          {% if orders %}
+          <ul class="list-group">
+              {% for order in orders %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                      <strong>Order ID:</strong> {{ order.id }}<br>
+                      <strong>Date:</strong> {{ order.order_date|date:"Y-m-d H:i" }}<br>
+                      <strong>Total Amount:</strong> ${{ order.total_amount }}<br>
+                      <strong>Status:</strong> {{ order.get_order_status_display }}
+                  </div>
+                  <a href="{% url 'single_order_detail' order.id %}" class="btn btn-primary">View Details</a>
+              </li>
+              {% endfor %}
+          </ul>
+          {% else %}
+          <p>You have no orders.</p>
+          {% endif %}
+      </div>
+  </div>
+</div> {% endcomment %}
+
+
+
+{% comment %} -----above is og ---------------------------------------------------- {% endcomment %}
+
+<div class="row block-9 g-3">
+  <div class="col-md-4 pe-md-2">
+      <div class="manage-account">
+          <h2>Manage Account</h2>
+          <div class="account-options">
+              <a href="{% url 'profile'%}" class="option">
+                  <i class="fa fa-user"></i>
+                  <span>My Profile</span>
+              </a>
+              <a href="{% url 'wishlist'%}" class="option">
+                <i class="fa fa-heart"></i>
+                <span>My Wishlist</span>
+              </a>
+              <a href="{% url 'addressbook' %}" class="option">
+                  <i class="fa fa-address-book"></i>
+                  <span>Address Book</span>
+              </a>
+              <a href="{% url 'order_details' %}" class="option">
+                  <i class="fa fa-shopping-cart"></i>
+                  <span>My Orders</span>
+              </a>
+              <a href="{% url 'wallet' %}" class="option">
+                  <i class="fa fa-credit-card"></i>
+                  <span>Payment Options</span>
+              </a>
+          </div>
+      </div>
+  </div>
+  <div class="col-md-8 ps-md-2">
+      <div class="bg-white p-5 contact-form">
+          <h3 class="mb-4">Your Orders</h3>
+          {% if orders %}
+          <ul class="list-group">
+              {% comment %} {% for order in orders %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                      <strong>Order ID:</strong> {{ order.id }}<br>
+                      <strong>Date:</strong> {{ order.order_date|date:"Y-m-d H:i" }}<br>
+                      <strong>Total Amount:</strong> ${{ order.total_amount }}<br>
+                      <strong>Status:</strong> {{ order.get_order_status_display }}
+                  </div>
+                  <a href="{% url 'single_order_detail' order.id %}" class="btn btn-primary">View Details</a>
+                  <a href="{% url 'generate_invoice' order.id %}" class="btn btn-secondary">Invoice</a>
+              </li>
+              {% endfor %} {% endcomment %}
+              {% for order in orders %}
+<li class="list-group-item d-flex justify-content-between align-items-center">
+    <div>
+        <strong>Order ID:</strong> {{ order.id }}<br>
+        <strong>Date:</strong> {{ order.order_date|date:"Y-m-d H:i" }}<br>
+        <strong>Total Amount:</strong> ${{ order.total_amount }}<br>
+        <strong>Status:</strong> {{ order.get_order_status_display }}<br>
+        <strong>Payment Status:</strong> {{ order.get_payment_status_display }}
+    </div>
+    <div class="d-flex gap-2">
+      {% if order.payment_status == 'pending' and order.can_retry_payment %}
+      <button class="retry-payment-btn" data-order-id="{{ order.id }}">
+          Retry Payment
+      </button>
+  {% endif %}
+        <a href="{% url 'single_order_detail' order.id %}" class="btn btn-primary">View Details</a>
+        <a href="{% url 'generate_invoice' order.id %}" class="btn btn-secondary">Invoice</a>
+    </div>
+</li>
+{% endfor %}
+          </ul>
+          {% else %}
+          <p>You have no orders.</p>
+          {% endif %}
+      </div>
+  </div>
+</div>
+{% csrf_token %}
+<!-- Add these meta tags in your base template head -->
+<meta name="user-email" content="{{ user.email }}">
+<meta name="user-phone" content="{{ user.phone_number }}">
+<meta name="user-name" content="{{ user.get_full_name }}">
+{% comment %} ---------------------------------------------------------------------- {% endcomment %}
+
+   
+
+
+        {% comment %} ------------------------------------------------------------------------ {% endcomment %}
+        </div>
+
+          <div class="col-md-6 d-flex">
+          	<div id="map" class="bg-white"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="ftco-footer ftco-section">
+      <div class="container">
+      	<div class="row">
+      		<div class="mouse">
+						<a href="#" class="mouse-icon">
+							<div class="mouse-wheel"><span class="ion-ios-arrow-up"></span></div>
+						</a>
+					</div>
+      	</div>
+        <div class="row mb-5">
+          <div class="col-md">
+            <div class="ftco-footer-widget mb-4">
+              <h2 class="ftco-heading-2">Vegefoods</h2>
+              <p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia.</p>
+              <ul class="ftco-footer-social list-unstyled float-md-left float-lft mt-5">
+                <li class="ftco-animate"><a href="#"><span class="icon-twitter"></span></a></li>
+                <li class="ftco-animate"><a href="#"><span class="icon-facebook"></span></a></li>
+                <li class="ftco-animate"><a href="#"><span class="icon-instagram"></span></a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-md">
+            <div class="ftco-footer-widget mb-4 ml-md-5">
+              <h2 class="ftco-heading-2">Menu</h2>
+              <ul class="list-unstyled">
+                <li><a href="#" class="py-2 d-block">Shop</a></li>
+                <li><a href="#" class="py-2 d-block">About</a></li>
+                <li><a href="#" class="py-2 d-block">Journal</a></li>
+                <li><a href="#" class="py-2 d-block">Contact Us</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-md-4">
+             <div class="ftco-footer-widget mb-4">
+              <h2 class="ftco-heading-2">Help</h2>
+              <div class="d-flex">
+	              <ul class="list-unstyled mr-l-5 pr-l-3 mr-4">
+	                <li><a href="#" class="py-2 d-block">Shipping Information</a></li>
+	                <li><a href="#" class="py-2 d-block">Returns &amp; Exchange</a></li>
+	                <li><a href="#" class="py-2 d-block">Terms &amp; Conditions</a></li>
+	                <li><a href="#" class="py-2 d-block">Privacy Policy</a></li>
+	              </ul>
+	              <ul class="list-unstyled">
+	                <li><a href="#" class="py-2 d-block">FAQs</a></li>
+	                <li><a href="#" class="py-2 d-block">Contact</a></li>
+	              </ul>
+	            </div>
+            </div>
+          </div>
+          <div class="col-md">
+            <div class="ftco-footer-widget mb-4">
+            	<h2 class="ftco-heading-2">Have a Questions?</h2>
+            	<div class="block-23 mb-3">
+	              <ul>
+	                <li><span class="icon icon-map-marker"></span><span class="text">203 Fake St. Mountain View, San Francisco, California, USA</span></li>
+	                <li><a href="#"><span class="icon icon-phone"></span><span class="text">+2 392 3929 210</span></a></li>
+	                <li><a href="#"><span class="icon icon-envelope"></span><span class="text">info@yourdomain.com</span></a></li>
+	              </ul>
+	            </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12 text-center">
+
+            <p><!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+						  Copyright &copy;<script>document.write(new Date().getFullYear());</script> All rights reserved | This template is made with <i class="icon-heart color-danger" aria-hidden="true"></i> by <a href="https://colorlib.com" target="_blank">Colorlib</a>
+						  <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+						</p>
+          </div>
+        </div>
+      </div>
+    </footer>
+    
+  
+
+  <!-- loader -->
+  <div id="ftco-loader" class="show fullscreen"><svg class="circular" width="48px" height="48px"><circle class="path-bg" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke="#eeeeee"/><circle class="path" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke-miterlimit="10" stroke="#F96D00"/></svg></div>
+
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script src="{% static 'user/js/jquery.min.js' %}"></script>
+  <script src="{% static 'user/js/jquery-migrate-3.0.1.min.js' %}"></script>
+  <script src="{% static 'user/js/popper.min.js' %}"></script>
+  <script src="{% static 'user/js/bootstrap.min.js' %}"></script>
+  <script src="{% static 'user/js/jquery.easing.1.3.js' %}"></script>
+  <script src="{% static 'user/js/jquery.waypoints.min.js' %}"></script>
+  <script src="{% static 'user/js/jquery.stellar.min.js' %}"></script>
+  <script src="{% static 'user/js/owl.carousel.min.js' %}"></script>
+  <script src="{% static 'user/js/jquery.magnific-popup.min.js' %}"></script>
+  <script src="{% static 'user/js/aos.js' %}"></script>
+  <script src="{% static 'user/js/jquery.animateNumber.min.js' %}"></script>
+  <script src="{% static 'user/js/bootstrap-datepicker.js' %}"></script>
+  <script src="{% static 'user/js/scrollax.min.js' %}"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBVWaKrjvy3MaE7SQ74_uJiULgl1JY0H2s&sensor=false"></script>
+  <script src="{% static 'user/js/google-map.js' %}"></script>
+  <script src="{% static 'user/js/main.js' %}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+
+
+
+
+
+
+
+
+  <script>
+
+ 
+
+  
+    function generateInvoice(event, orderId) {
+      event.preventDefault();
+      
+      fetch(`/generate-invoice/${orderId}/`)
+          .then(response => response.json())
+          .then(data => {
+              if (data.status === 'success') {
+                  // Create a temporary link and trigger download
+                  const link = document.createElement('a');
+                  link.href = data.file_url;
+                  link.target = '_blank';  // This will open in a new tab
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+              } else {
+                  alert('Error generating invoice: ' + data.message);
+              }
+          })
+          .catch(error => {
+              console.error('Error:', error);
+              alert('Error generating invoice');
+          });
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  {% comment %} ------------------------------ {% endcomment %}
+  
+    {% comment %} document.querySelectorAll('.retry-payment-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const orderId = this.dataset.orderId;
+            
+            fetch(`/retry-payment/${orderId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    var options = {
+                        key: data.razorpay_key,
+                        amount: data.amount,
+                        currency: "INR",
+                        name: "Your Store",
+                        description: "Order Payment",
+                        order_id: data.razorpay_order_id,
+                        handler: function (response) {
+                            // Handle successful payment
+                            window.location.href = `/payment/success/?payment_id=${response.razorpay_payment_id}&order_id=${response.razorpay_order_id}&signature=${response.razorpay_signature}`;
+                        },
+                        prefill: {
+                            email: "{{ request.user.email }}",
+                            contact: "{{ request.user.phone_number }}"
+                        },
+                        theme: {
+                            color: "#3399cc"
+                        }
+                    };
+                    var rzp1 = new Razorpay(options);
+                    rzp1.open();
+                });
+        });
+    });
+   {% endcomment %}
+
+
+   {% comment %} document.querySelectorAll('.retry-payment-btn').forEach(button => {
+    button.addEventListener('click', async function(e) {
+        e.preventDefault();
+        
+        this.disabled = true;
+        this.innerHTML = 'Loading...';
+        
+        const orderId = this.dataset.orderId;
+        
+        try {
+            const response = await fetch(`/order/${orderId}/retry-payment/`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            
+            const options = {
+                key: data.razorpay_key,
+                amount: data.amount,
+                currency: "INR",
+                name: "Your Store",
+                description: "Order Payment",
+                order_id: data.razorpay_order_id,
+                handler: async function (response) {
+                    // Create form data for verification
+                    const formData = new FormData();
+                    formData.append('razorpay_payment_id', response.razorpay_payment_id);
+                    formData.append('razorpay_order_id', response.razorpay_order_id);
+                    formData.append('razorpay_signature', response.razorpay_signature);
+                    
+                    try {
+                        const verifyResponse = await fetch('/payment/verify/', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        const verifyData = await verifyResponse.json();
+                        
+                        if (verifyData.status === 'success') {
+                            window.location.href = verifyData.redirect_url;
+                        } else {
+                            alert('Payment verification failed. Please contact support.');
+                        }
+                    } catch (error) {
+                        console.error('Verification failed:', error);
+                        alert('Payment verification failed. Please contact support.');
+                    }
+                },
+                prefill: {
+                    email: document.querySelector('meta[name="user-email"]')?.content,
+                    contact: document.querySelector('meta[name="user-phone"]')?.content
+                },
+                theme: {
+                    color: "#3399cc"
+                },
+                modal: {
+                    ondismiss: () => {
+                        this.disabled = false;
+                        this.innerHTML = 'Retry Payment';
+                    }
+                }
+            };
+            
+            const razorpay = new Razorpay(options);
+            razorpay.open();
+            
+        } catch (error) {
+            console.error('Payment retry failed:', error);
+            alert('Failed to initialize payment. Please try again.');
+            this.disabled = false;
+            this.innerHTML = 'Retry Payment';
+        }
+    });
+}); {% endcomment %}
+
+
+
+
+document.querySelectorAll('.retry-payment-btn').forEach(button => {
+  button.addEventListener('click', async function(e) {
+      e.preventDefault();
+      
+      // Get the loading state element or create one
+      let loadingState = this.querySelector('.loading-state') || 
+          (() => {
+              const span = document.createElement('span');
+              span.className = 'loading-state';
+              return span;
+          })();
+      
+      const originalText = this.textContent;
+      
+      const setButtonState = (loading) => {
+          this.disabled = loading;
+          loadingState.textContent = loading ? ' Loading...' : '';
+          this.textContent = loading ? 'Processing' : originalText;
+          this.classList.toggle('processing', loading);
+      };
+
+      setButtonState(true);
+      
+      const orderId = this.dataset.orderId;
+      
+      try {
+          // Add CSRF token to all requests
+          const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+          
+          const response = await fetch(`/order/${orderId}/retry-payment/`, {
+              headers: {
+                  'X-CSRFToken': csrfToken,
+                  'X-Requested-With': 'XMLHttpRequest'
+              }
+          });
+
+          if (!response.ok) {
+              const errorData = await response.json().catch(() => null);
+              throw new Error(errorData?.message || `HTTP error! status: ${response.status}`);
+          }
+
+          const data = await response.json();
+          
+          // Show payment processing modal
+          const paymentModal = document.createElement('div');
+          paymentModal.className = 'payment-processing-modal';
+          paymentModal.innerHTML = '<div class="modal-content">Initializing payment...</div>';
+          document.body.appendChild(paymentModal);
+          
+          const options = {
+              key: data.razorpay_key,
+              amount: data.amount,
+              currency: "INR",
+              name: "Your Store",
+              description: "Order Payment",
+              order_id: data.razorpay_order_id,
+              handler: async function (response) {
+                  paymentModal.querySelector('.modal-content').textContent = 'Verifying payment...';
+                  
+                  const formData = new FormData();
+                  formData.append('razorpay_payment_id', response.razorpay_payment_id);
+                  formData.append('razorpay_order_id', response.razorpay_order_id);
+                  formData.append('razorpay_signature', response.razorpay_signature);
+                  
+                  try {
+                    const verifyResponse = await fetch(`/order/${orderId}/retry-payment/`, {  // Update URL
+                      method: 'POST',
+                      headers: {
+                          'X-CSRFToken': csrfToken,
+                          'X-Requested-With': 'XMLHttpRequest'
+                      },
+                      body: formData
+                  });
+                  
+                  const verifyData = await verifyResponse.json();
+                  
+                  if (verifyData.status === 'success') {
+                    paymentModal.querySelector('.modal-content').textContent = 'Payment successful! Redirecting...';
+                
+                    // Redirect to the order details page
+                    setTimeout(() => {
+                        window.location.href = verifyData.redirect_url;
+                    }, 1500);
+                } else {
+                    throw new Error(verifyData.message || 'Payment verification failed');
+                }
+
+
+                  } catch (error) {
+                      console.error('Verification failed:', error);
+                      paymentModal.querySelector('.modal-content').textContent = 
+                          'Payment verification failed. Please contact support.';
+                      setTimeout(() => {
+                          paymentModal.remove();
+                      }, 3000);
+                      setButtonState(false);
+                  }
+              },
+              prefill: {
+                  email: document.querySelector('meta[name="user-email"]')?.content,
+                  contact: document.querySelector('meta[name="user-phone"]')?.content,
+                  name: document.querySelector('meta[name="user-name"]')?.content
+              },
+              theme: {
+                  color: "#3399cc"
+              },
+              modal: {
+                  ondismiss: () => {
+                      paymentModal.remove();
+                      setButtonState(false);
+                  },
+                  escape: false,
+                  animation: true
+              },
+              retry: {
+                  enabled: true,
+                  max_count: 3
+              }
+          };
+          
+          const razorpay = new Razorpay(options);
+          
+          // Add event listeners for payment events
+          razorpay.on('payment.failed', function(response) {
+              console.error('Payment failed:', response.error);
+              paymentModal.querySelector('.modal-content').textContent = 
+                  `Payment failed: ${response.error.description}`;
+              setTimeout(() => {
+                  paymentModal.remove();
+              }, 3000);
+              setButtonState(false);
+          });
+          
+          razorpay.open();
+          
+      } catch (error) {
+          console.error('Payment retry failed:', error);
+          const errorMessage = error.message || 'Failed to initialize payment. Please try again.';
+          
+          // Show error message in a toast
+          const toast = document.createElement('div');
+          toast.className = 'payment-error-toast';
+          toast.textContent = errorMessage;
+          document.body.appendChild(toast);
+          
+          setTimeout(() => {
+              toast.remove();
+          }, 5000);
+          
+          setButtonState(false);
+      }
+  });
+});
+
+
+</script>
+
+
+
+
+
+
+
+  </body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+

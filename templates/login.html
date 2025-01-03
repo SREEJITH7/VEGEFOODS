@@ -1,0 +1,217 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load socialaccount %}
+    {% load static %}
+    {% load account %}
+
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Login Page</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/css/bootstrap.min.css" integrity="sha384-whatever-integrity-code-here" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'user/css/login.css' %}">
+
+
+
+
+
+
+
+    <style>
+        {% comment %} .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f5f5f5;
+        } {% endcomment %}
+        
+        .auth-box {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .auth-title {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .btn-google {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 12px 24px;
+            width: 100%;
+            transition: background-color 0.3s;
+            text-decoration: none;
+            color: #757575;
+        }
+        
+        .btn-google:hover {
+            background-color: #f8f8f8;
+        }
+        
+        .btn-google img {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+        
+        .btn-google span {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        /* static/css/social_auth.css */
+
+.google-signin {
+    margin-top: 20px;
+}
+
+.social-divider {
+    margin: 20px 0;
+    text-align: center;
+    position: relative;
+}
+
+.social-divider:before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #e0e0e0;
+    z-index: 1;
+}
+
+.social-divider span {
+    background: white;
+    padding: 0 15px;
+    color: #666;
+    position: relative;
+    z-index: 2;
+}
+        </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <h2>Login</h2>
+
+        <!-- Display any messages here -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-danger">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post" action="{% url 'login' %}  ">
+            {% csrf_token %}
+            <div class="input-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="input-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+
+            <a class="signup-link" href="{% url 'forgotpassword' %}">Forgot Password</a>
+       <br><br>
+
+            <button type="submit" class="login-btn">Login</button>
+            <p class="signup-link">Don't have an account? <a href="{% url 'signup' %}">Sign Up</a></p>
+
+            <br><br>       
+
+    {% comment %} <div class="social-login">
+        <h3>Or Login With</h3>
+        <br>
+            <a href="/accounts/google/login/" class="btn btn-danger"> 
+                <img src="{% static 'user/images/search.png' %}" alt="Google Logo" style="width: 20px; margin-right: 8px;">
+                    Login with Google
+                </a>
+            </div>
+        </div>
+        </form>
+    </div> {% endcomment %}
+
+
+    <div class="auth-container">
+        <div class="auth-box">
+            <h2 class="auth-title">"Sign In with Google"</h2>
+            
+            <div class="google-signin">
+                <div class="google-btn">
+                    <a href="/accounts/google/login/" process='login' next='/welcome/' class="btn btn-google">
+                        <img src="{% static 'user/images/search.png' %}" alt="Google Logo">
+                        <span>Continue with Google</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+
+
+
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/js/bootstrap.bundle.min.js" integrity="sha384-whatever-integrity-code-here" crossorigin="anonymous"></script>
+
+            <!-- JavaScript for page refresh -->
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    // Check if user is accessing login page after being logged in
+                    function handleBackNavigation() {
+                        // Check if user was previously authenticated
+                        const wasAuthenticated = localStorage.getItem('wasAuthenticated') === 'true';
+                        
+                        if (wasAuthenticated) {
+                            // Clear the authentication flag
+                            localStorage.removeItem('wasAuthenticated');
+                            
+                            // Send logout request
+                            fetch('{% url "logout" %}', {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRFToken': '{{ csrf_token }}'
+                                }
+                            }).then(() => {
+                                // Reload the page to reflect logged-out state
+                                window.location.reload();
+                            }).catch(error => {
+                                console.error('Logout failed:', error);
+                            });
+                        }
+                    }
+            
+                    // Check navigation type and handle back button scenario
+                    if (performance.navigation.type === performance.navigation.TYPE_BACK_FORWARD) {
+                        handleBackNavigation();
+                    }
+            
+                    // Check if user is currently authenticated when loading login page
+                    {% if user.is_authenticated %}
+                        localStorage.setItem('wasAuthenticated', 'true');
+                    {% else %}
+                        localStorage.removeItem('wasAuthenticated');
+                    {% endif %}
+                });
+            </script>
+</body>
+</html>

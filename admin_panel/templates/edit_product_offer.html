@@ -1,0 +1,82 @@
+{% extends "admin_base.html" %}
+
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div class="card-body">
+            <h3 class="card-title">Edit Offer for {{ product.name }}</h3>
+            <form method="POST" id="offerForm">
+                {% csrf_token %}
+
+                <!-- Offer Name -->
+                <div class="form-group mb-3">
+                    <label for="offerName">Offer Name</label>
+                    <input type="text" id="offerName" name="offer_name" class="form-control" 
+                           placeholder="{{ offer.offer_name }}" value="{{ offer.offer_name }}">
+                    <span id="offerNameError" class="error-message text-danger"></span>
+                </div>
+
+                <!-- Description -->
+                <div class="form-group mb-3">
+                    <label for="offerDescription">Description</label>
+                    <textarea id="offerDescription" name="description" class="form-control" rows="3" 
+                              placeholder="{{ offer.description }}">{{ offer.description }}</textarea>
+                    <span id="offerDescriptionError" class="error-message text-danger"></span>
+                </div>
+
+                <!-- Discount Percentage -->
+                <div class="form-group mb-3">
+                    <label for="discountPercentage">Discount Percentage</label>
+                    <input type="number" id="discountPercentage" name="discount_percentage" 
+                           class="form-control" min="0" max="100" step="0.01"
+                           placeholder="{{ offer.discount_percentage }}" value="{{ offer.discount_percentage }}">
+                    <span id="discountPercentageError" class="error-message text-danger"></span>
+                </div>
+
+                <!-- Start Date -->
+                <div class="form-group mb-3">
+                    <label for="startDate">Start Date</label>
+                    <input type="date" id="startDate" name="start_date" class="form-control"
+                           value="{{ offer.start_date|date:'Y-m-d' }}">
+                    <span id="startDateError" class="error-message text-danger"></span>
+                </div>
+
+                <!-- End Date -->
+                <div class="form-group mb-3">
+                    <label for="endDate">End Date</label>
+                    <input type="date" id="endDate" name="end_date" class="form-control"
+                           value="{{ offer.end_date|date:'Y-m-d' }}">
+                    <span id="endDateError" class="error-message text-danger"></span>
+                </div>
+
+                <!-- Is Active -->
+                <div class="form-group mb-3">
+                    <div class="form-check">
+                        <input type="checkbox" id="isActive" name="is_active" class="form-check-input"
+                               {% if offer.is_active %}checked{% endif %}>
+                        <label class="form-check-label" for="isActive">
+                            Is Active
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Product Details (Read-only) -->
+                <div class="form-group mb-3">
+                    <label>Product Details</label>
+                    <div class="card">
+                        <div class="card-body">
+                            <p><strong>Name:</strong> {{ product.name }}</p>
+                            <p><strong>Base Price:</strong> ${{ product.base_price }}</p>
+                            <p><strong>Current Category:</strong> {{ product.catogery.name }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="submitBtn" type="submit" class="btn btn-primary">Save Changes</button>
+                <a href="{% url 'admin_product' %}" class="btn btn-secondary ml-2">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

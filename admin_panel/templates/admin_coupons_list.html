@@ -1,0 +1,408 @@
+{% extends "admin_base.html" %}
+
+
+
+
+{% block breadcrumbs %}
+           
+            <li class="breadcrumb-item active" aria-current="page">Coupons</li>
+
+{% endblock %} 
+
+
+{% block content %}
+
+
+
+{% comment %} <div class="coupon-management-container">
+  <div class="header-container">
+    <h3>Available Coupons</h3>
+    <a href="{% url 'create_coupon' %}" class="btn btn-primary add-coupon-button">+ Add Coupon</a>
+</div>
+    <div class="coupon-list">
+        {% for coupon in coupons %}
+        <div class="coupon-card">
+            <div class="coupon-header">
+                <span class="discount">
+                    {{ coupon.discount_value }}{% if coupon.discount_type == 'percentage' %}%{% else %}₹{% endif %} OFF
+                </span>
+            </div>
+            <div class="coupon-body">
+                <h5 class="coupon-code">{{ coupon.code }}</h5>
+                <p>Valid Until: {{ coupon.valid_until|date:"M d, Y" }}</p>
+                <p>Uses Left: {{ coupon.uses_left }}/{{ coupon.max_uses }}</p>
+                <p>Status: <span class="status {{ coupon.is_active|yesno:"active,inactive" }}">{{ coupon.is_active|yesno:"Active,Inactive" }}</span></p>
+            </div>
+            <div class="coupon-actions">
+              <a href="{% url 'edit_coupon' coupon_id=coupon.id %}" 
+                 class="edit-icon" 
+                 data-coupon-id="{{ coupon.id }}">✏️</a>
+                 <a href="#" class="delete-icon" data-coupon-id="{{ coupon.id }}">🗑️</a>
+          </div>
+        </div>
+        {% empty %}
+        <p>No coupons available.</p>
+        {% endfor %}
+    </div>
+</div> {% endcomment %}
+
+
+<div class="coupon-management-container">
+  <div class="header-container">
+    <h3>Available Coupons</h3>
+    <a href="{% url 'create_coupon' %}" class="btn btn-primary add-coupon-button">+ Add Coupon</a>
+  </div>
+  <div class="coupon-list">
+    {% for coupon in coupons %}
+    <div class="coupon-card">
+      <div class="coupon-header">
+        <span class="discount">
+          {{ coupon.discount_value }}{% if coupon.discount_type == 'percentage' %}%{% else %}₹{% endif %} OFF
+        </span>
+      </div>
+      <div class="coupon-body">
+        <h5 class="coupon-code">{{ coupon.code }}</h5>
+        <p>Valid Until: {{ coupon.valid_to|date:"M d, Y" }}</p>
+        <p>Uses Left: {{ coupon.uses_left }}/{{ coupon.max_uses }}</p>
+        <p>Status: <span class="status {{ coupon.is_active|yesno:"active,inactive" }}">{{ coupon.is_active|yesno:"Active,Inactive" }}</span></p>
+      </div>
+      <div class="coupon-actions">
+        <a href="{% url 'edit_coupon' coupon_id=coupon.id %}" class="edit-icon" data-coupon-id="{{ coupon.id }}">✏️</a>
+        <a href="#" class="delete-icon" data-coupon-id="{{ coupon.id }}">🗑️</a>
+      </div>
+    </div>
+    {% empty %}
+    <p>No coupons available.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+
+
+
+
+{% comment %} .header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.add-coupon-button {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: bold;
+  text-decoration: none;
+  color: white;
+  background-color: #007bff;
+  border-radius: 5px;
+  border: none;
+  transition: background-color 0.3s ease;
+}
+
+.add-coupon-button:hover {
+  background-color: #0056b3;
+} {% endcomment %}
+
+
+
+
+
+{% block extra_js %}
+
+<script>
+
+  $(document).ready(function() {
+    $('.edit-icon').on('click', function(e) {
+        e.preventDefault(); // Prevent default link behavior
+        var couponId = $(this).data('coupon-id');
+        
+        if (couponId) {
+            window.location.href = '/edit-coupon/' + couponId + '/';
+        } else {
+            console.error('No coupon ID found');
+            alert('Error: Unable to edit coupon');
+        }
+    });
+  });
+
+{% comment %} ------------------------------ {% endcomment %}
+
+$(document).ready(function () {
+  // Delete button functionality
+  $('.delete-icon').on('click', function (e) {
+      e.preventDefault();
+      var couponId = $(this).data('coupon-id');
+
+      if (couponId) {
+          // Show SweetAlert confirmation dialog with aesthetic customization
+          Swal.fire({
+              title: '<h3 style="color:#333;">Confirm Deletion</h3>',
+              html: `
+                  <p style="font-size:16px; color:#555;">
+                      Are you sure you want to delete this coupon? 
+                      <br>This action cannot be undone.
+                  </p>
+              `,
+              icon: 'warning',
+              iconColor: '#e63946',
+              showCancelButton: true,
+              confirmButtonColor: '#3085d6',
+              cancelButtonColor: '#f44336',
+              confirmButtonText: '<b>Delete</b>',
+              cancelButtonText: '<b>Cancel</b>',
+              background: '#f9f9f9',
+              customClass: {
+                  popup: 'swal-popup',
+                  title: 'swal-title',
+                  icon: 'swal-icon',
+              },
+              showClass: {
+                  popup: 'animate__animated animate__fadeInDown',
+              },
+              hideClass: {
+                  popup: 'animate__animated animate__fadeOutUp',
+              },
+          }).then((result) => {
+              if (result.isConfirmed) {
+                  // Send AJAX request to delete the coupon
+                  $.ajax({
+                      url: '{% url "delete_coupon" %}',
+                      type: 'POST',
+                      headers: {
+                          'X-CSRFToken': '{{ csrf_token }}',
+                      },
+                      contentType: 'application/json',
+                      data: JSON.stringify({ id: couponId }),
+                      success: function (response) {
+                          if (response.status === 'success') {
+                              Swal.fire({
+                                  title: '<h3 style="color:#333;">Deleted!</h3>',
+                                  html: `
+                                      <p style="font-size:16px; color:#555;">
+                                          ${response.message}
+                                      </p>
+                                  `,
+                                  icon: 'success',
+                                  iconColor: '#2ecc71',
+                                  background: '#f9f9f9',
+                                  confirmButtonColor: '#3085d6',
+                                  customClass: {
+                                      popup: 'swal-popup',
+                                      title: 'swal-title',
+                                      icon: 'swal-icon',
+                                  },
+                              }).then(() => {
+                                  location.reload();
+                              });
+                          } else {
+                              Swal.fire({
+                                  title: '<h3 style="color:#333;">Error</h3>',
+                                  html: `
+                                      <p style="font-size:16px; color:#555;">
+                                          ${response.message}
+                                      </p>
+                                  `,
+                                  icon: 'error',
+                                  iconColor: '#e63946',
+                                  background: '#f9f9f9',
+                                  confirmButtonColor: '#3085d6',
+                              });
+                          }
+                      },
+                      error: function (xhr) {
+                          Swal.fire({
+                              title: '<h3 style="color:#333;">Error</h3>',
+                              html: `
+                                  <p style="font-size:16px; color:#555;">
+                                      An error occurred while deleting the coupon.
+                                  </p>
+                              `,
+                              icon: 'error',
+                              iconColor: '#e63946',
+                              background: '#f9f9f9',
+                              confirmButtonColor: '#3085d6',
+                          });
+                      },
+                  });
+              }
+          });
+      } else {
+          Swal.fire({
+              title: '<h3 style="color:#333;">Error</h3>',
+              html: `
+                  <p style="font-size:16px; color:#555;">
+                      Coupon ID not found.
+                  </p>
+              `,
+              icon: 'error',
+              iconColor: '#e63946',
+              background: '#f9f9f9',
+              confirmButtonColor: '#3085d6',
+          });
+      }
+  });
+});
+</script>
+
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+{% block css %}
+
+
+<style>
+
+    .coupon-management-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 2rem;
+      }
+      
+      .coupon-list {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        grid-gap: 2rem;
+      }
+      
+      .coupon-card {
+        background-color: #f8f8f8;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border: 2px solid transparent;
+      }
+      
+      .coupon-header {
+        background-color: #00a78e;
+        padding: 1rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      
+      .discount {
+        color: white;
+        font-size: 1.5rem;
+        font-weight: bold;
+      }
+      
+      .coupon-body {
+        padding: 1.5rem;
+      }
+      
+      .coupon-code {
+        color: #333;
+        font-size: 1.25rem;
+        margin-bottom: 0.5rem;
+      }
+      
+      .coupon-body p {
+        color: #666;
+        margin-bottom: 0.5rem;
+      }
+      
+      .status {
+        font-weight: bold;
+      }
+      
+      .active {
+        color: #00a78e;
+      }
+      
+      .inactive {
+        color: #ff4d4d;
+      }
+      
+      .coupon-actions {
+        display: flex;
+        justify-content: flex-end;
+        padding: 1rem;
+        border-top: 1px solid #e0e0e0;
+      }
+      
+      .coupon-actions a {
+        color: #666;
+        margin-left: 0.5rem;
+        text-decoration: none;
+      }
+      
+      .coupon-actions a:hover {
+        color: #333;
+      }
+
+
+
+      
+
+      .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        gap: 700px;
+    }
+    
+    .header-container h3 {
+        margin: 0;
+    }
+    
+    .add-coupon-button {
+        margin-left: auto; /* Push the button to the far right */
+        padding: 10px 20px;
+        font-size: 14px;
+        font-weight: bold;
+        text-decoration: none;
+        color: white;
+        background-color: #007bff;
+        border-radius: 5px;
+        border: none;
+        transition: background-color 0.3s ease;
+    }
+    
+    .add-coupon-button:hover {
+        background-color: #0056b3;
+    }
+
+
+
+    .coupon-management-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 2rem;
+    }
+  
+    .coupon-list {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      grid-gap: 2rem;
+    }
+  
+    /* Rest of the CSS remains the same */
+</style>
+{% endblock %}
+
+
+
+
+
+
+
+

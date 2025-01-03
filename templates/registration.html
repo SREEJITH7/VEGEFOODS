@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup Page</title>
+    <link rel="stylesheet" href="{% static 'user/css/signup.css' %}">
+</head>
+<body>
+    <div class="signup-container">
+        <h2>Sign Up</h2>
+        {% if messages %}
+            {% for msg in messages %}
+                <div class="alert alert-success" role="alert">
+                    {{ msg }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        <form method="post" action="{% url 'signup' %}">
+            {% csrf_token %}
+
+        <div class = "name-container">
+
+            <div class="input-group">
+                <label for="first_name">First Name</label>
+                {{ form.first_name }}
+                <span id= "first-name-error" class="error-message"></span>
+            </div>
+
+            <div class="input-group">
+                <label for="last_name">Last Name</label>
+                {{ form.last_name }}
+                <span id="last-name-error" class="error-message"></span>
+            </div>
+        </div>
+        
+        <div class="input-group">
+            <label for="username">Username</label>
+            {{ form.username.as_widget }}
+            
+        </div>
+
+            <div class="input-group">
+                <label for="email">Email</label>
+                {{ form.email }}
+                <span id="email-error" class="error-message"></span>
+            </div>
+
+
+            <div class="input-group">
+                <label for="phone_number">Phone Number</label>
+                {{ form.phone_number }}
+                <span id="phone-error" class="error-message"></span>
+
+            </div>
+
+
+            <div class="input-group">
+                <label for="password">Password</label>
+                {{ form.password }}
+            </div>
+
+
+            <div class="input-group">
+                <label for="confirm_password">Confirm Password</label>
+                {{ form.confirm_password }}
+            </div>
+
+
+            <button type="submit" class="signup-btn">Sign Up</button>
+            <p class="login-link">Already have an account? <a href="{% url 'login' %}">Login</a></p>
+        </form>
+    </div>
+
+<script>
+
+{% comment %} validation for 1st and last name at real time {% endcomment %}
+document.querySelector('input[name="first_name"]').addEventListener('input', function() {
+    const firstNameError = document.getElementById('first-name-error');
+    const value = this.value;
+    if (value === '') {
+        firstNameError.textContent = '';  // Clear the error if the field is empty
+    } else {
+        const isValid = /^[a-zA-Z]+$/.test(value);
+        firstNameError.textContent = isValid ? '' : 'First name should contain only letters.';
+    }
+});
+
+{% comment %} last name on time validation  {% endcomment %}
+document.querySelector('input[name="last_name"]').addEventListener('input', function() {
+    const lastNameError = document.getElementById('last-name-error');
+    const value = this.value;
+    if (value === '') {
+        lastNameError.textContent = '';  // Clear the error if the field is empty
+    } else {
+        const isValid = /^[a-zA-Z]+$/.test(value);
+        lastNameError.textContent = isValid ? '' : 'Last name should contain only letters.';
+    }
+});
+
+{% comment %} email on time validation {% endcomment %}
+document.querySelector('input[name="email"]').addEventListener('input', function() {
+    const emailError = document.getElementById('email-error');
+    const value = this.value;
+    if (value === '') {
+        emailError.textContent = '';  // Clear the error if the field is empty
+    } else {
+        const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+        emailError.textContent = isValid ? '' : 'Please enter a valid email address.';
+    }
+});
+
+{% comment %} phone no validation {% endcomment %}
+document.querySelector('input[name="phone_number"]').addEventListener('input', function() {
+    const phoneError = document.getElementById('phone-error');
+    const value = this.value;
+    if (value === '') {
+        phoneError.textContent = '';  // Clear the error if the field is empty
+    } else {
+        const isValid = /^\d{10,11}$/.test(value);
+        phoneError.textContent = isValid ? '' : 'Phone number must contain only digits and be at least 10 digits long.';
+    }
+});
+
+</script>
+
+</body>
+</html>

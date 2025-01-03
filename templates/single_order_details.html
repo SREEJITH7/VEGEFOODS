@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+  <head>
+{% comment %} ############################################################################## {% endcomment %}
+
+
+
+<style>
+    .contact-form {
+        width: 100%;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        border-radius: 8px;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        color: #333;
+    }
+    
+    .form-control {
+        height: 45px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 0.375rem 0.75rem;
+    }
+    
+    .form-control:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    }
+    
+    .btn {
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #5a6268;
+        border-color: #545b62;
+    }
+    
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+    
+    .btn-primary:hover {
+        background-color: #0069d9;
+        border-color: #0062cc;
+    }
+
+
+
+    .manage-account {
+        background-color: #f9f9f9;
+        border: 1px solid #e5e5e5;
+        border-radius: 5px;
+        padding: 20px;
+        width: 300px;
+      }
+      
+      .manage-account h2 {
+        margin-top: 0;
+        font-size: 18px;
+        font-weight: bold;
+      }
+      
+      .account-options {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .account-options .option {
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        color: #333;
+        padding: 10px;
+        border-radius: 5px;
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: box-shadow 0.3s ease;
+      }
+      
+      .account-options .option:hover {
+        background-color: #e6f2ff; /* Light blue on hover */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      
+      .account-options .option i {
+        margin-right: 10px;
+        font-size: 20px;
+      }
+
+
+
+      h1.mb-0.bread {
+        font-size: 50rem; /* Increase the font size */
+        font-weight: bold; /* Make the text bold */
+        margin-top: 1rem; /* Add some top margin */
+      }
+
+
+
+
+</style>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% comment %} #################################################################################################### {% endcomment %}
+
+    <title>Vegefoods - Free Bootstrap 4 Template by Colorlib</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <link href="https://fonts.googleapis.com/css?family=Poppins:200,300,400,500,600,700,800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Lora:400,400i,700,700i&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Amatic+SC:400,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'user/css/open-iconic-bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'user/css/animate.css' %}">
+    
+    <link rel="stylesheet" href="{% static 'user/css/owl.carousel.min.css' %}">
+    <link rel="stylesheet" href="{% static 'user/css/owl.theme.default.min.css' %}">
+    <link rel="stylesheet" href="{% static 'user/css/magnific-popup.css' %}">
+
+    <link rel="stylesheet" href="{% static 'user/css/aos.css' %}">
+
+    <link rel="stylesheet" href="{% static 'user/css/ionicons.min.css' %}">
+
+    <link rel="stylesheet" href="{% static 'user/css/bootstrap-datepicker.css' %}">
+    <link rel="stylesheet" href="{% static 'user/css/jquery.timepicker.css' %}">
+
+    
+    <link rel="stylesheet" href="{% static 'user/css/flaticon.css' %}">
+    <link rel="stylesheet" href="{% static 'user/css/icomoon.css' %}">
+    <link rel="stylesheet" href="{% static 'user/css/style.css' %}">
+  </head>
+  <body class="goto-here">
+		<div class="py-1 bg-primary">
+    	<div class="container">
+    		<div class="row no-gutters d-flex align-items-start align-items-center px-md-0">
+	    		<div class="col-lg-12 d-block">
+		    		<div class="row d-flex">
+		    			<div class="col-md pr-4 d-flex topper align-items-center">
+					    	<div class="icon mr-2 d-flex justify-content-center align-items-center"><span class="icon-phone2"></span></div>
+						    <span class="text">+ 1235 2355 98</span>
+					    </div>
+					    <div class="col-md pr-4 d-flex topper align-items-center">
+					    	<div class="icon mr-2 d-flex justify-content-center align-items-center"><span class="icon-paper-plane"></span></div>
+						    <span class="text">youremail@email.com</span>
+					    </div>
+					    <div class="col-md-5 pr-4 d-flex topper align-items-center text-lg-right">
+						    <span class="text">3-5 Business days delivery &amp; Free Returns</span>
+					    </div>
+				    </div>
+			    </div>
+		    </div>
+		  </div>
+    </div>
+    <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light" id="ftco-navbar">
+	    <div class="container">
+	      <a class="navbar-brand" href="index.html">Vegefoods</a>
+	      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav" aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
+	        <span class="oi oi-menu"></span> Menu
+	      </button>
+
+	      <div class="collapse navbar-collapse" id="ftco-nav">
+	        <ul class="navbar-nav ml-auto">
+	          <li class="nav-item"><a href="{% url 'welcome' %}" class="nav-link">Home</a></li>
+	          <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="dropdown04" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Shop</a>
+              <div class="dropdown-menu" aria-labelledby="dropdown04">
+              	<a class="dropdown-item" href="{% url 'shopsection'%}">Shop</a>
+				  <a class="dropdown-item" href="{% url 'wishlist' %}">Wishlist</a>
+				  <a class="dropdown-item" href="product-single.html">Single Product</a>
+				  <a class="dropdown-item" href="{% url 'cart' %}">Cart</a>
+				  <a class="dropdown-item" href="checkout.html">Checkout</a>
+              </div>
+            </li>
+	          <li class="nav-item"><a href="about.html" class="nav-link">About</a></li>
+	          <li class="nav-item"><a href="blog.html" class="nav-link">Blog</a></li>
+	          <li class="nav-item active"><a href="contact.html" class="nav-link">Contact</a></li>
+              <li class="nav-item cta cta-colored"><a href="{% url 'wishlist' %}" class="nav-link"><span class="fas fa-heart" style="color: black;"></span></a></li>
+			  <li class="nav-item"><a href="{% url 'cart' %}" class="nav-link"><i class="fas fa-shopping-cart"></i> [0]</a></li>
+	        </ul>
+	      </div>
+	    </div>
+	  </nav>
+    <!-- END nav -->
+
+    <div class="hero-wrap hero-bread" style="background-image: url('{% static 'user/images/bg_1.jpg'%}');">
+      <div class="container">
+        <div class="row no-gutters slider-text align-items-center justify-content-center">
+          <div class="col-md-9 ftco-animate text-center">
+          	<p class="breadcrumbs"><span class="mr-2"><a href="index.html">Home</a></span> <span>Your Profile</span></p>
+            <h1 class="mb-0 bread">Your Profile</h1>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="ftco-section contact-section bg-light">
+      <div class="container">
+      	<div class="row d-flex mb-5 contact-info">
+          <div class="w-100"></div>
+          <div class="col-md-3 d-flex">
+          	<div class="info bg-white p-4">
+	            <p><span>Address:</span> 198 West 21th Street, Suite 721 New York NY 10016</p>
+	          </div>
+          </div>
+          <div class="col-md-3 d-flex">
+          	<div class="info bg-white p-4">
+	            <p><span>Phone:</span> <a href="tel://1234567920">+ 1235 2355 98</a></p>
+	          </div>
+          </div>
+          <div class="col-md-3 d-flex">
+          	<div class="info bg-white p-4">
+	            <p><span>Email:</span> <a href="mailto:info@yoursite.com">info@yoursite.com</a></p>
+	          </div>
+          </div>
+          <div class="col-md-3 d-flex">
+          	<div class="info bg-white p-4">
+	            <p><span>Website</span> <a href="#">yoursite.com</a></p>
+	          </div>
+          </div>
+        </div>
+
+{% comment %} ------user  form -------------------------------------------------------------------- {% endcomment %}
+
+<div class="row block-9">
+    <div class="col-md-12">
+        <div class="bg-white p-5">
+            <h3 class="mb-4">Order Details - Order #{{ order.id }}</h3>
+            <p><strong>Date:</strong> {{ order.order_date|date:"Y-m-d H:i" }}</p>
+            <p><strong>Total Amount:</strong> ₹{{ order.total_amount }}</p>
+            <p><strong>Status:</strong> {{ order.get_order_status_display }}</p>
+            <p><strong>Payment Method:</strong> {{ order.get_payment_method_display }}</p>
+
+            <h4>Products:</h4>
+            <table class="table table-bordered" id="order-items-table">
+                <thead>
+                    <tr>
+                        <th>Product Image</th>
+                        <th>Product Name</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order_items %}
+                    <tr data-order-item-id="{{ item.id }}" 
+                        {% if item.is_cancelled %}class="text-muted"{% endif %}>
+                        <td>
+                            {% if item.primary_image and item.primary_image.images %}
+                                <img src="{{ item.primary_image.images.url }}" alt="Product Image" style="width: 50px; height: 50px;">
+                            {% else %}
+                                <span>No image available</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ item.product.name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>
+                            {% if item.variant %}
+                                ${{ item.variant.variant_price }}
+                            {% else %}
+                                ${{ item.price_per_unit }}
+                            {% endif %}
+                        </td>
+                        <td>
+                          {% if not item.is_cancelled %}
+                              {% if order.order_status == 'delivered' %}
+                              <button class="btn btn-warning btn-sm return-item" 
+                              data-order-item-id="{{ item.id }}"
+                              data-product-name="{{ item.product.name }}"
+                              data-quantity="{{ item.quantity }}"
+                              data-price="{{ item.price_per_unit }}">
+                          Return Item
+                      </button>
+                              {% elif order.order_status not in 'delivered,shipped' %}
+                                  <button class="btn btn-danger btn-sm cancel-item" 
+                                          data-order-item-id="{{ item.id }}">
+                                      Cancel Item
+                                  </button>
+                              {% else %}
+                                  <span class="text-muted">Not Cancellable</span>
+                              {% endif %}
+                          {% else %}
+                              <span class="text-muted">Cancelled</span>
+                          {% endif %}
+                      </td>
+                  </tr>
+                  {% endfor %}
+              </tbody>
+          </table>
+
+            <a href="{% url 'order_details' %}" class="btn btn-secondary">Back to Orders</a>
+        </div>
+    </div>
+</div>
+{% comment %} ----pop up for return button------------------------------------------------------------------ {% endcomment %}
+
+<div class="modal fade" id="returnRequestModal" tabindex="-1" aria-labelledby="returnRequestModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h5 class="modal-title" id="returnRequestModalLabel">Return Item Request</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <form id="returnRequestForm" method="post" enctype="multipart/form-data">
+              {% csrf_token %}
+              <input type="hidden" id="returnOrderItemId" name="order_item_id" value="">
+              <div class="modal-body">
+                  <div class="mb-3">
+                      <h6>Product Details</h6>
+                      <p><strong>Product:</strong> <span id="returnProductName"></span></p>
+                      <p><strong>Quantity:</strong> <span id="returnProductQuantity"></span></p>
+                      <p><strong>Price:</strong> ₹<span id="returnProductPrice"></span></p>
+                  </div>
+
+                  <div class="mb-3">
+                      <label for="returnReason" class="form-label">Reason for Return <span class="text-danger">*</span></label>
+                      <select class="form-select" id="returnReason" name="return_reason" required>
+                          <option value="">Select a reason</option>
+                          <option value="DEFECTIVE">Item Damaged</option>
+                          <option value="WRONG_ITEM">Wrong Item Received</option>
+                          <option value="SIZE_ISSUE">Size/Fit Issue</option>
+                          <option value="QUALITY_ISSUE">Poor Quality</option>
+                          <option value="NOT_NEEDED">No Longer Needed</option>
+                          {% comment %} <option value="other">Other Reason</option> {% endcomment %}
+                      </select>
+                  </div>
+                  
+                  <div class="mb-3">
+                      <label for="returnExplanation" class="form-label">Detailed Explanation <span class="text-danger">*</span></label>
+                      <textarea class="form-control" id="returnExplanation" name="explanation" rows="3" required placeholder="Please provide more details about your return"></textarea>
+                  </div>
+                  
+                  <div class="mb-3">
+                      <label for="proofUpload" class="form-label">Upload Proof (Optional)</label>
+                      <input class="form-control" type="file" id="proofUpload" name="proof_image" accept="image/*">
+                      <small class="form-text text-muted">Upload an image to support your return request (optional)</small>
+                  </div>
+              </div>
+              <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                  <button type="submit" class="btn btn-primary">Submit Return Request</button>
+              </div>
+          </form>
+      </div>
+  </div>
+</div>
+
+{% comment %} ------------------------------------------------------------------------ {% endcomment %}
+        </div>
+
+          <div class="col-md-6 d-flex">
+          	<div id="map" class="bg-white"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="ftco-footer ftco-section">
+      <div class="container">
+      	<div class="row">
+      		<div class="mouse">
+						<a href="#" class="mouse-icon">
+							<div class="mouse-wheel"><span class="ion-ios-arrow-up"></span></div>
+						</a>
+					</div>
+      	</div>
+        <div class="row mb-5">
+          <div class="col-md">
+            <div class="ftco-footer-widget mb-4">
+              <h2 class="ftco-heading-2">Vegefoods</h2>
+              <p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia.</p>
+              <ul class="ftco-footer-social list-unstyled float-md-left float-lft mt-5">
+                <li class="ftco-animate"><a href="#"><span class="icon-twitter"></span></a></li>
+                <li class="ftco-animate"><a href="#"><span class="icon-facebook"></span></a></li>
+                <li class="ftco-animate"><a href="#"><span class="icon-instagram"></span></a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-md">
+            <div class="ftco-footer-widget mb-4 ml-md-5">
+              <h2 class="ftco-heading-2">Menu</h2>
+              <ul class="list-unstyled">
+                <li><a href="#" class="py-2 d-block">Shop</a></li>
+                <li><a href="#" class="py-2 d-block">About</a></li>
+                <li><a href="#" class="py-2 d-block">Journal</a></li>
+                <li><a href="#" class="py-2 d-block">Contact Us</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-md-4">
+             <div class="ftco-footer-widget mb-4">
+              <h2 class="ftco-heading-2">Help</h2>
+              <div class="d-flex">
+	              <ul class="list-unstyled mr-l-5 pr-l-3 mr-4">
+	                <li><a href="#" class="py-2 d-block">Shipping Information</a></li>
+	                <li><a href="#" class="py-2 d-block">Returns &amp; Exchange</a></li>
+	                <li><a href="#" class="py-2 d-block">Terms &amp; Conditions</a></li>
+	                <li><a href="#" class="py-2 d-block">Privacy Policy</a></li>
+	              </ul>
+	              <ul class="list-unstyled">
+	                <li><a href="#" class="py-2 d-block">FAQs</a></li>
+	                <li><a href="#" class="py-2 d-block">Contact</a></li>
+	              </ul>
+	            </div>
+            </div>
+          </div>
+          <div class="col-md">
+            <div class="ftco-footer-widget mb-4">
+            	<h2 class="ftco-heading-2">Have a Questions?</h2>
+            	<div class="block-23 mb-3">
+	              <ul>
+	                <li><span class="icon icon-map-marker"></span><span class="text">203 Fake St. Mountain View, San Francisco, California, USA</span></li>
+	                <li><a href="#"><span class="icon icon-phone"></span><span class="text">+2 392 3929 210</span></a></li>
+	                <li><a href="#"><span class="icon icon-envelope"></span><span class="text">info@yourdomain.com</span></a></li>
+	              </ul>
+	            </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12 text-center">
+
+            <p><!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+						  Copyright &copy;<script>document.write(new Date().getFullYear());</script> All rights reserved | This template is made with <i class="icon-heart color-danger" aria-hidden="true"></i> by <a href="https://colorlib.com" target="_blank">Colorlib</a>
+						  <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+						</p>
+          </div>
+        </div>
+      </div>
+    </footer>
+    
+  
+
+  <!-- loader -->
+  <div id="ftco-loader" class="show fullscreen"><svg class="circular" width="48px" height="48px"><circle class="path-bg" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke="#eeeeee"/><circle class="path" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke-miterlimit="10" stroke="#F96D00"/></svg></div>
+
+
+  <script src="{% static 'user/js/jquery.min.js' %}"></script>
+  <script src="{% static 'user/js/jquery-migrate-3.0.1.min.js' %}"></script>
+  <script src="{% static 'user/js/popper.min.js' %}"></script>
+  <script src="{% static 'user/js/bootstrap.min.js' %}"></script>
+  <script src="{% static 'user/js/jquery.easing.1.3.js' %}"></script>
+  <script src="{% static 'user/js/jquery.waypoints.min.js' %}"></script>
+  <script src="{% static 'user/js/jquery.stellar.min.js' %}"></script>
+  <script src="{% static 'user/js/owl.carousel.min.js' %}"></script>
+  <script src="{% static 'user/js/jquery.magnific-popup.min.js' %}"></script>
+  <script src="{% static 'user/js/aos.js' %}"></script>
+  <script src="{% static 'user/js/jquery.animateNumber.min.js' %}"></script>
+  <script src="{% static 'user/js/bootstrap-datepicker.js' %}"></script>
+  <script src="{% static 'user/js/scrollax.min.js' %}"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBVWaKrjvy3MaE7SQ74_uJiULgl1JY0H2s&sensor=false"></script>
+  <script src="{% static 'user/js/google-map.js' %}"></script>
+  <script src="{% static 'user/js/main.js' %}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- SweetAlert2 CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
+
+
+
+
+
+
+
+
+
+  <script>
+{% comment %} 
+        document.addEventListener('DOMContentLoaded', function() {
+            const cancelButtons = document.querySelectorAll('.cancel-item');
+            
+            cancelButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const orderItemId = this.dataset.orderItemId;
+                    const rowElement = this.closest('tr');
+                    
+                    // Confirm cancellation
+                    if (!confirm('Are you sure you want to cancel this item?')) {
+                        return;
+                    }
+                    
+                    // AJAX request to cancel the item
+                    fetch(`/cancel-order-item/${orderItemId}/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update UI to show cancelled item
+                            rowElement.classList.add('text-muted');
+                            this.outerHTML = '<span class="text-muted">Cancelled</span>';
+                            
+                            // Optional: Update total amount
+                            alert(data.message);
+                        } else {
+                            alert(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while cancelling the item');
+                    });
+                });
+            });
+        
+            // Function to get CSRF token from cookies
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+        });
+         {% endcomment %}
+
+  
+         document.addEventListener('DOMContentLoaded', function() {
+            const cancelButtons = document.querySelectorAll('.cancel-item');
+            
+            cancelButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const orderItemId = this.dataset.orderItemId;
+                    const rowElement = this.closest('tr');
+                    
+                    // SweetAlert confirmation
+                    Swal.fire({
+                        title: 'Cancel Item',
+                        text: 'Are you sure you want to cancel this item?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Yes, cancel it!'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // AJAX request to cancel the item
+                            fetch(`/cancel-order-item/${orderItemId}/`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': getCookie('csrftoken')
+                                }
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    // Update UI to show cancelled item
+                                    rowElement.classList.add('text-muted');
+                                    this.outerHTML = '<span class="text-muted">Cancelled</span>';
+                                    
+                                    // SweetAlert success message
+                                    Swal.fire(
+                                        'Cancelled!',
+                                        data.message,
+                                        'success'
+                                    );
+                                } else {
+                                    // SweetAlert error message
+                                    Swal.fire(
+                                        'Error!',
+                                        data.message,
+                                        'error'
+                                    );
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                Swal.fire(
+                                    'Error!',
+                                    'An error occurred while cancelling the item',
+                                    'error'
+                                );
+                            });
+                        }
+                    });
+                });
+            });
+        
+            // Function to get CSRF token from cookies
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+        });
+
+{% comment %} ------------------------------------------------ {% endcomment %}
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Return Item Modal Handling
+  const returnItemButtons = document.querySelectorAll('.return-item');
+  const returnRequestModal = new bootstrap.Modal(document.getElementById('returnRequestModal'));
+  const returnRequestForm = document.getElementById('returnRequestForm');
+
+  returnItemButtons.forEach(button => {
+      button.addEventListener('click', function() {
+          // Get item details from data attributes
+          const orderItemId = this.getAttribute('data-order-item-id');
+          const productName = this.getAttribute('data-product-name');
+          const quantity = this.getAttribute('data-quantity');
+          const price = this.getAttribute('data-price');
+          
+          // Populate modal with item details
+          document.getElementById('returnOrderItemId').value = orderItemId;
+          document.getElementById('returnProductName').textContent = productName;
+          document.getElementById('returnProductQuantity').textContent = quantity;
+          document.getElementById('returnProductPrice').textContent = price;
+          
+          // Show the modal
+          returnRequestModal.show();
+      });
+  });
+
+  // Form Submission via AJAX
+  returnRequestForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      // Validate form
+      const returnReason = document.getElementById('returnReason');
+      const returnExplanation = document.getElementById('returnExplanation');
+      
+      // Reset previous validation states
+      returnReason.classList.remove('is-invalid');
+      returnExplanation.classList.remove('is-invalid');
+      
+      // Validate reason
+      if (!returnReason.value) {
+          returnReason.classList.add('is-invalid');
+          alert('Please select a reason for return');
+          return;
+      }
+      
+      // Validate explanation
+      if (!returnExplanation.value.trim()) {
+          returnExplanation.classList.add('is-invalid');
+          alert('Please provide a detailed explanation');
+          return;
+      }
+
+      // Prepare form data
+      const formData = new FormData(returnRequestForm);
+
+      // AJAX Submission
+      fetch('{% url "submit_return_request" %}', {
+          method: 'POST',
+          body: formData,
+          headers: {
+              'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+          }
+      })
+      .then(response => response.json())
+      .then(data => {
+          if (data.status === 'success') {
+              // Show success message
+              Swal.fire({
+                  icon: 'success',
+                  title: 'Return Request Submitted',
+                  text: data.message,
+                  confirmButtonText: 'OK'
+              }).then(() => {
+                  // Close modal
+                  returnRequestModal.hide();
+                  
+                  // Optionally update UI (e.g., disable return button)
+                  const returnButton = document.querySelector(`.return-item[data-order-item-id="${formData.get('order_item_id')}"]`);
+                  if (returnButton) {
+                      returnButton.disabled = true;
+                      returnButton.textContent = 'Return Requested';
+                      returnButton.classList.remove('btn-warning');
+                      returnButton.classList.add('btn-secondary');
+                  }
+              });
+          } else {
+              // Show error message
+              Swal.fire({
+                  icon: 'error',
+                  title: 'Error',
+                  text: data.message || 'Failed to submit return request'
+              });
+          }
+      })
+      .catch(error => {
+          console.error('Error:', error);
+          Swal.fire({
+              icon: 'error',
+              title: 'Network Error',
+              text: 'Unable to submit return request. Please try again.'
+          });
+      });
+  });
+});
+
+
+
+</script>
+
+
+
+
+
+
+
+  </body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+

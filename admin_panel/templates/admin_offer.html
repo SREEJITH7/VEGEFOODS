@@ -1,0 +1,329 @@
+{% extends "admin_base.html" %} 
+
+
+
+{% block breadcrumbs %}
+            
+            <li class="breadcrumb-item active" aria-current="page"> offers </li>
+
+{% endblock %} 
+
+{% block content %}
+
+<div class="offers-container">
+    {% for offer in all_offers %}
+    <div class="offer-card {% if offer.is_active %}active{% else %}inactive{% endif %}">
+        <h3>{{ offer.offer_name }}
+            <span class="offer-type-badge">
+                {% if offer.offer_type == 'PRODUCT' %}
+                    (Product Offer)
+                {% elif offer.offer_type == 'CATEGORY' %}
+                    (Category Offer)
+                {% endif %}
+            </span>
+        </h3>
+        <p><strong>Description:</strong> {{ offer.description }}</p>
+        <p><strong>Discount:</strong> {{ offer.discount_percentage }}%</p>
+        <p><strong>Offer Type:</strong> {{ offer.get_offer_type_display }}</p>
+        <p><strong>Valid Until:</strong> {{ offer.end_date }}</p>
+        
+        {% if offer.offer_type == 'PRODUCT' %}
+        <div class="product-details">
+            <h4>Product Details</h4>
+            {% if offer.product %}
+            <p><strong>Name:</strong> {{ offer.product.name }}</p>
+            <p><strong>Base Price:</strong> ${{ offer.product.base_price }}</p>
+            <p><strong>Category:</strong> {{ offer.product.catogery.name }}</p>
+            {% else %}
+            <p>No product associated with this offer</p>
+            {% endif %}
+        </div>
+        {% elif offer.offer_type == 'CATEGORY' %}
+        <div class="category-details">
+            <h4>Category Details</h4>
+            {% if offer.category %}
+            <p><strong>Name:</strong> {{ offer.category.name }}</p>
+            <p><strong>Description:</strong> {{ offer.category.description }}</p>
+            <p><strong>Status:</strong> {{ offer.category.status }}</p>
+            {% else %}
+            <p>No category associated with this offer</p>
+            {% endif %}
+        </div>
+        {% endif %}
+
+
+        <p class="offer-status">
+            {% if offer.is_active %}
+            <span class="active-label">Active</span>
+            {% else %}
+            <span class="inactive-label">Inactive</span>
+            {% endif %}
+        </p>
+    </div>
+    {% endfor %}
+</div>
+
+{% if messages %}
+<div class="messages">
+    {% for message in messages %}
+    <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+        {{ message }}
+    </div>
+    {% endfor %}
+
+
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- No additional scripts are required since all interactivity has been removed -->
+{% endblock %}
+
+
+
+{% comment %} ------------------------- {% endcomment %}
+
+
+
+
+
+
+{% block css %}
+<style>
+
+
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.4);
+    }
+    
+    .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 500px;
+    }
+    
+    .close-btn {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .offer-card-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .edit-offer-btn, .delete-offer-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.2rem;
+        padding: 5px;
+    }
+    
+    .edit-offer-btn:hover, .delete-offer-btn:hover {
+        opacity: 0.7;
+    }
+    .offers-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        grid-gap: 20px;
+    }
+    
+    .offer-card {
+        background-color: #2f3136;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .offer-card.active {
+        border-left: 4px solid #4CAF50;
+    }
+    
+    .offer-card.inactive {
+        border-left: 4px solid #FF5722;
+        opacity: 0.6;
+    }
+    
+    .offer-status {
+        margin-top: 10px;
+        font-weight: bold;
+    }
+    
+    .active-label {
+        color: #4CAF50;
+    }
+    
+    .inactive-label {
+        color: #FF5722;
+    }
+
+
+    .add-offer-btn {
+        padding: 10px 20px;
+        background-color: #000000;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        margin: 20px;
+        transition: background-color 0.3s ease;
+    }
+
+    .add-offer-btn:hover {
+        background-color: #333;
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.7); /* Semi-transparent dark overlay */
+    }
+
+    .modal-content {
+        background: transparent; /* Remove white background */
+        margin: 10% auto;
+        padding: 0;
+        border-radius: 8px;
+        width: 80%;
+        max-width: 600px;
+        position: relative;
+    }
+
+    .close-btn {
+        color: white;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        position: absolute;
+        right: 10px;
+        top: 10px;
+        z-index: 1001;
+    }
+
+    .close-btn:hover {
+        color: #ccc;
+    }
+
+    /* Form Styles */
+    .form-container {
+        max-width: 500px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: #000000;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(255,255,255,0.1);
+        color: white;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: white;
+    }
+
+    .form-group input, 
+    .form-group select, 
+    .form-group textarea {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #444;
+        border-radius: 6px;
+        background-color: #1a1a1a;
+        color: white;
+        transition: border-color 0.3s ease;
+    }
+
+    .form-group input:focus, 
+    .form-group select:focus, 
+    .form-group textarea:focus {
+        border-color: #007bff;
+        outline: none;
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+    }
+
+    .form-group--checkbox {
+        display: flex;
+        align-items: center;
+        color: white;
+    }
+
+    .form-group--checkbox input {
+        width: auto;
+        margin-right: 10px;
+    }
+
+    .btn {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        background-color: #000000;
+        color: white;
+        border: 2px solid white;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .btn:hover {
+        background-color: #333;
+        border-color: #007bff;
+    }
+
+    .product-category-section {
+        display: none;
+    }
+
+    #offer_type[value="PRODUCT"]:checked ~ .product-category-section,
+    #offer_type[value="CATEGORY"]:checked ~ .product-category-section {
+        display: block;
+    }
+
+    /* Radio button styling */
+    .offer-type-group {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .offer-type-group label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    .offer-type-group input[type="radio"] {
+        margin-right: 8px;
+    }
+</style>
+{% endblock %}

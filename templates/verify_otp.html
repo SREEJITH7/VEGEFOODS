@@ -1,0 +1,119 @@
+{% comment %} <!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OTP Verification</title>
+    <link rel="stylesheet" href="{% static 'user/css/signup.css' %}"> <!-- Ensure the path is correct -->
+</head>
+<body>
+    <div class="signup-container"> <!-- Match the same class used in registration.html for consistent styling -->
+        <h2>OTP Verification</h2>
+        {% if messages %}
+            {% for msg in messages %}
+                <div class="alert alert-danger" role="alert">
+                    {{ msg }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        <form method="post" action="{% url 'verify_otp' %}">
+            {% csrf_token %}
+            <div class="input-group">
+                <label for="otp">Enter OTP</label>
+                <input type="text" name="otp" required>
+            </div>
+            <button type="submit" class="signup-btn">Verify OTP</button> <!-- Apply the same button style -->
+        </form>
+    </div>
+</body>
+</html> {% endcomment %}
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OTP Verification</title>
+    <link rel="stylesheet" href="{% static 'user/css/signup.css' %}">
+</head>
+<body>
+    
+    <div class="signup-container">
+        <h2>OTP Verification</h2>
+        {% if messages %}
+            {% for msg in messages %}
+                <div class="alert alert-danger" role="alert">
+                    {{ msg }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post" action="{% url 'verify_otp' %}">
+            {% csrf_token %}
+            <div class="input-group">
+                <label for="otp">Enter OTP</label>
+                <input type="text" name="otp" required>
+            </div>
+
+            <div id="timer" class="timer">01:00</div> <!-- Timer display -->
+            
+            <button type="submit" class="signup-btn">Verify OTP</button>
+        </form>
+
+        <!-- Resend OTP button (initially hidden) -->
+        <button id="resend-btn" class="signup-btn" onclick="resendOtp()" style="display: none;">Resend OTP</button>
+    </div>
+
+    <script>
+        let timer = 60;  // Timer starts from 1 minute
+        let countdown;
+
+        const timerDisplay = document.getElementById('timer');
+        const resendButton = document.getElementById('resend-btn');
+
+        function startCountdown() {
+            timer = 60;  // Reset timer to 1 minute
+            resendButton.style.display = 'none';  // Hide resend button
+            timerDisplay.style.display = 'block';  // Show timer display
+
+            countdown = setInterval(() => {
+                let minutes = Math.floor(timer / 60);
+                let seconds = timer % 60;
+                seconds = seconds < 10 ? '0' + seconds : seconds;
+                timerDisplay.textContent = `0${minutes}:${seconds}`;
+
+                if (timer > 0) {
+                    timer--;
+                } else {
+                    clearInterval(countdown);
+                    timerDisplay.style.display = 'none';  // Hide timer
+                    resendButton.style.display = 'block';  // Show resend button
+                }
+            }, 1000);
+        }
+
+        function resendOtp() {
+            fetch("{% url 'resend_otp' %}", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}"
+                }
+            }).then(response => {
+                if (response.ok) {
+                    alert("OTP has been resent!");
+                    startCountdown();  // Restart the countdown timer
+                } else {
+                    alert("Failed to resend OTP. Please try again.");
+                }
+            }).catch(error => console.error("Error resending OTP:", error));
+        }
+
+        // Start countdown when the page loads
+        startCountdown();
+    </script>
+</body>
+</html>
+

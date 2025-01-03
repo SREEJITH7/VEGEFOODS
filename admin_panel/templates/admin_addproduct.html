@@ -1,0 +1,492 @@
+{% extends "admin_base.html" %}
+
+
+{% block css %} 
+
+<style>
+
+/* Form styles */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-control {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 8px 12px;
+    transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 14px;
+    margin-top: 5px;
+    min-height: 20px;
+}
+
+/* Image upload section */
+.image-upload-section {
+    margin-top: 15px;
+}
+
+.image-preview-container {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+/* Upload box styles */
+.upload-box {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f8f8f8;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.upload-box:hover {
+    border-color: #007bff;
+    background-color: #f1f8ff;
+}
+
+.upload-box.has-image {
+    border-style: solid;
+    border-color: #28a745;
+}
+
+.upload-box input[type="file"] {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.upload-box .placeholder {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: #666;
+    font-size: 14px;
+    pointer-events: none;
+}
+
+.upload-box i {
+    font-size: 24px;
+    color: #6c757d;
+    margin-bottom: 8px;
+}
+
+/* Preview styles */
+.preview-box {
+    width: 150px;
+    height: 150px;
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #dee2e6;
+}
+
+.preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+/* Delete button styles */
+.delete-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 24px;
+    height: 24px;
+    background-color: rgba(255, 0, 0, 0.7);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    z-index: 2;
+}
+
+.has-image .delete-btn {
+    display: flex;
+}
+
+.delete-btn:hover {
+    background-color: rgba(255, 0, 0, 0.9);
+}
+
+/* Input validation styles */
+.invalid-input {
+    border-color: #dc3545;
+}
+
+.valid-input {
+    border-color: #28a745;
+}
+
+/* Square input styles */
+.square-input {
+    width: 100px;
+    height: 100px;
+    padding: 0;
+    border: 2px solid #ccc;
+    display: inline-block;
+    overflow: hidden;
+}
+
+.square-input:hover,
+.square-input:focus {
+    border-color: #007bff;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .preview-box,
+    .upload-box {
+        width: 120px;
+        height: 120px;
+    }
+}
+
+
+</style>
+
+{% endblock %}
+
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'admin_product' %}">Product</a></li>
+<li class="breadcrumb-item active" aria-current="page">Add Product</li>
+{% endblock %} 
+
+
+{% block content %} 
+
+<div class="container">
+    <div class="card">
+        <div class="card-body">
+            <h3 class="card-title">Add Product</h3>
+            <form method="POST" enctype="multipart/form-data" id="productForm">
+                {% csrf_token %}
+
+                <!-- Product Name -->
+                <div class="form-group mb-3">
+                    <label for="productName">Product Name</label>
+                    <input type="text" id="productName" name="name" class="form-control" required>
+                    <span id="productNameError" class="error-message text-danger"></span>
+                </div>
+
+                <!-- Base Price (Updated from Price) -->
+                <div class="form-group mb-3">
+                    <label for="productBasePrice">Base Price</label> <!-- Updated Label -->
+                    <input type="number" id="productBasePrice" name="base_price" class="form-control" required> <!-- Updated Field Name -->
+                    <span id="productBasePriceError" class="error-message text-danger"></span> <!-- Updated Error ID -->
+                </div>
+
+                <!-- Stock Quantity -->
+                <div class="form-group mb-3">
+                    <label for="productStock">Stock Quantity</label>
+                    <input type="number" id="productStock" name="stock_quantity" class="form-control" required>
+                    <span id="productStockError" class="error-message text-danger"></span>
+                </div>
+
+                <!-- Category Dropdown -->
+                <div class="form-group mb-3">
+                    <label for="productCategory">Category</label>
+                    <select id="productCategory" name="category" class="form-control">
+                        <option value="">Select a category</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <span id="productCategoryError" class="error-message text-danger"></span>
+                </div>
+
+
+
+
+                
+<!-- Image Upload Section -->
+<div class="form-group mb-3">
+    <label>Upload Images</label>
+    <div id="imagePreviewContainer" class="d-flex flex-wrap" style="gap: 1rem;">
+        <div class="upload-box">
+            <input type="file" accept="image/*" class="image-input" onchange="handleImageUpload(event, 0)">
+            <div class="placeholder">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <div>Click to upload image</div>
+            </div>
+            <img class="preview-image" src="" style="display: none;">
+            <button type="button" class="delete-btn" onclick="deleteImage(event, 0)">×</button>
+        </div>
+        <div class="upload-box">
+            <input type="file" accept="image/*" class="image-input" onchange="handleImageUpload(event, 1)">
+            <div class="placeholder">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <div>Click to upload image</div>
+            </div>
+            <img class="preview-image" src="" style="display: none;">
+            <button type="button" class="delete-btn" onclick="deleteImage(event, 1)">×</button>
+        </div>
+        <div class="upload-box">
+            <input type="file" accept="image/*" class="image-input" onchange="handleImageUpload(event, 2)">
+            <div class="placeholder">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <div>Click to upload image</div>
+            </div>
+            <img class="preview-image" src="" style="display: none;">
+            <button type="button" class="delete-btn" onclick="deleteImage(event, 2)">×</button>
+        </div>
+    </div>
+    <span id="imageError" class="error-message text-danger"></span>
+    <small id="imageCount" class="text-muted">0/3 images added</small>
+</div>
+
+                <button id="submitBtn" type="submit" class="btn btn-primary">Add Product</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+{% endblock %}
+
+
+
+
+
+{% block extra_js %}
+
+<script>
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('productForm');
+        const imageFiles = [null, null, null];
+    
+        // Validation patterns
+        const patterns = {
+            name: /^[a-zA-Z\s]{3,50}$/, // Letters and spaces only, 3-50 chars
+            basePrice: /^(?!0|00)\d+(\.\d{1,2})?$/, // No negatives or zero, allow up to 2 decimal places
+            stock: /^[1-9]\d*$/, // Positive integers only, no zero
+        };
+    
+        // Field validation function
+        function validateField(field, pattern = null) {
+            const errorSpan = document.getElementById(`${field.id}Error`);
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                if (errorSpan) errorSpan.textContent = 'This field is required';
+                return false;
+            }
+    
+            if (pattern && !pattern.test(field.value)) {
+                field.classList.add('is-invalid');
+                if (errorSpan) errorSpan.textContent = 'Invalid format';
+                return false;
+            }
+    
+            field.classList.remove('is-invalid');
+            if (errorSpan) errorSpan.textContent = '';
+            return true;
+        }
+    
+        // Image validation function
+        function validateImage(file) {
+            const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                return { valid: false, error: 'Invalid image format. Only JPG, PNG, and WEBP are allowed' };
+            }
+            return { valid: true, error: null };
+        }
+    
+        // Image count update
+        function updateImageCount() {
+            const activeImages = imageFiles.filter(file => file !== null);
+            const imageCountEl = document.getElementById('imageCount');
+            imageCountEl.textContent = `${activeImages.length}/3 images added`;
+        }
+    
+        // Image upload handler
+        window.handleImageUpload = function (event, index) {
+            const file = event.target.files[0];
+            const uploadBox = event.target.closest('.upload-box');
+            const placeholder = uploadBox.querySelector('.placeholder');
+            const previewImage = uploadBox.querySelector('.preview-image');
+            const deleteBtn = uploadBox.querySelector('.delete-btn');
+            const imageError = document.getElementById('imageError');
+    
+            imageError.textContent = ''; // Reset error
+    
+            const validationResult = validateImage(file);
+            if (!validationResult.valid) {
+                imageError.textContent = validationResult.error;
+                event.target.value = '';
+                return;
+            }
+    
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                placeholder.style.display = 'none';
+                previewImage.src = e.target.result;
+                previewImage.style.display = 'block';
+                deleteBtn.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+    
+            imageFiles[index] = file;
+            updateImageCount();
+        };
+    
+        // Delete image handler
+        window.deleteImage = function (event, index) {
+            event.preventDefault();
+            const uploadBox = event.target.closest('.upload-box');
+            const fileInput = uploadBox.querySelector('.image-input');
+            const placeholder = uploadBox.querySelector('.placeholder');
+            const previewImage = uploadBox.querySelector('.preview-image');
+            const deleteBtn = uploadBox.querySelector('.delete-btn');
+    
+            fileInput.value = '';
+            placeholder.style.display = 'flex';
+            previewImage.src = '';
+            previewImage.style.display = 'none';
+            deleteBtn.style.display = 'none';
+    
+            imageFiles[index] = null;
+            updateImageCount();
+        };
+    
+        // Form submit handler
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+    
+            const nameValid = validateField(document.getElementById('productName'), patterns.name);
+            const basePriceValid = validateField(document.getElementById('productBasePrice'), patterns.basePrice);
+            const stockValid = validateField(document.getElementById('productStock'), patterns.stock);
+            const categoryValid = validateField(document.getElementById('productCategory'));
+    
+            const activeImages = imageFiles.filter(file => file !== null);
+            const imageError = document.getElementById('imageError');
+            if (activeImages.length === 0) {
+                imageError.textContent = 'At least one image is required';
+                return;
+            }
+    
+            if (nameValid && basePriceValid && stockValid && categoryValid) {
+                const formData = new FormData(form);
+                activeImages.forEach((file, index) => formData.append(`image_${index}`, file));
+    
+                fetch('/add_product/', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin',
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.href = '/admin_product/';
+                        } else {
+                            alert(data.message || 'Something went wrong!');
+                        }
+                    })
+                    .catch(error => console.error('Fetch Error:', error));
+            }
+        });
+    });
+    
+    
+    
+
+
+
+</script>
+ 
+{% endblock %}
+
+
+
+{% comment %} <div class="container">
+    <div class="card">
+        <div class="card-body">
+            <h3 class="card-title">Add Product</h3>
+            <form method="POST" enctype="multipart/form-data" id="productForm">
+                {% csrf_token %}
+
+                <!-- Product Name -->
+                <div class="form-group mb-3">
+                    <label for="productName">Product Name</label>
+                    <input type="text" id="productName" name="name" class="form-control" required>
+                    <span id="productNameError" class="error-message text-danger"></span>
+                </div>
+
+                <!-- Price -->
+                <div class="form-group mb-3">
+                    <label for="productPrice">Price</label>
+                    <input type="number" id="productPrice" name="price" class="form-control" required>
+                    <span id="productPriceError" class="error-message text-danger"></span>
+                </div>
+
+                <!-- Stock Quantity -->
+                <div class="form-group mb-3">
+                    <label for="productStock">Stock Quantity</label>
+                    <input type="number" id="productStock" name="stock_quantity" class="form-control" required>
+                    <span id="productStockError" class="error-message text-danger"></span>
+                </div>
+
+                <!-- Category Dropdown -->
+                <div class="form-group mb-3">
+                    <label for="productCategory">Category</label>
+                    <select id="productCategory" name="category" class="form-control">
+                        <option value="">Select a category</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <span id="productCategoryError" class="error-message text-danger"></span>
+                </div>     original {% endcomment %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

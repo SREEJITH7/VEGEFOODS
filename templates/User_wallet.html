@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+  <head>
+{% comment %} ############################################################################## {% endcomment %}
+
+
+
+<style>
+
+
+  .history-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.history-scroll::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.history-scroll::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.history-scroll::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.history-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #888 #f1f1f1;
+}
+
+.table td {
+    padding: 0.75rem;
+    vertical-align: middle;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    .contact-form {
+        width: 100%;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        border-radius: 8px;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        color: #333;
+    }
+    
+    .form-control {
+        height: 45px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 0.375rem 0.75rem;
+    }
+    
+    .form-control:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    }
+    
+    .btn {
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #5a6268;
+        border-color: #545b62;
+    }
+    
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+    
+    .btn-primary:hover {
+        background-color: #0069d9;
+        border-color: #0062cc;
+    }
+
+
+
+    .manage-account {
+        background-color: #f9f9f9;
+        border: 1px solid #e5e5e5;
+        border-radius: 5px;
+        padding: 20px;
+        width: 300px;
+      }
+      
+      .manage-account h2 {
+        margin-top: 0;
+        font-size: 18px;
+        font-weight: bold;
+      }
+      
+      .account-options {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .account-options .option {
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        color: #333;
+        padding: 10px;
+        border-radius: 5px;
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: box-shadow 0.3s ease;
+      }
+      
+      .account-options .option:hover {
+        background-color: #e6f2ff; /* Light blue on hover */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      
+      .account-options .option i {
+        margin-right: 10px;
+        font-size: 20px;
+      }
+
+
+
+      h1.mb-0.bread {
+        font-size: 50rem; /* Increase the font size */
+        font-weight: bold; /* Make the text bold */
+        margin-top: 1rem; /* Add some top margin */
+      }
+
+      /* Parent Flexbox Container for Wallet and Manage Account */
+      .d-flex.justify-content-center.align-items-start {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start; /* Ensures alignment starts from the top */
+          gap: 20px; /* Adjust spacing between the two sections */
+      }
+      
+      /* Wallet Container Styling */
+      .wallet-container {
+          flex: 1; /* Allows flexibility to grow or shrink */
+          min-width: 300px;
+      }
+      
+      /* Manage Account Styling */
+      .manage-account {
+          flex: 1; /* Allows flexibility to grow or shrink */
+          max-width: 300px; /* Ensures Manage Account doesn't grow too wide */
+      }
+      
+
+
+</style>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% comment %} #################################################################################################### {% endcomment %}
+
+    <title>Vegefoods - Free Bootstrap 4 Template by Colorlib</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <link href="https://fonts.googleapis.com/css?family=Poppins:200,300,400,500,600,700,800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Lora:400,400i,700,700i&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Amatic+SC:400,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'user/css/open-iconic-bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'user/css/animate.css' %}">
+    
+    <link rel="stylesheet" href="{% static 'user/css/owl.carousel.min.css' %}">
+    <link rel="stylesheet" href="{% static 'user/css/owl.theme.default.min.css' %}">
+    <link rel="stylesheet" href="{% static 'user/css/magnific-popup.css' %}">
+
+    <link rel="stylesheet" href="{% static 'user/css/aos.css' %}">
+
+    <link rel="stylesheet" href="{% static 'user/css/ionicons.min.css' %}">
+
+    <link rel="stylesheet" href="{% static 'user/css/bootstrap-datepicker.css' %}">
+    <link rel="stylesheet" href="{% static 'user/css/jquery.timepicker.css' %}">
+
+    
+    <link rel="stylesheet" href="{% static 'user/css/flaticon.css' %}">
+    <link rel="stylesheet" href="{% static 'user/css/icomoon.css' %}">
+    <link rel="stylesheet" href="{% static 'user/css/style.css' %}">
+  </head>
+  <body class="goto-here">
+		<div class="py-1 bg-primary">
+    	<div class="container">
+    		<div class="row no-gutters d-flex align-items-start align-items-center px-md-0">
+	    		<div class="col-lg-12 d-block">
+		    		<div class="row d-flex">
+		    			<div class="col-md pr-4 d-flex topper align-items-center">
+					    	<div class="icon mr-2 d-flex justify-content-center align-items-center"><span class="icon-phone2"></span></div>
+						    <span class="text">+ 1235 2355 98</span>
+					    </div>
+					    <div class="col-md pr-4 d-flex topper align-items-center">
+					    	<div class="icon mr-2 d-flex justify-content-center align-items-center"><span class="icon-paper-plane"></span></div>
+						    <span class="text">youremail@email.com</span>
+					    </div>
+					    <div class="col-md-5 pr-4 d-flex topper align-items-center text-lg-right">
+						    <span class="text">3-5 Business days delivery &amp; Free Returns</span>
+					    </div>
+				    </div>
+			    </div>
+		    </div>
+		  </div>
+    </div>
+    <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light" id="ftco-navbar">
+	    <div class="container">
+	      <a class="navbar-brand" href="index.html">Vegefoods</a>
+	      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav" aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
+	        <span class="oi oi-menu"></span> Menu
+	      </button>
+
+	      <div class="collapse navbar-collapse" id="ftco-nav">
+	        <ul class="navbar-nav ml-auto">
+	          <li class="nav-item"><a href="{% url 'welcome' %}" class="nav-link">Home</a></li>
+	          <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="dropdown04" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Shop</a>
+              <div class="dropdown-menu" aria-labelledby="dropdown04">
+              	<a class="dropdown-item" href="{% url 'shopsection'%}">Shop</a>
+				  <a class="dropdown-item" href="{% url 'wishlist' %}">Wishlist</a>
+				  <a class="dropdown-item" href="product-single.html">Single Product</a>
+				  <a class="dropdown-item" href="{% url 'cart' %}">Cart</a>
+				  <a class="dropdown-item" href="checkout.html">Checkout</a>
+              </div>
+            </li>
+	          <li class="nav-item"><a href="about.html" class="nav-link">About</a></li>
+	          <li class="nav-item"><a href="blog.html" class="nav-link">Blog</a></li>
+	          <li class="nav-item active"><a href="contact.html" class="nav-link">Contact</a></li>
+	          <li class="nav-item"><a href="{% url 'wishlist' %}" class="nav-link"><i class="fas fa-heart"></i></a></li>
+			      <li class="nav-item"><a href="{% url 'cart' %}" class="nav-link"><i class="fas fa-shopping-cart"></i> [0]</a></li>
+
+	        </ul>
+	      </div>
+	    </div>
+	  </nav>
+    <!-- END nav -->
+
+    <div class="hero-wrap hero-bread" style="background-image: url('{% static 'user/images/bg_1.jpg'%}');">
+      <div class="container">
+        <div class="row no-gutters slider-text align-items-center justify-content-center">
+          <div class="col-md-9 ftco-animate text-center">
+          	<p class="breadcrumbs"><span class="mr-2"><a href="index.html">Home</a></span> <span>Your Profile</span></p>
+            <h1 class="mb-0 bread">Your Profile</h1>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="ftco-section contact-section bg-light">
+      <div class="container">
+      	<div class="row d-flex mb-5 contact-info">
+          <div class="w-100"></div>
+          <div class="col-md-3 d-flex">
+          	<div class="info bg-white p-4">
+	            <p><span>Address:</span> 198 West 21th Street, Suite 721 bangalore 10016</p>
+	          </div>
+          </div>
+          <div class="col-md-3 d-flex">
+          	<div class="info bg-white p-4">
+	            <p><span>Phone:</span> <a href="tel://1234567920">7356190377</a></p>
+	          </div>
+          </div>
+          <div class="col-md-3 d-flex">
+          	<div class="info bg-white p-4">
+	            <p><span>Email:</span> <a href="mailto:info@yoursite.com">sreejith@gmail.com</a></p>
+	          </div>
+          </div>
+          <div class="col-md-3 d-flex">
+          	<div class="info bg-white p-4">
+	            <p><span>Website</span> <a href="#">Vegefoods.com</a></p>
+	          </div>
+          </div>
+        </div>
+{% comment %} ----------------------------------------------------------------------------------- {% endcomment %}
+
+<div class="row block-9 g-3">
+    <div class="col-md-12 d-flex justify-content-center align-items-start gap-4">
+        <!-- Manage Account Section -->
+        <div class="manage-account">
+            <h2>Manage Account</h2>
+            <div class="account-options">
+                <a href="{% url 'profile'%}" class="option">
+                    <i class="fa fa-user"></i>
+                    <span>My Profile</span>
+                </a>
+                <a href="{% url 'wishlist'%}" class="option">
+                    <i class="fa fa-heart"></i>
+                    <span>My Wishlist</span>
+                </a>
+                <a href="{% url 'addressbook' %}" class="option">
+                    <i class="fa fa-address-book"></i>
+                    <span>Address Book</span>
+                </a>
+                <a href="{% url 'order_details' %}" class="option">
+                    <i class="fa fa-shopping-cart"></i>
+                    <span>My Orders</span>
+                </a>
+                <a href="{% url 'wallet' %}" class="option">
+                    <i class="fa fa-credit-card"></i>
+                    <span>Payment Wallet</span>
+                </a>
+            </div>
+        </div>
+
+        
+
+{% comment %} <div class="wallet-container bg-white shadow p-4 rounded d-flex flex-column" style="min-height: 500px; max-width: 500px;">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="m-0">My Wallet</h2>
+      <div class="wallet-balance text-end">
+          <span class="text-muted d-block">Total Balance:</span>
+          <strong class="h4 text-success m-0">₹{{ wallet_balance }}</strong>
+      </div>
+  </div>
+
+  <div class="wallet-breakdown mb-4">
+      <div class="row">
+          <div class="col-md-6">
+              <div class="bg-light p-3 rounded">
+                  <h5>Total Refunds</h5>
+                  <p class="h4 text-primary">₹{{ total_refunds }}</p>
+              </div>
+          </div>
+          <div class="col-md-6">
+              <div class="bg-light p-3 rounded">
+                  <h5>Added Funds</h5>
+                  <p class="h4 text-success">₹{{ total_added_funds }}</p>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <div class="wallet-actions row g-3 justify-content-center mt-auto">
+      <div class="col-md-5">
+          <button id="add-money-btn" class="btn btn-primary btn-lg w-100 d-flex align-items-center justify-content-center">
+              <i class="fa fa-plus-circle me-2"></i>Add Money
+          </button>
+      </div>
+      <div class="col-md-5">
+          <button class="btn btn-outline-primary btn-lg w-100 d-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#withdrawModal">
+              <i class="fa fa-arrow-down me-2"></i>Withdraw
+          </button>
+      </div>
+  </div>
+</div>
+
+<!-- Razorpay Payment Modal -->
+<div class="modal fade" id="razorpayModal" tabindex="-1" aria-labelledby="razorpayModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h5 class="modal-title" id="razorpayModalLabel">Add Funds</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+              <input type="number" id="amount-input" class="form-control" placeholder="Enter amount">
+          </div>
+          <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary" id="proceed-payment">Proceed to Pay</button>
+          </div>
+      </div>
+  </div>
+</div> {% endcomment %}
+
+
+
+<!-- Main Wallet Container -->
+<div class="wallet-container bg-white shadow p-4 rounded d-flex flex-column" style="min-height: 500px; max-width: 500px;">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="m-0">My Wallet</h2>
+      <div class="wallet-balance text-end">
+          <span class="text-muted d-block">Total Balance:</span>
+          <strong class="h4 text-success m-0">₹{{ wallet_balance }}</strong>
+      </div>
+  </div>
+
+  <div class="wallet-breakdown mb-4">
+      <div class="row">
+          <div class="col-md-6">
+              <div class="bg-light p-3 rounded">
+                  <h5>Total Refunds</h5>
+                  <p class="h4 text-primary">₹{{ total_refunds }}</p>
+              </div>
+          </div>
+          <div class="col-md-6">
+              <div class="bg-light p-3 rounded">
+                  <h5>Added Funds</h5>
+                  <p class="h4 text-success">₹{{ total_added_funds }}</p>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <!-- Withdrawal History Section -->
+  <div class="withdrawal-history mb-4">
+    <h5 class="mb-3">Recent Withdrawals</h5>
+    <div class="history-scroll" style="max-height: 200px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px;">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <tbody>
+                    {% for withdrawal in withdrawal_history %}
+                    <tr>
+                        <td class="text-muted" style="white-space: nowrap;">
+                            {{ withdrawal.created_at|date:"d M Y" }}
+                        </td>
+                        <td class="text-truncate" style="max-width: 150px;">
+                            {{ withdrawal.account_holder_name }}
+                        </td>
+                        <td class="text-end text-danger" style="white-space: nowrap;">
+                            -₹{{ withdrawal.amount }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center text-muted py-3">
+                            No withdrawal history available
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+  <div class="wallet-actions row g-3 justify-content-center mt-auto">
+      <div class="col-md-5">
+          <button id="add-money-btn" class="btn btn-primary btn-lg w-100 d-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#razorpayModal">
+              <i class="fa fa-plus-circle me-2"></i>Add Money
+          </button>
+      </div>
+      <div class="col-md-5">
+
+         <a href="{% url 'request_withdrawal' %}" class="btn btn-outline-primary btn-lg w-100 d-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#withdrawModal">
+        <i class="fa fa-arrow-down me-2"></i>Withdraw
+        </a>
+
+      </div>
+  </div>
+</div>
+
+<!-- Razorpay Payment Modal -->
+<div class="modal fade" id="razorpayModal" tabindex="-1" aria-labelledby="razorpayModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h5 class="modal-title" id="razorpayModalLabel">Add Funds</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+              <div class="mb-3">
+                  <label for="amount-input" class="form-label">Enter Amount (₹)</label>
+                  <div class="input-group">
+                      <span class="input-group-text">₹</span>
+                      <input type="number" id="amount-input" class="form-control" placeholder="Enter amount" min="1">
+                  </div>
+              </div>
+          </div>
+          <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary" id="proceed-payment">Proceed to Pay</button>
+          </div>
+      </div>
+  </div>
+</div>
+
+<!-- Withdrawal Modal -->
+{% comment %} <div class="modal fade" id="withdrawModal" tabindex="-1" aria-labelledby="withdrawModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h5 class="modal-title" id="withdrawModalLabel">Withdraw Money</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+              <div class="current-balance mb-4">
+                  <span class="text-muted">Available Balance:</span>
+                  <h4 class="text-success">₹{{ wallet_balance }}</h4>
+              </div>
+
+              <form id="withdrawForm">
+                  <div class="mb-3">
+                      <label for="withdraw-amount" class="form-label">Withdrawal Amount</label>
+                      <div class="input-group">
+                          <span class="input-group-text">₹</span>
+                          <input type="number" class="form-control" id="withdraw-amount" 
+                                 min="100" max="{{ wallet_balance }}" required>
+                      </div>
+                      <small class="text-muted">Minimum withdrawal: ₹100</small>
+                  </div>
+
+                  <div class="mb-3">
+                      <label for="account-holder" class="form-label">Account Holder Name</label>
+                      <input type="text" class="form-control" id="account-holder" required>
+                  </div>
+
+                  <div class="mb-3">
+                      <label for="bank-account" class="form-label">Bank Account Number</label>
+                      <input type="text" class="form-control" id="bank-account" required>
+                  </div>
+
+                  <div class="mb-3">
+                      <label for="ifsc-code" class="form-label">IFSC Code</label>
+                      <input type="text" class="form-control" id="ifsc-code" 
+                             pattern="^[A-Z]{4}0[A-Z0-9]{6}$" required>
+                      <small class="text-muted">Example: SBIN0123456</small>
+                  </div>
+              </form>
+          </div>
+          <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" id="confirm-withdrawal">
+                  Confirm Withdrawal
+              </button>
+          </div>
+      </div>
+  </div>
+</div> {% endcomment %}
+
+
+
+        {% comment %} ------------------------------------------------------------------------ {% endcomment %}
+        </div>
+
+          <div class="col-md-6 d-flex">
+          	<div id="map" class="bg-white"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="ftco-footer ftco-section">
+      <div class="container">
+      	<div class="row">
+      		<div class="mouse">
+						<a href="#" class="mouse-icon">
+							<div class="mouse-wheel"><span class="ion-ios-arrow-up"></span></div>
+						</a>
+					</div>
+      	</div>
+        <div class="row mb-5">
+          <div class="col-md">
+            <div class="ftco-footer-widget mb-4">
+              <h2 class="ftco-heading-2">Vegefoods</h2>
+              <p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia.</p>
+              <ul class="ftco-footer-social list-unstyled float-md-left float-lft mt-5">
+                <li class="ftco-animate"><a href="#"><span class="icon-twitter"></span></a></li>
+                <li class="ftco-animate"><a href="#"><span class="icon-facebook"></span></a></li>
+                <li class="ftco-animate"><a href="#"><span class="icon-instagram"></span></a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-md">
+            <div class="ftco-footer-widget mb-4 ml-md-5">
+              <h2 class="ftco-heading-2">Menu</h2>
+              <ul class="list-unstyled">
+                <li><a href="#" class="py-2 d-block">Shop</a></li>
+                <li><a href="#" class="py-2 d-block">About</a></li>
+                <li><a href="#" class="py-2 d-block">Journal</a></li>
+                <li><a href="#" class="py-2 d-block">Contact Us</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-md-4">
+             <div class="ftco-footer-widget mb-4">
+              <h2 class="ftco-heading-2">Help</h2>
+              <div class="d-flex">
+	              <ul class="list-unstyled mr-l-5 pr-l-3 mr-4">
+	                <li><a href="#" class="py-2 d-block">Shipping Information</a></li>
+	                <li><a href="#" class="py-2 d-block">Returns &amp; Exchange</a></li>
+	                <li><a href="#" class="py-2 d-block">Terms &amp; Conditions</a></li>
+	                <li><a href="#" class="py-2 d-block">Privacy Policy</a></li>
+	              </ul>
+	              <ul class="list-unstyled">
+	                <li><a href="#" class="py-2 d-block">FAQs</a></li>
+	                <li><a href="#" class="py-2 d-block">Contact</a></li>
+	              </ul>
+	            </div>
+            </div>
+          </div>
+          <div class="col-md">
+            <div class="ftco-footer-widget mb-4">
+            	<h2 class="ftco-heading-2">Have a Questions?</h2>
+            	<div class="block-23 mb-3">
+	              <ul>
+	                <li><span class="icon icon-map-marker"></span><span class="text">203 Fake St. Mountain View, San Francisco, California, USA</span></li>
+	                <li><a href="#"><span class="icon icon-phone"></span><span class="text">+2 392 3929 210</span></a></li>
+	                <li><a href="#"><span class="icon icon-envelope"></span><span class="text">info@yourdomain.com</span></a></li>
+	              </ul>
+	            </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12 text-center">
+
+            <p><!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+						  Copyright &copy;<script>document.write(new Date().getFullYear());</script> All rights reserved | This template is made with <i class="icon-heart color-danger" aria-hidden="true"></i> by <a href="https://colorlib.com" target="_blank">Colorlib</a>
+						  <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+						</p>
+          </div>
+        </div>
+      </div>
+    </footer>
+    
+  
+
+  <!-- loader -->
+  <div id="ftco-loader" class="show fullscreen"><svg class="circular" width="48px" height="48px"><circle class="path-bg" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke="#eeeeee"/><circle class="path" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke-miterlimit="10" stroke="#F96D00"/></svg></div>
+
+
+  <script src="{% static 'user/js/jquery.min.js' %}"></script>
+  <script src="{% static 'user/js/jquery-migrate-3.0.1.min.js' %}"></script>
+  <script src="{% static 'user/js/popper.min.js' %}"></script>
+  <script src="{% static 'user/js/bootstrap.min.js' %}"></script>
+  <script src="{% static 'user/js/jquery.easing.1.3.js' %}"></script>
+  <script src="{% static 'user/js/jquery.waypoints.min.js' %}"></script>
+  <script src="{% static 'user/js/jquery.stellar.min.js' %}"></script>
+  <script src="{% static 'user/js/owl.carousel.min.js' %}"></script>
+  <script src="{% static 'user/js/jquery.magnific-popup.min.js' %}"></script>
+  <script src="{% static 'user/js/aos.js' %}"></script>
+  <script src="{% static 'user/js/jquery.animateNumber.min.js' %}"></script>
+  <script src="{% static 'user/js/bootstrap-datepicker.js' %}"></script>
+  <script src="{% static 'user/js/scrollax.min.js' %}"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBVWaKrjvy3MaE7SQ74_uJiULgl1JY0H2s&sensor=false"></script>
+  <script src="{% static 'user/js/google-map.js' %}"></script>
+  <script src="{% static 'user/js/main.js' %}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+
+    
+      document.getElementById('add-money-btn').addEventListener('click', function() {
+          $('#razorpayModal').modal('show');
+      });
+      
+      document.getElementById('proceed-payment').addEventListener('click', function() {
+          const amount = document.getElementById('amount-input').value;
+          
+          // Make AJAX call to generate Razorpay order
+          fetch('/wallet/generate-order/', {
+              method: 'POST',
+              body: JSON.stringify({ amount: amount * 100 }),
+              headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRFToken': '{{ csrf_token }}'
+              }
+          })
+          .then(response => response.json())
+          .then(data => {
+              var options = {
+                  key: "{{ razorpay_key }}",
+                  amount: data.amount,
+                  currency: "INR",
+                  name: "VEGEFOODS",
+                  description: "Wallet Funds",
+                  order_id: data.id,
+                  handler: function (response) {
+                      // Verify payment on server
+                      fetch('/wallet/verify-payment/', {
+                          method: 'POST',
+                          body: JSON.stringify(response),
+                          headers: {
+                              'Content-Type': 'application/json',
+                              'X-CSRFToken': '{{ csrf_token }}'
+                          }
+                      })
+                      .then(verifyResponse => verifyResponse.json())
+                      .then(verifyData => {
+                          if (verifyData.status === 'success') {
+                              alert('Funds added successfully');
+                              location.reload();
+                          }
+                      });
+                  }
+              };
+              var rzp1 = new Razorpay(options);
+              rzp1.open();
+          });
+      });
+       
+
+       document.getElementById('proceed-payment').addEventListener('click', function() {
+        const amount = document.getElementById('amount-input').value;
+        
+        fetch('/wallet/generate-order/', {
+            method: 'POST',
+            body: JSON.stringify({ amount: amount * 100 }),
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Order generation failed');
+            }
+            return response.json();
+        })
+        .then(data => {
+            var options = {
+                key: "{{ razorpay_key }}",
+                amount: data.amount,
+                currency: "INR",
+                name: "Your Company Name",
+                description: "Wallet Funds",
+                order_id: data.id,
+                handler: function (response) {
+                    fetch('/wallet/verify-payment/', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_signature: response.razorpay_signature,
+                            amount: data.amount
+                        }),
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        }
+                    })
+                    .then(verifyResponse => {
+                        if (!verifyResponse.ok) {
+                            throw new Error('Payment verification failed');
+                        }
+                        return verifyResponse.json();
+                    })
+                    .then(verifyData => {
+                      if (verifyData.status === 'success') {
+                          alert('Funds added successfully');
+                          // Optionally update the displayed balance
+                          document.getElementById('wallet-balance').textContent = '₹' + verifyData.balance;
+                          $('#razorpayModal').modal('hide');
+                      } else {
+                          alert(verifyData.message);
+                      }
+                  })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Payment verification failed');
+                    });
+                },
+                theme: {
+                    color: "#3399cc"
+                }
+            };
+            var rzp1 = new Razorpay(options);
+            rzp1.open();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to generate order');
+        });
+    });
+      
+
+
+
+
+
+
+    
+{% comment %} -----------------withdraw script-------------------- {% endcomment %}
+
+
+{% comment %} / Wait for DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // First, let's add console logs to debug
+    console.log('DOM loaded');
+
+    // Check if withdraw button exists and add click handler
+    const withdrawBtn = document.querySelector('[data-bs-target="#withdrawModal"]');
+    if (withdrawBtn) {
+        console.log('Withdraw button found');
+        withdrawBtn.addEventListener('click', function() {
+            console.log('Withdraw button clicked');
+        });
+    }
+
+    // Initialize Bootstrap modal
+    const withdrawModal = document.getElementById('withdrawModal');
+    if (withdrawModal) {
+        console.log('Modal element found');
+        const bsModal = new bootstrap.Modal(withdrawModal);
+    }
+
+    // Get the confirmation button
+    const confirmWithdrawalBtn = document.getElementById('confirm-withdrawal');
+    console.log('Confirm button found:', confirmWithdrawalBtn ? 'yes' : 'no');
+
+    if (confirmWithdrawalBtn) {
+        confirmWithdrawalBtn.addEventListener('click', async function(e) {
+            console.log('Confirm button clicked');
+            e.preventDefault();
+
+            // Get form values
+            const amount = document.getElementById('withdraw-amount').value;
+            const accountHolder = document.getElementById('account-holder').value;
+            const bankAccount = document.getElementById('bank-account').value;
+            const ifscCode = document.getElementById('ifsc-code').value;
+
+            console.log('Form values:', {
+                amount,
+                accountHolder,
+                bankAccount,
+                ifscCode
+            });
+
+            // Basic validation
+            if (!amount || !accountHolder || !bankAccount || !ifscCode) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            if (parseFloat(amount) < 100) {
+                alert('Minimum withdrawal amount is ₹100');
+                return;
+            }
+
+            // IFSC validation
+            const ifscPattern = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+            if (!ifscPattern.test(ifscCode)) {
+                alert('Please enter a valid IFSC code');
+                return;
+            }
+
+            // Get CSRF token
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            console.log('CSRF Token found:', csrfToken ? 'yes' : 'no');
+
+            try {
+                console.log('Sending withdrawal request');
+                const response = await fetch('/wallet/withdraw/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({
+                        amount: amount,
+                        account_holder: accountHolder,
+                        bank_account: bankAccount,
+                        ifsc_code: ifscCode
+                    })
+                });
+
+                console.log('Response received:', response.status);
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                if (response.ok) {
+                    alert(data.message || 'Withdrawal request submitted successfully');
+                    
+                    // Update the displayed balance if provided in response
+                    if (data.new_balance !== undefined) {
+                        const balanceElement = document.querySelector('.current-balance h4');
+                        if (balanceElement) {
+                            balanceElement.textContent = `₹${data.new_balance}`;
+                        }
+                    }
+                    
+                    // Close the modal
+                    if (withdrawModal) {
+                        const modal = bootstrap.Modal.getInstance(withdrawModal);
+                        if (modal) {
+                            modal.hide();
+                        }
+                    }
+                    
+                    // Reload the page to refresh all data
+                    window.location.reload();
+                } else {
+                    throw new Error(data.message || 'Withdrawal request failed');
+                }
+            } catch (error) {
+                console.error('Error details:', error);
+                alert(error.message || 'An error occurred during withdrawal');
+            }
+        });
+    }
+
+    // Add input validation for IFSC code
+    const ifscInput = document.getElementById('ifsc-code');
+    if (ifscInput) {
+        ifscInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+    }
+
+    // Add input validation for amount
+    const amountInput = document.getElementById('withdraw-amount');
+    if (amountInput) {
+        amountInput.addEventListener('input', function() {
+            const value = parseFloat(this.value);
+            const maxAmount = parseFloat(this.getAttribute('max'));
+            if (value > maxAmount) {
+                this.value = maxAmount;
+            }
+        });
+    }
+});
+
+
+
+ {% endcomment %}
+
+
+
+
+
+</script>
+
+
+
+
+
+
+
+  </body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+

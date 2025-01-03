@@ -1,0 +1,546 @@
+{% extends "admin_base.html" %}
+
+
+
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item active" aria-current="page">Category</li>
+{% endblock %}
+
+
+
+{% block content%}
+
+<div class="container">
+    <div class="messages-container">   {% comment %} Messages section right after containe {% endcomment %}
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+
+
+    <!-- Header Section -->
+    <div class="header">
+        <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Search">
+        </div>
+        <div class="actions">
+            <a href ="{% url 'add_category'%}" class ="btn btn-primary">
+                <span>+</span>
+                Add new category
+            </a>
+            <button class="btn btn-secondary">
+                <span>⚙️</span>
+                Filter
+            </button>
+        </div>
+    </div>
+
+    <!-- Modified Table Container -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Sl No</th>
+                    <th>ID</th>
+                    <th>offer</th>
+                    <th>category</th>
+                    <th>Description</th>
+                    <th>status</th> 
+                    <th>total earning</th>               
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="userTableBody">
+                {% for category in categories  %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ category.id }}</td> 
+
+                    <td>
+                      {% if category.offers.exists %}
+                       <a href="{% url 'edit_offer_for_category' category.offers.first.id %}" class="edit-offer-btn">Edit</a>
+                      <form method="POST" action="{% url 'delete_offer_for_category' category.offers.first.id %}" style="display: inline;">
+                      {% csrf_token %}
+                      <button type="submit" class="delete-offer-btn">Delete</button>
+                      </form>
+                      {% else %}
+                      <a href="{% url 'add_offer_to_category' category.id %}" class="add-offer-btn">Add Offer</a>
+                      {% endif %}
+                    </td> 
+
+                    <td>{{ category.name }}</td>
+                    <td>{{ category.description }}</td>
+                    <td>{{ category.status }}</td>
+                    <td>{{ category.earnings }}</td>
+                    
+
+                    
+                    <td class="action-cell">
+                        <a href="{% url 'edit_category' category.id %}" class="action-btn">✏️</a>
+                        
+                        <form method="POST" action="{% url 'toggle_category_status' category.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="action-btn {% if category.status == 'Available' %}block-btn{% else %}unblock-btn{% endif %}">
+                                {% if category.status == 'Available' %}
+                                    🔒 Block
+                                {% else %}
+                                    🔓 Unblock
+                                {% endif %}
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% comment %} ################################################################### {% endcomment %}
+
+
+
+<!-- Pagination Section -->
+<div class="pagination">
+    <div class="show-entries">
+        <span>Showing</span>
+        <select>
+            <option>15</option>
+            <option>25</option>
+            <option>50</option>
+            <option>100</option>
+        </select>
+    </div>
+
+    <div>Showing 1 to 15 out of 100 records</div>
+
+
+<!-- Pagination Controls -->
+<div class="pagination">
+<div class="pagination-controls">
+    <!-- First and Previous buttons -->
+    {% if page_obj.has_previous %}
+        <button class="page-btn" onclick="window.location.href='?page=1'">First</button>
+        <button class="page-btn" onclick="window.location.href='?page={{ page_obj.previous_page_number }}'">Previous</button>
+    {% endif %}
+
+    <!-- Numbered page buttons -->
+    {% for num in page_obj.paginator.page_range %}
+        {% if num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            {% if page_obj.number == num %}
+                <button class="page-btn active">{{ num }}</button>
+            {% else %}
+                <button class="page-btn" onclick="window.location.href='?page={{ num }}'">{{ num }}</button>
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+
+    <!-- Next and Last buttons -->
+    {% if page_obj.has_next %}
+        <button class="page-btn" onclick="window.location.href='?page={{ page_obj.next_page_number }}'">Next</button>
+        <button class="page-btn" onclick="window.location.href='?page={{ page_obj.paginator.num_pages }}'">Last</button>
+    {% endif %}
+</div>
+</div>
+
+<p>Total Pages: {{ page_obj.paginator.num_pages }}</p>
+<p>Current Page: {{ page_obj.number }}</p>
+
+{% endblock %}
+
+{% block extra_js %}{% endblock %}
+
+
+{% block css %}
+
+<style>
+
+
+
+  .add-offer-btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.3s ease;
+  }
+
+
+
+  /* Style for Edit Button */
+  .edit-offer-btn {
+      
+      background-color: #007bff; /* Blue */
+      color: white;
+      padding: 8px 17px;
+      font-size: 12px;
+      border: none;
+      border-radius: 4px;
+      text-decoration: none;
+      cursor: pointer;
+  }
+  
+  .edit-offer-btn:hover {
+      background-color: #0056b3; /* Darker Blue */
+      text-decoration: none;
+  }
+  
+  /* Style for Delete Button */
+  .delete-offer-btn {
+      background-color: #dc3545; /* Red */
+      color: white;
+      padding: 8px 13px;
+      font-size: 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+  }
+  
+  .delete-offer-btn:hover {
+      background-color: #a71d2a; /* Darker Red */
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Messages Container Styles */
+.messages-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+    max-width: 400px;
+    width: 100%;
+}
+
+.messages-container .alert {
+    margin-bottom: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    animation: slideIn 0.3s ease-out;
+}
+
+/* Different alert types */
+.alert-success {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+.alert-error,
+.alert-danger {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+.alert-warning {
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+    color: #856404;
+}
+
+.alert-info {
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+    color: #0c5460;
+}
+
+/* Animation for alerts */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Animation for alert dismissal */
+.alert.fade {
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+.alert.fade.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.alert.fade.hide {
+    opacity: 0;
+    transform: translateX(100%);
+}
+
+/* Close button styles */
+.alert .btn-close {
+    padding: 0.5rem;
+    margin: -0.5rem -0.5rem -0.5rem auto;
+}
+
+.alert .btn-close:focus {
+    box-shadow: none;
+    outline: none;
+}
+
+{% comment %} ------------------------------------ {% endcomment %}
+
+{% comment %} ##########################################################3333 {% endcomment %}
+
+/* Basic Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+  background-color: #000;
+  color: #fff;
+  padding: 20px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header Styles */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.search-container {
+  position: relative;
+  flex: 1;
+  max-width: 300px;
+}
+
+.search-container input {
+  width: 100%;
+  padding: 8px 12px 8px 35px;
+  border: none;
+  border-radius: 5px;
+  background-color: #1a1a1a;
+  color: #fff;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+}
+
+/* Button Styles */
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-secondary {
+  background-color: #2a2a2a;
+  color: white;
+}
+
+/* Table Styles */
+.table-container {
+  overflow-x: auto;
+  background-color: #1a1a1a;
+  border-radius: 8px;
+}
+
+table {
+  {% comment %} width: 100%; {% endcomment %}
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+th,
+td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #2a2a2a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+th:nth-child(1),
+td:nth-child(1) {
+  width: 5%;
+}
+
+{% comment %} th:nth-child(2),
+td:nth-child(2) {
+  width: 15%;
+} {% endcomment %}
+
+th {
+  background-color: #0d0d0d;
+  color: #fff;
+}
+
+tr:hover {
+  background-color: #2a2a2a;
+}
+
+/* Status Styles */
+.status {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.status-active {
+  color: #28a745;
+}
+
+.status-blocked {
+  color: #dc3545;
+}
+
+/* Action Button Styles */
+.action-cell {
+  display: flex;
+  gap: 10px;
+}
+
+.action-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.action-btn:hover {
+  opacity: 1;
+}
+
+/* Pagination Styles */
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  color: #888;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 5px;
+
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.page-btn {
+  padding: 5px 10px;
+  background-color: #2a2a2a;
+  border: none;
+  border-radius: 3px;
+  color: #fff;
+  cursor: pointer;
+
+  opacity: 0.8;
+}
+
+.page-btn.active {
+  background-color: #007bff;
+
+  opacity: 1;
+}
+
+.page-btn:hover {
+    opacity: 1;
+}
+
+.show-entries {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.show-entries select {
+  background-color: #2a2a2a;
+  color: #fff;
+  border: none;
+  padding: 5px;
+  border-radius: 3px;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .search-container {
+    max-width: 100%;
+  }
+
+  .pagination {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  th,
+  td {
+    font-size: 14px;
+  }
+
+
+  
+}
+
+</style>
+
+{% endblock %}
+
+
+

@@ -1,0 +1,332 @@
+{% extends "admin_base.html" %}
+
+{% comment %} {% block content %}
+
+<div class="container-fluid">
+    <h1 class="mt-4">Sales Report</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <div class="row">
+                <div class="col-md-3">
+                    <label>Start Date</label>
+                    <input type="date" id="start-date" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <label>End Date</label>
+                    <input type="date" id="end-date" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <label>Report Type</label>
+                    <select id="report-type" class="form-control">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                    </select>
+                </div>
+                <div class="col-md-3 align-self-end">
+                    <button id="generate-report" class="btn btn-primary">Generate Report</button>
+                    <div class="btn-group ml-2">
+                        <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown">
+                            Download
+                        </button>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="#" id="download-excel">Excel</a>
+                            <a class="dropdown-item" href="#" id="download-pdf">PDF</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div id="overall-summary" class="mb-3">
+                <h5>Overall Summary</h5>
+                <p>Total Orders: <span id="total-orders">0</span></p>
+                <p>Total Revenue: ₹<span id="total-revenue">0.00</span></p>
+                <p>Total Discount: ₹<span id="total-discount">0.00</span></p>
+            </div>
+            <table class="table table-bordered" id="sales-report-table">
+                <thead>
+                    <tr>
+                        <th>Date/Period</th>
+                        <th>Total Orders</th>
+                        <th>Total Revenue</th>
+                        <th>Total Discount</th>
+                    </tr>
+                </thead>
+                <tbody id="report-data">
+                    <!-- Dynamic data will be populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+
+
+
+
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const generateReportBtn = document.getElementById('generate-report');
+        const downloadExcelBtn = document.getElementById('download-excel');
+        const downloadPdfBtn = document.getElementById('download-pdf');
+    
+        generateReportBtn.addEventListener('click', function() {
+    const startDate = document.getElementById('start-date').value;
+    const endDate = document.getElementById('end-date').value;
+    const reportType = document.getElementById('report-type').value;
+
+    console.log('Start Date:', startDate);
+    console.log('End Date:', endDate);
+    console.log('Report Type:', reportType);
+
+    fetch(`/generate-sales-report/?start_date=${startDate}&end_date=${endDate}&report_type=${reportType}`)
+        .then(response => {
+            console.log('Response status:', response.status);
+            
+            // Check if response is not OK
+            if (!response.ok) {
+                // Try to parse error message
+                return response.json().then(errorData => {
+                    throw new Error(errorData.error || 'Unknown error occurred');
+                });
+            }
+            
+            return response.json();
+        })
+        .then(data => {
+            console.log('Received data:', data);
+
+            // Update overall summary
+            document.getElementById('total-orders').textContent = data.overall_summary.total_orders;
+            document.getElementById('total-revenue').textContent = data.overall_summary.total_revenue.toFixed(2);
+            document.getElementById('total-discount').textContent = data.overall_summary.total_discount.toFixed(2);
+
+            // Populate sales report table
+            const reportDataBody = document.getElementById('report-data');
+            reportDataBody.innerHTML = ''; // Clear previous data
+
+            // Check if there are any sales data
+            if (data.sales_data.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td colspan="4" class="text-center">No sales data found for the selected period</td>
+                `;
+                reportDataBody.appendChild(row);
+                return;
+            }
+
+            data.sales_data.forEach(item => {
+                const row = document.createElement('tr');
+                const dateKey = Object.keys(item).find(key => ['date', 'week', 'month', 'year'].includes(key));
+                
+                row.innerHTML = `
+                    <td>${item[dateKey]}</td>
+                    <td>${item.total_orders}</td>
+                    <td>₹${item.total_revenue.toFixed(2)}</td>
+                    <td>₹${item.total_discount.toFixed(2)}</td>
+                `;
+                reportDataBody.appendChild(row);
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            
+            // Clear previous data
+            document.getElementById('total-orders').textContent = '0';
+            document.getElementById('total-revenue').textContent = '0.00';
+            document.getElementById('total-discount').textContent = '0.00';
+            
+            // Clear report table
+            const reportDataBody = document.getElementById('report-data');
+            reportDataBody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center text-danger">${error.message}</td>
+                </tr>
+            `;
+        });
+});
+
+
+
+        // Download buttons
+        downloadExcelBtn.addEventListener('click', function() {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            const reportType = document.getElementById('report-type').value;
+    
+            window.location.href = `/download-sales-report/?start_date=${startDate}&end_date=${endDate}&report_type=${reportType}&format=excel`;
+        });
+    
+        downloadPdfBtn.addEventListener('click', function() {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            const reportType = document.getElementById('report-type').value;
+    
+            window.location.href = `/download-sales-report/?start_date=${startDate}&end_date=${endDate}&report_type=${reportType}&format=pdf`;
+        });
+    });
+</script>
+{% endblock %} {% endcomment %}
+
+
+
+
+
+{% block content %}
+
+<div class="container-fluid ">
+    <h1 class="mt-4 ">Sales Report</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header text-white ">
+            <div class="row">
+                <div class="col-md-4">
+                    <label>Start Date</label>
+                    <input type="date" id="start-date" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label>End Date</label>
+                    <input type="date" id="end-date" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label>Report Type</label>
+                    <select id="report-type" class="form-control">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-12">
+                    <button id="generate-report" class="btn btn-primary">Generate Report</button>
+                    <div class="btn-group ml-2">
+                        <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown">
+                            Download
+                        </button>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="#" id="download-excel">Excel</a>
+                            <a class="dropdown-item" href="#" id="download-pdf">PDF</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body text-white">
+            <div id="overall-summary" class="mb-3">
+                <h5>Overall Summary</h5>
+                <p>Total Orders: <span id="total-orders">0</span></p>
+                <p>Total Revenue: ₹<span id="total-revenue">0.00</span></p>
+            </div>
+            <table class="table table-bordered" id="sales-report-table">
+                <thead>
+                    <tr>
+                        <th>Date/Period</th>
+                        <th>Total Orders</th>
+                        <th>Total Revenue</th>
+                    </tr>
+                </thead>
+                <tbody id="report-data">
+                    <!-- Dynamic data will be populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const generateReportBtn = document.getElementById('generate-report');
+        const downloadExcelBtn = document.getElementById('download-excel');
+        const downloadPdfBtn = document.getElementById('download-pdf');
+    
+        generateReportBtn.addEventListener('click', function() {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            const reportType = document.getElementById('report-type').value;
+
+            fetch(`/generate-sales-report/?start_date=${startDate}&end_date=${endDate}&report_type=${reportType}`)
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(errorData => {
+                            throw new Error(errorData.error || 'Unknown error occurred');
+                        });
+                    }
+                    
+                    return response.json();
+                })
+                .then(data => {
+                    // Update overall summary
+                    document.getElementById('total-orders').textContent = data.overall_summary.total_orders;
+                    document.getElementById('total-revenue').textContent = data.overall_summary.total_revenue.toFixed(2);
+
+                    // Populate sales report table
+                    const reportDataBody = document.getElementById('report-data');
+                    reportDataBody.innerHTML = ''; // Clear previous data
+
+                    // Check if there are any sales data
+                    if (data.sales_data.length === 0) {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td colspan="3" class="text-center">No sales data found for the selected period</td>
+                        `;
+                        reportDataBody.appendChild(row);
+                        return;
+                    }
+
+                    data.sales_data.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${item.period}</td>
+                            <td>${item.total_orders}</td>
+                            <td>₹${item.total_revenue.toFixed(2)}</td>
+                        `;
+                        reportDataBody.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    
+                    // Clear previous data
+                    document.getElementById('total-orders').textContent = '0';
+                    document.getElementById('total-revenue').textContent = '0.00';
+                    
+                    // Clear report table
+                    const reportDataBody = document.getElementById('report-data');
+                    reportDataBody.innerHTML = `
+                        <tr>
+                            <td colspan="3" class="text-center text-danger">${error.message}</td>
+                        </tr>
+                    `;
+                });
+        });
+
+        // Download buttons remain the same
+        downloadExcelBtn.addEventListener('click', function() {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            const reportType = document.getElementById('report-type').value;
+    
+            window.location.href = `/download-sales-report/?start_date=${startDate}&end_date=${endDate}&report_type=${reportType}&format=excel`;
+        });
+    
+        downloadPdfBtn.addEventListener('click', function() {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            const reportType = document.getElementById('report-type').value;
+    
+            window.location.href = `/download-sales-report/?start_date=${startDate}&end_date=${endDate}&report_type=${reportType}&format=pdf`;
+        });
+    });
+</script>
+{% endblock %}

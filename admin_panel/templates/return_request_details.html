@@ -1,0 +1,93 @@
+{% extends "admin_base.html" %} 
+
+
+
+{% block content %}
+
+
+
+
+<div class="return-requests-container">
+    <h2>Return Requests for Order #{{ order.id }}</h2>
+    
+    {% if return_requests %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Variant</th>
+                    <th>Reason</th>
+                    <th>Explanation</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for return_request in return_requests %}
+                <tr>
+                    <td>{{ return_request.order_item.product.name }}</td>
+                    <td>{{ return_request.order_item.variant.display_name|default:'N/A' }}</td>
+                    <td>{{ return_request.get_return_reason_display }}</td>
+                    <td>{{ return_request.return_explanation }}</td>
+                    <td>
+                        <form method="post" action="{% url 'process_return_request' return_request.id %}">
+                            {% csrf_token %}
+                            <button type="submit" name="action" value="approve" class="btn btn-success">Approve</button>
+                            <button type="submit" name="action" value="reject" class="btn btn-danger">Reject</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No return requests found for this order.</p>
+    {% endif %}
+</div>
+
+{% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+            <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+{% endblock %}
+
+
+{% block css %}
+<style>
+
+
+    
+.messages-container {
+    margin: 15px 0;
+}
+
+.alert {
+    padding: 10px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.alert-success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.alert-info {
+    color: #0c5460;
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+}
+</style>
+{% endblock %}
