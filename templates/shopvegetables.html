@@ -159,7 +159,7 @@
 <section>
     <nav>
       <!-- Breadcrumbs -->
-      <a href="{% if user.is_authenticated %}{% url 'welcome' %}{% else %}{% url '/' %}{% endif %}">Home</a> / 
+      <a href="{% if user.is_authenticated %}{% url 'welcome' %}{% else %}{% url 'beforelogin' %}{% endif %}">Home</a> / 
       <a href="#">Shop</a>
     </nav>
   </section>
