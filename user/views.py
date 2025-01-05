@@ -92,31 +92,32 @@ def welcome(request):
 # this view is for signup page 
 
 def registrationPage(request):
-    if request.method == 'POST' :
+    if request.method == 'POST':
         form = UserRegForm(request.POST)
         if form.is_valid():
-            email = form.cleaned_data['email']
-            # this is for otp generation
-            otp = random.randint(100000,999999)  
-            # for saving the data in the form in session for while the time of otp generation ie for later user after otp
-            request.session['form_data'] = request.POST
-            request.session['email_otp'] = otp
+            try:
+                email = form.cleaned_data['email']
+                otp = random.randint(100000, 999999)
+                request.session['form_data'] = request.POST
+                request.session['email_otp'] = otp
 
-            #sending otp to the users mail..
-            send_mail(
-
-                'Your OTP for Registration',
-                f'Your OTP is {otp}',
-                settings.EMAIL_HOST_USER,
-                [email],
-                fail_silently = False,
-            )
-            return redirect('verify_otp')
+                send_mail(
+                    'Your OTP for Registration',
+                    f'Your OTP is {otp}',
+                    settings.EMAIL_HOST_USER,
+                    [email],
+                    fail_silently=False,
+                )
+                return redirect('verify_otp')
+            except Exception as e:
+                print(f"Email error: {str(e)}")  # This will help debug the issue
+                messages.error(request, "Failed to send OTP email. Please try again.")
         else:
-            messages.error(request,"There were errors in your form .Please correct them.")
+            messages.error(request, "There were errors in your form. Please correct them.")
     else:
         form = UserRegForm()
-    return render(request,'registration.html',{'form': form})  
+    return render(request, 'registration.html', {'form': form})
+
 
 # this is for otp varification 
 ##################################################################################################################################################
