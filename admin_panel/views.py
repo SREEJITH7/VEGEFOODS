@@ -388,8 +388,110 @@ def admin_product(request):
 
 #############   add product   #####################################################################################################################
 
+# @admin_required
+# @csrf_exempt  # remove in production  
+# @require_http_methods(["GET", "POST"])
+# def add_product(request):
+#     if request.method == 'GET':
+#         categories = Catogery.objects.all()
+#         return render(request, 'admin_addproduct.html', {'categories': categories})
+    
+#     elif request.method == 'POST':
+#         try:
+#             #debugging 
+#             print("Request POST data:", request.POST)
+#             print("Request FILES:", request.FILES)
+            
+#             #get from data
+#             name = request.POST.get('name')
+#             base_price = request.POST.get('base_price')  
+#             stock_quantity = request.POST.get('stock_quantity')
+#             category_id = request.POST.get('category')
+
+#             #validate data
+#             if not all([name, base_price, stock_quantity, category_id]):  # Updated 'price' to 'base_price'
+#                 missing_fields = []
+#                 if not name: missing_fields.append('name')
+#                 if not base_price: missing_fields.append('base_price')  # Updated field name
+#                 if not stock_quantity: missing_fields.append('stock_quantity')
+#                 if not category_id: missing_fields.append('category')
+                
+#                 return JsonResponse({
+#                     'success': False,
+#                     'message': f'Missing required fields: {", ".join(missing_fields)}'
+#                 }, status=400)
+
+#             #validate daata
+#             images = []
+#             for i in range(3):
+#                 if f'image_{i}' in request.FILES:
+#                     images.append(request.FILES[f'image_{i}'])
+
+#             if not images:
+#                 return JsonResponse({
+#                     'success': False,
+#                     'message': 'At least one image is required'
+#                 }, status=400)
+
+#             try:
+#                 #fetch category instance
+#                 category = Catogery.objects.get(id=int(category_id))
+
+#                 #create productt
+#                 product = Product.objects.create(
+#                     name=name,
+#                     base_price=float(base_price),  
+#                     stock_quantity=int(stock_quantity),
+#                     catogery=category 
+#                 )
+
+#                 #save image 
+#                 for image in images:
+#                     ProductImage.objects.create(
+#                         product=product,
+#                         images=image
+#                     )
+
+#                 return JsonResponse({
+#                     'success': True,
+#                     'message': 'Product added successfully',
+#                     'product_id': product.id
+#                 })
+
+#             except ValueError as ve:
+#                 return JsonResponse({
+#                     'success': False,
+#                     'message': f'Invalid data format: {str(ve)}'
+#                 }, status=400)
+
+#             except Catogery.DoesNotExist:
+#                 return JsonResponse({
+#                     'success': False,
+#                     'message': 'Invalid category ID'
+#                 }, status=400)
+
+#             except Exception as e:
+#                 print(f"Error creating product: {str(e)}")
+#                 return JsonResponse({
+#                     'success': False,
+#                     'message': f'Error creating product: {str(e)}'
+#                 }, status=500)
+
+#         except Exception as e:
+#             print(f"Unexpected error: {str(e)}")
+#             return JsonResponse({
+#                 'success': False,
+#                 'message': f'Server error: {str(e)}'
+#             }, status=500)
+
+
+
+# ------------------above is working code ---------------------
+
+# -------------after adding the varients-----------------------
+
 @admin_required
-@csrf_exempt  # remove in production  
+@csrf_exempt  
 @require_http_methods(["GET", "POST"])
 def add_product(request):
     if request.method == 'GET':
@@ -398,21 +500,24 @@ def add_product(request):
     
     elif request.method == 'POST':
         try:
-            #debugging 
-            print("Request POST data:", request.POST)
-            print("Request FILES:", request.FILES)
-            
-            #get from data
+            # Get basic product data
             name = request.POST.get('name')
-            base_price = request.POST.get('base_price')  
+            base_price = request.POST.get('base_price')
             stock_quantity = request.POST.get('stock_quantity')
             category_id = request.POST.get('category')
+            
+            # Get variant prices
+            variant_prices = {
+                '1': request.POST.get('variant_1kg_price'),
+                '1.5': request.POST.get('variant_1_5kg_price'),
+                '2': request.POST.get('variant_2kg_price')
+            }
 
-            #validate data
-            if not all([name, base_price, stock_quantity, category_id]):  # Updated 'price' to 'base_price'
+            # Validate basic fields
+            if not all([name, base_price, stock_quantity, category_id]):
                 missing_fields = []
                 if not name: missing_fields.append('name')
-                if not base_price: missing_fields.append('base_price')  # Updated field name
+                if not base_price: missing_fields.append('base_price')
                 if not stock_quantity: missing_fields.append('stock_quantity')
                 if not category_id: missing_fields.append('category')
                 
@@ -421,7 +526,7 @@ def add_product(request):
                     'message': f'Missing required fields: {", ".join(missing_fields)}'
                 }, status=400)
 
-            #validate daata
+            # Process images
             images = []
             for i in range(3):
                 if f'image_{i}' in request.FILES:
@@ -434,29 +539,48 @@ def add_product(request):
                 }, status=400)
 
             try:
-                #fetch category instance
-                category = Catogery.objects.get(id=int(category_id))
-
-                #create productt
-                product = Product.objects.create(
-                    name=name,
-                    base_price=float(base_price),  
-                    stock_quantity=int(stock_quantity),
-                    catogery=category 
-                )
-
-                #save image 
-                for image in images:
-                    ProductImage.objects.create(
-                        product=product,
-                        images=image
+                with transaction.atomic():
+                    # Create product with Decimal price
+                    category = Catogery.objects.get(id=int(category_id))
+                    product = Product.objects.create(
+                        name=name,
+                        base_price=Decimal(base_price),
+                        stock_quantity=int(stock_quantity),
+                        catogery=category
                     )
 
-                return JsonResponse({
-                    'success': True,
-                    'message': 'Product added successfully',
-                    'product_id': product.id
-                })
+                    # Save images
+                    for image in images:
+                        ProductImage.objects.create(
+                            product=product,
+                            images=image
+                        )
+
+                    # Create base variant (0.5 kg)
+                    Variant.objects.create(
+                        product=product,
+                        category='WEIGHT',
+                        weight='0.5',
+                        variant_price=Decimal(base_price),
+                        stock_quantity=int(stock_quantity)
+                    )
+
+                    # Create other variants using the same stock quantity
+                    for weight, price in variant_prices.items():
+                        if price:  # Only create variant if price is provided
+                            Variant.objects.create(
+                                product=product,
+                                category='WEIGHT',
+                                weight=weight,
+                                variant_price=Decimal(price),
+                                stock_quantity=int(stock_quantity)
+                            )
+
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Product and variants added successfully',
+                        'product_id': product.id
+                    })
 
             except ValueError as ve:
                 return JsonResponse({
@@ -470,19 +594,14 @@ def add_product(request):
                     'message': 'Invalid category ID'
                 }, status=400)
 
-            except Exception as e:
-                print(f"Error creating product: {str(e)}")
-                return JsonResponse({
-                    'success': False,
-                    'message': f'Error creating product: {str(e)}'
-                }, status=500)
-
         except Exception as e:
             print(f"Unexpected error: {str(e)}")
             return JsonResponse({
                 'success': False,
                 'message': f'Server error: {str(e)}'
             }, status=500)
+
+
 
 # -----------------EDIT PRODUCT -------------------------------------------------------------------------------------------------------------
 

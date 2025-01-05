@@ -10,6 +10,17 @@
     margin-bottom: 20px;
 }
 
+
+label {
+    color: white;
+}
+
+
+.card-header h5 {
+    color: white;
+}
+
+
 .form-control {
     border: 1px solid #ddd;
     border-radius: 6px;
@@ -229,6 +240,37 @@
 
 
 
+                <!-- Variant Fields -->
+              <div class="card mt-4 mb-3">
+                <div class="card-header">
+                    <h5>Product Variants</h5>
+                </div>
+                <div class="card-body">
+                    <!-- 1 kg Variant -->
+                    <div class="form-group mb-3">
+                        <label for="variant1kg">1 kg Price</label>
+                        <input type="number" id="variant1kg" name="variant_1kg_price" class="form-control variant-price">
+                    </div>
+
+                    <!-- 1.5 kg Variant -->
+                    <div class="form-group mb-3">
+                        <label for="variant1_5kg">1.5 kg Price</label>
+                        <input type="number" id="variant1_5kg" name="variant_1_5kg_price" class="form-control variant-price">
+                    </div>
+
+                    <!-- 2 kg Variant -->
+                    <div class="form-group mb-3">
+                        <label for="variant2kg">2 kg Price</label>
+                        <input type="number" id="variant2kg" name="variant_2kg_price" class="form-control variant-price">
+                    </div>
+                </div>
+            </div>
+
+
+
+
+
+
 
                 
 <!-- Image Upload Section -->
@@ -286,7 +328,7 @@
 
 {% block extra_js %}
 
-<script>
+{% comment %} <script>
 
     document.addEventListener('DOMContentLoaded', function () {
         const form = document.getElementById('productForm');
@@ -428,51 +470,248 @@
 
 
 
+</script> {% endcomment %}
+
+
+<script>
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('productForm');
+        const imageFiles = [null, null, null];
+    
+        // Validation patterns
+        const patterns = {
+            name: /^[a-zA-Z\s]{3,50}$/, // Letters and spaces only, 3-50 chars
+            basePrice: /^(?!0|00)\d+(\.\d{1,2})?$/, // No negatives or zero, allow up to 2 decimal places
+            stock: /^[1-9]\d*$/, // Positive integers only, no zero
+            variantPrice: /^\d+(\.\d{1,2})?$/ // Variant price validation
+        };
+    
+        // Field validation function
+        function validateField(field, pattern = null) {
+            const errorSpan = document.getElementById(`${field.id}Error`);
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                if (errorSpan) errorSpan.textContent = 'This field is required';
+                return false;
+            }
+    
+            if (pattern && !pattern.test(field.value)) {
+                field.classList.add('is-invalid');
+                if (errorSpan) errorSpan.textContent = 'Invalid format';
+                return false;
+            }
+    
+            field.classList.remove('is-invalid');
+            if (errorSpan) errorSpan.textContent = '';
+            return true;
+        }
+
+        // Variant price calculation helper
+        function calculateVariantPrice(basePrice, weight) {
+            const price = parseFloat(basePrice);
+            if (isNaN(price)) return '';
+            
+            // Calculate price based on weight multiplier
+            const multiplier = parseFloat(weight) / 0.5; // Base weight is 0.5kg
+            return (price * multiplier).toFixed(2);
+        }
+
+        // Setup variant price listeners
+        function setupVariantPriceCalculation() {
+            const basePrice = document.getElementById('productBasePrice');
+            const variant1kg = document.getElementById('variant1kg');
+            const variant1_5kg = document.getElementById('variant1_5kg');
+            const variant2kg = document.getElementById('variant2kg');
+
+            basePrice.addEventListener('input', function() {
+                if (patterns.basePrice.test(this.value)) {
+                    // Auto-calculate variant prices based on base price
+                    variant1kg.value = calculateVariantPrice(this.value, 1);
+                    variant1_5kg.value = calculateVariantPrice(this.value, 1.5);
+                    variant2kg.value = calculateVariantPrice(this.value, 2);
+                }
+            });
+
+            // Allow manual override of variant prices
+            [variant1kg, variant1_5kg, variant2kg].forEach(input => {
+                input.addEventListener('input', function() {
+                    validateField(this, patterns.variantPrice);
+                });
+            });
+        }
+    
+        // Image validation function
+        function validateImage(file) {
+            const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                return { valid: false, error: 'Invalid image format. Only JPG, PNG, and WEBP are allowed' };
+            }
+            return { valid: true, error: null };
+        }
+    
+        // Image count update
+        function updateImageCount() {
+            const activeImages = imageFiles.filter(file => file !== null);
+            const imageCountEl = document.getElementById('imageCount');
+            imageCountEl.textContent = `${activeImages.length}/3 images added`;
+        }
+    
+        // Image upload handler
+        window.handleImageUpload = function (event, index) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const uploadBox = event.target.closest('.upload-box');
+            const placeholder = uploadBox.querySelector('.placeholder');
+            const previewImage = uploadBox.querySelector('.preview-image');
+            const deleteBtn = uploadBox.querySelector('.delete-btn');
+            const imageError = document.getElementById('imageError');
+    
+            imageError.textContent = ''; // Reset error
+    
+            const validationResult = validateImage(file);
+            if (!validationResult.valid) {
+                imageError.textContent = validationResult.error;
+                event.target.value = '';
+                return;
+            }
+    
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                placeholder.style.display = 'none';
+                previewImage.src = e.target.result;
+                previewImage.style.display = 'block';
+                deleteBtn.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+    
+            imageFiles[index] = file;
+            updateImageCount();
+        };
+    
+        // Delete image handler
+        window.deleteImage = function (event, index) {
+            event.preventDefault();
+            const uploadBox = event.target.closest('.upload-box');
+            const fileInput = uploadBox.querySelector('.image-input');
+            const placeholder = uploadBox.querySelector('.placeholder');
+            const previewImage = uploadBox.querySelector('.preview-image');
+            const deleteBtn = uploadBox.querySelector('.delete-btn');
+    
+            fileInput.value = '';
+            placeholder.style.display = 'flex';
+            previewImage.src = '';
+            previewImage.style.display = 'none';
+            deleteBtn.style.display = 'none';
+    
+            imageFiles[index] = null;
+            updateImageCount();
+        };
+
+        // Validate variants function
+        function validateVariants() {
+            const variants = ['1kg', '1_5kg', '2kg'];
+            let isValid = true;
+            let hasAtLeastOneVariant = false;
+
+            variants.forEach(variant => {
+                const priceInput = document.getElementById(`variant${variant}`);
+                if (priceInput.value) {
+                    hasAtLeastOneVariant = true;
+                    if (!patterns.variantPrice.test(priceInput.value)) {
+                        isValid = false;
+                        priceInput.classList.add('is-invalid');
+                    } else {
+                        priceInput.classList.remove('is-invalid');
+                    }
+                }
+            });
+
+            return isValid && hasAtLeastOneVariant;
+        }
+    
+        // Form submit handler
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+    
+            const nameValid = validateField(document.getElementById('productName'), patterns.name);
+            const basePriceValid = validateField(document.getElementById('productBasePrice'), patterns.basePrice);
+            const stockValid = validateField(document.getElementById('productStock'), patterns.stock);
+            const categoryValid = validateField(document.getElementById('productCategory'));
+            const variantsValid = validateVariants();
+    
+            const activeImages = imageFiles.filter(file => file !== null);
+            const imageError = document.getElementById('imageError');
+            if (activeImages.length === 0) {
+                imageError.textContent = 'At least one image is required';
+                return;
+            }
+    
+            if (nameValid && basePriceValid && stockValid && categoryValid && variantsValid) {
+                const formData = new FormData(form);
+                
+                // Add images
+                activeImages.forEach((file, index) => {
+                    if (file) {
+                        formData.append(`image_${index}`, file);
+                    }
+                });
+
+                // Add variants data
+                const variantData = {
+                    variants: []
+                };
+
+                // Add base variant (0.5kg)
+                variantData.variants.push({
+                    weight: '0.5',
+                    price: formData.get('base_price'),
+                    stock: formData.get('stock_quantity')
+                });
+
+                // Add other variants
+                ['1', '1.5', '2'].forEach(weight => {
+                    const fieldName = `variant_${weight.replace('.', '_')}kg_price`;
+                    const price = formData.get(fieldName);
+                    if (price) {
+                        variantData.variants.push({
+                            weight: weight,
+                            price: price,
+                            stock: formData.get('stock_quantity') // Using same stock as base variant
+                        });
+                    }
+                });
+
+                formData.append('variants', JSON.stringify(variantData));
+    
+                fetch('/add_product/', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin',
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.href = '/admin_product/';
+                        } else {
+                            alert(data.message || 'Something went wrong!');
+                        }
+                    })
+                    .catch(error => console.error('Fetch Error:', error));
+            }
+        });
+
+        // Initialize variant price calculation
+        setupVariantPriceCalculation();
+    });
 </script>
  
 {% endblock %}
 
 
 
-{% comment %} <div class="container">
-    <div class="card">
-        <div class="card-body">
-            <h3 class="card-title">Add Product</h3>
-            <form method="POST" enctype="multipart/form-data" id="productForm">
-                {% csrf_token %}
 
-                <!-- Product Name -->
-                <div class="form-group mb-3">
-                    <label for="productName">Product Name</label>
-                    <input type="text" id="productName" name="name" class="form-control" required>
-                    <span id="productNameError" class="error-message text-danger"></span>
-                </div>
-
-                <!-- Price -->
-                <div class="form-group mb-3">
-                    <label for="productPrice">Price</label>
-                    <input type="number" id="productPrice" name="price" class="form-control" required>
-                    <span id="productPriceError" class="error-message text-danger"></span>
-                </div>
-
-                <!-- Stock Quantity -->
-                <div class="form-group mb-3">
-                    <label for="productStock">Stock Quantity</label>
-                    <input type="number" id="productStock" name="stock_quantity" class="form-control" required>
-                    <span id="productStockError" class="error-message text-danger"></span>
-                </div>
-
-                <!-- Category Dropdown -->
-                <div class="form-group mb-3">
-                    <label for="productCategory">Category</label>
-                    <select id="productCategory" name="category" class="form-control">
-                        <option value="">Select a category</option>
-                        {% for category in categories %}
-                            <option value="{{ category.id }}">{{ category.name }}</option>
-                        {% endfor %}
-                    </select>
-                    <span id="productCategoryError" class="error-message text-danger"></span>
-                </div>     original {% endcomment %}
 
 
 
