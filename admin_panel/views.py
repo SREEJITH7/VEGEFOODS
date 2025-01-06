@@ -556,6 +556,16 @@ def add_product(request):
                             images=image
                         )
 
+
+                     #    Save images and set the first one as primary
+                    for index, image in enumerate(images):
+                        ProductImage.objects.create(
+                            product=product,
+                            images=image,
+                            is_primary=(index == 0)  # Set first image as primary
+                        )
+
+
                     # Create base variant (0.5 kg)
                     Variant.objects.create(
                         product=product,
