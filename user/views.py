@@ -15,7 +15,7 @@ from .decorators import login_required
 from django.http import HttpResponse
 from django.http import JsonResponse
 from django.db.models import Prefetch
-from datetime import timedelta
+from datetime import timedelta, timezone
 from admin_panel.models import Product, ProductImage ,Catogery ,Variant,CouponTable, CouponUsage , Offer
 from django.utils.timezone import now
 from datetime import datetime
@@ -1235,7 +1235,7 @@ import logging
 import traceback
 logger = logging.getLogger(__name__)
 
------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------
 import logging
 import traceback
 from django.http import JsonResponse
