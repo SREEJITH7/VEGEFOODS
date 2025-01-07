@@ -195,7 +195,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 
 
-@user_required
+
 def shopsection(request):
     search_query = request.GET.get('q', '').lower()
     sort_option = request.GET.get('sort', '')
@@ -306,7 +306,7 @@ def shopsection(request):
 ##### shop vegetables  ###########################################################################################################################################################
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-@user_required
+
 def shopvegetables(request):
     search_query = request.GET.get('q', '')
     sort_option = request.GET.get('sort', '')
@@ -420,7 +420,7 @@ def shopvegetables(request):
 
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-@user_required
+
 def shopfruits(request):
     search_query = request.GET.get('q', '')
     sort_option = request.GET.get('sort', '')
@@ -536,7 +536,7 @@ def shopfruits(request):
 
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-@user_required
+
 def shopjuice(request):
     search_query = request.GET.get('q', '')
     sort_option = request.GET.get('sort', '')
@@ -648,7 +648,7 @@ def shopjuice(request):
 ###### shop dried #####################################################################################################################################################
 
 
-@user_required
+
 def shopdried(request):
     search_query = request.GET.get('q', '')
     sort_option = request.GET.get('sort', '')
@@ -815,7 +815,7 @@ def shopdried(request):
 
 # --------implementing offer price in single product page----------------------------------------------------
 
-@user_required
+
 def product_details(request, product_id):
     # Fetch the product with its images and offers
     product = get_object_or_404(
@@ -1574,7 +1574,7 @@ from django.views.decorators.http import require_http_methods
 #         logger.error(f"Error in cart view: {traceback.format_exc()}")
 #         print(f"Error in cart view: {traceback.format_exc()}")  # For server console
 #         return JsonResponse({'success': False, 'message': f'An error occurred: {str(e)}'})
-@user_required
+
 @require_http_methods(["GET", "POST"])
 def cart(request):
     try:
@@ -1866,7 +1866,7 @@ from django.core.exceptions import ValidationError
 #     })
 
 
-@user_required
+@login_required
 @transaction.atomic
 def add_to_cart_ajax(request):
     try:
@@ -1982,7 +1982,7 @@ logger = logging.getLogger(__name__)
 
 
 
-@user_required
+@login_required
 @transaction.atomic
 def update_cart_quantity_ajax(request, cart_id):
     try:
@@ -2101,7 +2101,7 @@ def remove_cart_item(request, item_id):
 #                                              'cart_total': cart_total,
 #                                              'cart_items' : cart_items,
 #                                              })
-@user_required
+
 def checkout(request):
     cart_items = Cart.objects.filter(user=request.user)
     
@@ -2589,7 +2589,7 @@ def retry_payment(request, order_id):
 #     return render(request, 'single_order_details.html', context)
 
 
-@user_required
+
 def single_order_detail(request, order_id):
     # Fetch the specific order for the user
     order = get_object_or_404(Order, id=order_id, user=request.user)
@@ -2652,7 +2652,7 @@ def cancel_order_item(request, order_item_id):
 
 
 # ---------------------------------------------------------------------------------------------------
-@user_required
+@login_required
 def wishlist(request):
     if request.user.is_authenticated:
         # Get the wishlist items for the logged-in user
@@ -2733,7 +2733,7 @@ import razorpay
 from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-@user_required
+
 @user_required
 def wallet(request):
     user_wallet = Wallet.objects.get_or_create(user=request.user)[0]
@@ -2772,7 +2772,6 @@ def wallet(request):
     return render(request, 'User_wallet.html', context)
 
 @csrf_exempt
-@user_required
 def verify_razorpay_payment(request):
     if request.method == 'POST':
         try:
@@ -2875,7 +2874,7 @@ def verify_razorpay_payment(request):
             }, status=400)
 
 
-@user_required
+
 def generate_razorpay_order(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -2904,7 +2903,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 
-@user_required
+
 @require_POST
 def submit_return_request(request):
     try:
