@@ -1378,6 +1378,15 @@ from django.views.decorators.http import require_http_methods
 def calculate_best_discount(product, variant_price):
     """Calculate the best applicable discount for a product."""
     today = timezone.now().date()
+
+
+    logger.debug(f"""
+    Calculating discount for:
+    Product ID: {product.id}
+    Product Name: {product.name}
+    Base Price: {variant_price}
+    Current Date: {today}
+    """)
     
     # Convert to Decimal for precise calculations
     variant_price = Decimal(str(variant_price))
@@ -1394,6 +1403,13 @@ def calculate_best_discount(product, variant_price):
         start_date__lte=today,
         end_date__gte=today
     )
+
+    logger.debug(f"""
+    Found Product Offers:
+    Count: {product_offers.count()}
+    Offers: {[(offer.id, offer.discount_percentage, offer.start_date, offer.end_date) for offer in product_offers]}
+    """)
+
     if product_offers.exists():
         product_offer_discount = Decimal(str(max(offer.discount_percentage for offer in product_offers)))
     
@@ -1438,6 +1454,10 @@ def calculate_best_discount(product, variant_price):
 @require_http_methods(["GET", "POST"])
 def cart(request):
     logger.debug("Starting cart view")
+    logger.debug(f"Server timezone: {timezone.get_current_timezone()}")
+    logger.debug(f"Current server time: {timezone.now()}")
+
+
     try:
         if request.method == 'POST':
             coupon_code = request.POST.get('coupon_code')
