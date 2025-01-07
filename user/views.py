@@ -32,6 +32,7 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth import update_session_auth_hash
 import environ
 import razorpay
+from django.utils import timezone
 # Create your views here.
 
 
@@ -1431,7 +1432,7 @@ def calculate_best_discount(product, variant_price):
     
     return None
 
-from django.utils import timezone
+
 
 @user_required
 @require_http_methods(["GET", "POST"])
