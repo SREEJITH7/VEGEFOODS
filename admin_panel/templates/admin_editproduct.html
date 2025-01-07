@@ -426,28 +426,28 @@ Fixed Edit Product Template {% endcomment %}
                 <!-- Product Name -->
                 <div class="form-group mb-3">
                     <label for="productName">Product Name</label>
-                    <input type="text" id="productName" name="name" class="form-control" value="{{ product.name }}" required>
+                    <input type="text" id="productName" name="name" class="form-control" value="{{ product.name }}" >
                     <span id="productNameError" class="error-message text-danger"></span>
                 </div>
 
                 <!-- Base Price -->
                 <div class="form-group mb-3">
                     <label for="basePrice">Base Price</label>
-                    <input type="number" id="basePrice" name="base_price" class="form-control" value="{{ product.base_price }}" step="0.01" required>
+                    <input type="number" id="basePrice" name="base_price" class="form-control" value="{{ product.base_price }}" step="0.01" >
                     <span id="productBasePriceError" class="error-message text-danger"></span>
                 </div>
 
                 <!-- Discount Percentage -->
                 <div class="form-group mb-3">
                     <label for="discountPercentage">Discount Percentage</label>
-                    <input type="number" id="discountPercentage" name="discount_percentage" class="form-control" value="{{ product.discount_percentage }}" step="0.01" required>
+                    <input type="number" id="discountPercentage" name="discount_percentage" class="form-control" value="{{ product.discount_percentage }}" step="0.01" >
                     <span id="discountError" class="error-message text-danger"></span>
                 </div>
 
                 <!-- Stock Quantity -->
                 <div class="form-group mb-3">
                     <label for="stockQuantity">Stock Quantity</label>
-                    <input type="number" id="stockQuantity" name="stock_quantity" class="form-control" value="{{ product.stock_quantity }}" required>
+                    <input type="number" id="stockQuantity" name="stock_quantity" class="form-control" value="{{ product.stock_quantity }}" >
                     <span id="productStockError" class="error-message text-danger"></span>
                 </div>
 

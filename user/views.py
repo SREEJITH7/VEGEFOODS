@@ -1235,101 +1235,7 @@ import logging
 import traceback
 logger = logging.getLogger(__name__)
 
-# @require_http_methods(["GET", "POST"])
-# def cart(request):
-#     try:
-#         cart_items = Cart.objects.select_related('product', 'variant', 'product__catogery').filter(user=request.user)
-#         cart_total = sum(item.total_price for item in cart_items)
-#         cart_empty = not cart_items.exists()
-
-#         # Prepare formatted cart items
-#         formatted_cart_items = []
-#         for item in cart_items:
-#             variant_display = ''
-#             if item.variant:
-#                 # Determine variant display based on category
-#                 if item.product.category.name in ['vegetables', 'fruits', 'dried']:
-#                     variant_display = f"{item.variant.weight} kg"
-#                 elif item.product.category.name == 'juice':
-#                     variant_display = f"{item.variant.volume} liter" if item.variant.volume else ''
-#                 else:
-#                     variant_display = item.variant.weight or ''
-#             formatted_item = {
-#                 'cart_item': item,
-#                 'variant_display': variant_display,
-#                 'item_total': float(item.total_price)
-#             }
-#             formatted_cart_items.append(formatted_item)
-
-#         # Handle coupon application
-#         if request.method == 'POST':
-#             coupon_code = request.POST.get('coupon_code')
-#             discount_amount = 0
-#             final_total = cart_total
-
-#             if coupon_code:
-#                 try:
-#                     coupon = get_object_or_404(CouponTable, code=coupon_code, is_active=True)
-#                     if coupon.max_uses is None or coupon.max_uses > 0:
-#                         if cart_total >= coupon.min_purchase_amount:
-#                             if coupon.coupon_type == 'percentage':
-#                                 discount_amount = cart_total * (coupon.discount_value / 100)
-#                             else:
-#                                 discount_amount = min(coupon.discount_value, cart_total)
-#                             final_total = cart_total - discount_amount
-
-#                             # Create CouponUsage record
-#                             CouponUsage.objects.create(
-#                                 user=request.user,
-#                                 coupon=coupon,
-#                                 discount_value=discount_amount
-#                             )
-
-#                             # Update coupon usage
-#                             if coupon.max_uses is not None:
-#                                 coupon.max_uses -= 1
-#                                 coupon.save()
-
-#                             return JsonResponse({
-#                                 'success': True,
-#                                 'message': f"Coupon '{coupon_code}' applied successfully!",
-#                                 'discount_amount': discount_amount,
-#                                 'final_total': final_total
-#                             })
-#                         else:
-#                             return JsonResponse({
-#                                 'success': False,
-#                                 'message': f"Minimum purchase amount of ₹{coupon.min_purchase_amount:.2f} is required to use this coupon."
-#                             })
-#                     else:
-#                         return JsonResponse({
-#                             'success': False,
-#                             'message': "This coupon has been exhausted."
-#                         })
-#                 except CouponTable.DoesNotExist:
-#                     return JsonResponse({
-#                         'success': False,
-#                         'message': "Invalid coupon code."
-#                     })
-#             else:
-#                 return JsonResponse({
-#                     'success': False,
-#                     'message': "Please enter a coupon code."
-#                 })
-
-#         context = {
-#             'cart_items': formatted_cart_items,  # Now contains formatted cart items
-#             'cart_total': cart_total,
-#             'cart_empty': cart_empty,
-#         }
-#         return render(request, 'cart.html', context)
-
-#     except Exception as e:
-#         logger.error("Error in cart view: %s", traceback.format_exc())
-#         return JsonResponse({'success': False, 'message': 'An error occurred. Please try again.'})
-
-
-#-------------------------this is working on cart page commented for checkout page should also render the totalss expiriment------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------
 import logging
 import traceback
 from django.http import JsonResponse
@@ -1337,138 +1243,29 @@ from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods
 
 
+
 # @require_http_methods(["GET", "POST"])
 # def cart(request):
 #     try:
 #         # Clear any previous applied coupons
 #         Cart.objects.filter(user=request.user).update(applied_coupon=None, discount_amount=0)
 
+#         # Fetch all cart items
 #         cart_items = Cart.objects.select_related('product', 'variant', 'product__catogery').filter(user=request.user)
-#         cart_total = sum(item.total_price for item in cart_items)
-#         cart_empty = not cart_items.exists()
-#         delivery_charge = 10  # Fixed delivery charge
         
-
-#         # Handle coupon application
-#         if request.method == 'POST':
-#             coupon_code = request.POST.get('coupon_code')
-            
-#             if coupon_code:
-#                 try:
-#                     coupon = CouponTable.objects.get(code=coupon_code, is_active=True)
-                    
-#                     if coupon.max_uses is None or coupon.max_uses > 0:
-#                         if cart_total >= coupon.min_purchase_amount:
-#                             # Calculate discount
-#                             if coupon.coupon_type == 'percentage':
-#                                 discount_amount = round(cart_total * (coupon.discount_value / 100), 2)
-#                             else:
-#                                 discount_amount = round(min(coupon.discount_value, cart_total), 2)
-                            
-#                             final_total = round(cart_total - discount_amount, 2)
-
-#                             # Distribute discount across cart items
-#                             if cart_items.exists():
-#                                 discount_per_item = round(discount_amount / len(cart_items), 2)
-#                                 for item in cart_items:
-#                                     item.applied_coupon = coupon
-#                                     item.discount_amount = discount_per_item
-#                                     item.save()
-
-#                             # Create CouponUsage record
-#                             CouponUsage.objects.create(
-#                                 user=request.user,
-#                                 coupon=coupon,
-#                                 discount_value=discount_amount
-#                             )
-
-#                             # Update coupon usage
-#                             if coupon.max_uses is not None:
-#                                 coupon.max_uses -= 1
-#                                 coupon.save()
-
-#                             return JsonResponse({
-#                                 'success': True,
-#                                 'message': f"Coupon '{coupon_code}' applied successfully!",
-#                                 'discount_amount': float(discount_amount),
-#                                 'final_total': float(final_total)
-#                             })
-#                         else:
-#                             return JsonResponse({
-#                                 'success': False,
-#                                 'message': f"Minimum purchase amount of ₹{coupon.min_purchase_amount:.2f} is required to use this coupon."
-#                             })
-#                     else:
-#                         return JsonResponse({
-#                             'success': False,
-#                             'message': "This coupon has been exhausted."
-#                         })
-#                 except CouponTable.DoesNotExist:
-#                     return JsonResponse({
-#                         'success': False,
-#                         'message': "Invalid coupon code."
-#                     })
-#                 except Exception as e:
-#                     logger.error(f"Coupon application error: {str(e)}")
-#                     return JsonResponse({
-#                         'success': False,
-#                         'message': f"An error occurred: {str(e)}"
-#                     })
-#             else:
-#                 return JsonResponse({
-#                     'success': False,
-#                     'message': "Please enter a coupon code."
-#                 })
-
-#         # Prepare formatted cart items
-#         formatted_cart_items = []
-#         for item in cart_items:
-#             variant_display = ''
-#             if item.variant:
-#                 # Determine variant display based on category
-#                 if item.product.category.name in ['vegetables', 'fruits', 'dried']:
-#                     variant_display = f"{item.variant.weight} kg"
-#                 elif item.product.category.name == 'juice':
-#                     variant_display = f"{item.variant.volume} liter" if item.variant.volume else ''
-#                 else:
-#                     variant_display = item.variant.weight or ''
-            
-#             formatted_item = {
-#                 'cart_item': item,
-#                 'variant_display': variant_display,
-#                 'item_total': round(float(item.total_price), 2),
-#                 'discount_amount': round(float(item.discount_amount or 0), 2)
-#             }
-#             formatted_cart_items.append(formatted_item)
-
-#         context = {
-#             'cart_items': formatted_cart_items,
-#             'cart_total': cart_total,
-#             'cart_empty': cart_empty,
-#         }
-#         return render(request, 'cart.html', context)
-
-#     except Exception as e:
-#         # More detailed error logging
-#         logger.error(f"Error in cart view: {traceback.format_exc()}")
-#         print(f"Error in cart view: {traceback.format_exc()}")  # For server console
-#         return JsonResponse({'success': False, 'message': f'An error occurred: {str(e)}'})
-
-
-
-# @require_http_methods(["GET", "POST"])
-# def cart(request):
-#     try:
-#         # Clear any previous applied coupons
-#         Cart.objects.filter(user=request.user).update(applied_coupon=None, discount_amount=0)
-
-#         cart_items = Cart.objects.select_related('product', 'variant', 'product__catogery').filter(user=request.user)
+#         # Calculate cart subtotal (only product prices)
 #         cart_subtotal = sum(item.total_price for item in cart_items)
-#         delivery_charge = 10  # Fixed delivery charge
+
+#         # Fixed delivery charge
+#         delivery_charge = 10
+        
+#         # Calculate cart total (subtotal + delivery charge)
 #         cart_total = cart_subtotal + delivery_charge
+        
+#         # Check if cart is empty
 #         cart_empty = not cart_items.exists()
 
-#         # Handle coupon application
+#         # Handle coupon application if POST request
 #         if request.method == 'POST':
 #             coupon_code = request.POST.get('coupon_code')
             
@@ -1476,8 +1273,9 @@ from django.views.decorators.http import require_http_methods
 #                 try:
 #                     coupon = CouponTable.objects.get(code=coupon_code, is_active=True)
                     
+#                     # Check coupon usage limits and minimum purchase
 #                     if coupon.max_uses is None or coupon.max_uses > 0:
-#                         if cart_total >= coupon.min_purchase_amount:
+#                         if cart_subtotal >= coupon.min_purchase_amount:  # Validate against subtotal
 #                             # Calculate discount
 #                             if coupon.coupon_type == 'percentage':
 #                                 discount_amount = round(cart_subtotal * (coupon.discount_value / 100), 2)
@@ -1494,14 +1292,14 @@ from django.views.decorators.http import require_http_methods
 #                                     item.discount_amount = discount_per_item
 #                                     item.save()
 
-#                             # Create CouponUsage record
+#                             # Record coupon usage
 #                             CouponUsage.objects.create(
 #                                 user=request.user,
 #                                 coupon=coupon,
 #                                 discount_value=discount_amount
 #                             )
 
-#                             # Update coupon usage
+#                             # Update coupon usage limit
 #                             if coupon.max_uses is not None:
 #                                 coupon.max_uses -= 1
 #                                 coupon.save()
@@ -1539,7 +1337,7 @@ from django.views.decorators.http import require_http_methods
 #                     'message': "Please enter a coupon code."
 #                 })
 
-#         # Prepare formatted cart items
+#         # Prepare formatted cart items for rendering in the template
 #         formatted_cart_items = []
 #         for item in cart_items:
 #             variant_display = ''
@@ -1560,6 +1358,7 @@ from django.views.decorators.http import require_http_methods
 #             }
 #             formatted_cart_items.append(formatted_item)
 
+#         # Render the template with context
 #         context = {
 #             'cart_items': formatted_cart_items,
 #             'cart_subtotal': cart_subtotal,
@@ -1570,52 +1369,96 @@ from django.views.decorators.http import require_http_methods
 #         return render(request, 'cart.html', context)
 
 #     except Exception as e:
-#         # More detailed error logging
+#         # Log detailed error
 #         logger.error(f"Error in cart view: {traceback.format_exc()}")
-#         print(f"Error in cart view: {traceback.format_exc()}")  # For server console
+#         print(f"Error in cart view: {traceback.format_exc()}")  # Debug output
 #         return JsonResponse({'success': False, 'message': f'An error occurred: {str(e)}'})
 
+def calculate_best_discount(product, variant_price):
+    """Calculate the best applicable discount for a product."""
+    today = timezone.now().date()
+    
+    # Convert to Decimal for precise calculations
+    variant_price = Decimal(str(variant_price))
+    
+    # 1. Product's base discount
+    base_discount = Decimal(str(product.discount_percentage or '0'))
+    
+    # 2. Active Product Offers - Get the best one
+    product_offer_discount = Decimal('0')
+    product_offers = Offer.objects.filter(
+        product=product,
+        offer_type='PRODUCT',
+        is_active=True,
+        start_date__lte=today,
+        end_date__gte=today
+    )
+    if product_offers.exists():
+        product_offer_discount = Decimal(str(max(offer.discount_percentage for offer in product_offers)))
+    
+    # 3. Active Category Offers - Get the best one
+    category_offer_discount = Decimal('0')
+    category_offers = Offer.objects.filter(
+        category=product.catogery,
+        offer_type='CATEGORY',
+        is_active=True,
+        start_date__lte=today,
+        end_date__gte=today
+    )
+    if category_offers.exists():
+        category_offer_discount = Decimal(str(max(offer.discount_percentage for offer in category_offers)))
+    
+    # Get the best discount percentage
+    best_discount_percentage = max(base_discount, product_offer_discount, category_offer_discount)
+    
+    # If there's any discount, return the discount info
+    if best_discount_percentage > 0:
+        discount_amount = (variant_price * best_discount_percentage) / Decimal('100')
+        
+        # Determine the discount type
+        if best_discount_percentage == base_discount:
+            discount_type = 'Product Discount'
+        elif best_discount_percentage == product_offer_discount:
+            discount_type = 'Product Offer'
+        else:
+            discount_type = 'Category Offer'
+            
+        return {
+            'type': discount_type,
+            'percentage': float(best_discount_percentage),  # Convert to float for JSON serialization
+            'amount': float(discount_amount)  # Convert to float for JSON serialization
+        }
+    
+    return None
+
+
+
+@user_required
 @require_http_methods(["GET", "POST"])
 def cart(request):
+    logger.debug("Starting cart view")
     try:
-        # Clear any previous applied coupons
-        Cart.objects.filter(user=request.user).update(applied_coupon=None, discount_amount=0)
-
-        # Fetch all cart items
-        cart_items = Cart.objects.select_related('product', 'variant', 'product__catogery').filter(user=request.user)
-        
-        # Calculate cart subtotal (only product prices)
-        cart_subtotal = sum(item.total_price for item in cart_items)
-
-        # Fixed delivery charge
-        delivery_charge = 10
-        
-        # Calculate cart total (subtotal + delivery charge)
-        cart_total = cart_subtotal + delivery_charge
-        
-        # Check if cart is empty
-        cart_empty = not cart_items.exists()
-
-        # Handle coupon application if POST request
         if request.method == 'POST':
             coupon_code = request.POST.get('coupon_code')
             
             if coupon_code:
                 try:
                     coupon = CouponTable.objects.get(code=coupon_code, is_active=True)
+                    cart_items = Cart.objects.select_related('product', 'variant').filter(user=request.user)
                     
-                    # Check coupon usage limits and minimum purchase
+                    temp_subtotal = Decimal(str(sum(
+                        (item.variant.variant_price if item.variant else item.product.base_price) * item.quantity 
+                        for item in cart_items
+                    )))
+                    
                     if coupon.max_uses is None or coupon.max_uses > 0:
-                        if cart_subtotal >= coupon.min_purchase_amount:  # Validate against subtotal
+                        if temp_subtotal >= coupon.min_purchase_amount:
                             # Calculate discount
                             if coupon.coupon_type == 'percentage':
-                                discount_amount = round(cart_subtotal * (coupon.discount_value / 100), 2)
+                                discount_amount = round(temp_subtotal * (Decimal(str(coupon.discount_value)) / Decimal('100')), 2)
                             else:
-                                discount_amount = round(min(coupon.discount_value, cart_subtotal), 2)
+                                discount_amount = round(min(Decimal(str(coupon.discount_value)), temp_subtotal), 2)
                             
-                            final_total = round(cart_total - discount_amount, 2)
-
-                            # Distribute discount across cart items
                             if cart_items.exists():
                                 discount_per_item = round(discount_amount / len(cart_items), 2)
                                 for item in cart_items:
@@ -1623,14 +1466,12 @@ def cart(request):
                                     item.discount_amount = discount_per_item
                                     item.save()
 
-                            # Record coupon usage
                             CouponUsage.objects.create(
                                 user=request.user,
                                 coupon=coupon,
                                 discount_value=discount_amount
                             )
 
-                            # Update coupon usage limit
                             if coupon.max_uses is not None:
                                 coupon.max_uses -= 1
                                 coupon.save()
@@ -1639,7 +1480,7 @@ def cart(request):
                                 'success': True,
                                 'message': f"Coupon '{coupon_code}' applied successfully!",
                                 'discount_amount': float(discount_amount),
-                                'final_total': float(final_total)
+                                'final_total': float(temp_subtotal - discount_amount + 10)
                             })
                         else:
                             return JsonResponse({
@@ -1668,43 +1509,93 @@ def cart(request):
                     'message': "Please enter a coupon code."
                 })
 
-        # Prepare formatted cart items for rendering in the template
+        # GET request handling - Show cart
+        # Clear any previous applied coupons if not POST request
+        Cart.objects.filter(user=request.user).update(applied_coupon=None, discount_amount=0)
+
+        # Fetch all cart items with necessary related data
+        cart_items = Cart.objects.select_related(
+            'product', 
+            'variant', 
+            'product__catogery'
+        ).filter(user=request.user)
+        
         formatted_cart_items = []
+        cart_subtotal = Decimal('0')
+        total_discount = Decimal('0')
+        coupon_discount = Decimal('0')
+        
         for item in cart_items:
+            # Get base price from variant or product
+            item_price = item.variant.variant_price if item.variant else item.product.base_price
+            
+            # Calculate best discount using the same logic as product_details
+            best_discount = calculate_best_discount(item.product, item_price)
+            
+            # Calculate prices with discount
+            item_discount = Decimal(str(best_discount['amount'])) if best_discount else Decimal('0')
+            
+            # Add coupon discount if any
+            coupon_discount_per_item = Decimal(str(item.discount_amount)) if item.applied_coupon else Decimal('0')
+            
+            discounted_price = item_price - item_discount - coupon_discount_per_item
+            item_total = discounted_price * item.quantity
+
+            logger.debug(f"""
+            Item: {item.product.name}
+            Original Price: {item_price}
+            Best Discount: {best_discount}
+            Coupon Discount: {coupon_discount_per_item}
+            Final Price: {discounted_price}
+            Item Total: {item_total}
+            """)
+            
+            # Get variant display info
             variant_display = ''
             if item.variant:
-                # Determine variant display based on category
-                if item.product.category.name in ['vegetables', 'fruits', 'dried']:
+                if item.product.category.name.lower() in ['vegetables', 'fruits', 'dried']:
                     variant_display = f"{item.variant.weight} kg"
-                elif item.product.category.name == 'juice':
+                elif item.product.category.name.lower() == 'juice':
                     variant_display = f"{item.variant.volume} liter" if item.variant.volume else ''
                 else:
                     variant_display = item.variant.weight or ''
             
+            # Add to running totals
+            cart_subtotal += item_total
+            total_discount += (item_discount * item.quantity)
+            coupon_discount += (coupon_discount_per_item * item.quantity)
+            
             formatted_item = {
                 'cart_item': item,
                 'variant_display': variant_display,
-                'item_total': round(float(item.total_price), 2),
-                'discount_amount': round(float(item.discount_amount or 0), 2)
+                'original_price': float(item_price),
+                'discount_info': best_discount,
+                'coupon_discount': float(coupon_discount_per_item),
+                'discounted_price': float(discounted_price),
+                'item_total': float(item_total),
+                'item_discount': float(item_discount)
             }
             formatted_cart_items.append(formatted_item)
 
-        # Render the template with context
+        delivery_charge = Decimal('10')
+        cart_total = cart_subtotal + delivery_charge
+        cart_empty = not cart_items.exists()
+
         context = {
             'cart_items': formatted_cart_items,
-            'cart_subtotal': cart_subtotal,
-            'delivery_charge': delivery_charge,
-            'cart_total': cart_total,
+            'cart_subtotal': float(cart_subtotal),
+            'delivery_charge': float(delivery_charge),
+            'cart_total': float(cart_total),
+            'total_discount': float(total_discount),
+            'coupon_discount': float(coupon_discount),
             'cart_empty': cart_empty,
         }
+        
         return render(request, 'cart.html', context)
 
     except Exception as e:
-        # Log detailed error
         logger.error(f"Error in cart view: {traceback.format_exc()}")
-        print(f"Error in cart view: {traceback.format_exc()}")  # Debug output
         return JsonResponse({'success': False, 'message': f'An error occurred: {str(e)}'})
-
 
 
 # --------add to cart ajax new for varient ---------------------------------------------------------------------------------------

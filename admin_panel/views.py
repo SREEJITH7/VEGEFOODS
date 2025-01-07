@@ -1325,6 +1325,28 @@ def offer(request):
             end_date = request.POST.get('end_date')
             is_active = request.POST.get('is_active') == 'on'
 
+
+
+            # Convert string dates to datetime objects
+            start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+            end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+            today = timezone.now().date()
+
+            # Validate dates
+            if start_date_obj < today:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Start date must be today or later'
+                }, status=400)
+
+            if end_date_obj < start_date_obj:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'End date must be after start date'
+                }, status=400)
+
+                
+
             # Create new Offer instance
             new_offer = Offer.objects.create(
                 offer_name=offer_name,

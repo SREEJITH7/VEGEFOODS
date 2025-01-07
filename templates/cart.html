@@ -96,192 +96,161 @@
     </div>
 
     <section class="ftco-section ftco-cart">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-12 ftco-animate">
-                    <div class="cart-list">
-                        <table class="table">
-                            <thead class="thead-primary">
+      <div class="container">
+          <div class="row">
+              <div class="col-md-12 ftco-animate">
+                  <div class="cart-list">
+                      <table class="table">
+                          <thead class="thead-primary">
+                              <tr class="text-center">
+                                  <th>&nbsp;</th>
+                                  <th>&nbsp;</th>
+                                  <th>Product name</th>
+                                  <th>Price</th>
+                                  <th>Quantity</th>
+                                  <th>Total</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              
+                          <tbody>
+                            {% for formatted_item in cart_items %}
                                 <tr class="text-center">
-                                    <th>&nbsp;</th>
-                                    <th>&nbsp;</th>
-                                    <th>Product name</th>
-                                    <th>Price</th>
-                                    <th>Quantity</th>
-                                    <th>Total</th>
+                                    <td class="product-remove">
+                                        <a href="#" class="remove-item" data-cart-id="{{ formatted_item.cart_item.id }}">
+                                            <span class="ion-ios-close"></span>
+                                        </a>
+                                    </td>
+                            
+                                    <td class="image-prod">
+                                        {% if formatted_item.cart_item.product.images.exists %}
+                                            <div class="img" style="background-image:url('{{ formatted_item.cart_item.product.images.first.images.url }}');"></div>
+                                        {% endif %}
+                                    </td>
+                            
+                                    <td class="product-name">
+                                        <h3>{{ formatted_item.cart_item.product.name }}</h3>
+                                        <p>{{ formatted_item.variant_display }}{{ formatted_item.variant_unit }}</p>
+                                        <p>{{ formatted_item.cart_item.product.description }}</p>
+                                    </td>
+                                    {% comment %} <td class="price">₹{{ formatted_item.item_price }}</td> {% endcomment %}
+                                    {% comment %} <td class="price">₹{{ formatted_item.cart_item.product.base_price }}</td> {% endcomment %}
+                                    <td class="price">
+                                      {% if formatted_item.discount_info %}
+                                          <del class="text-muted">₹{{ formatted_item.original_price }}</del>
+                                          <br>
+                                          <span class="text-success">
+                                              ₹{{ formatted_item.discounted_price }}
+                                              <small>({{ formatted_item.discount_info.percentage }}% {{ formatted_item.discount_info.type }})</small>
+                                          </span>
+                                      {% else %}
+                                          ₹{{ formatted_item.original_price }}
+                                      {% endif %}
+                                  </td>
+                            
+                                    <td class="quantity">
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <button class="btn btn-outline-secondary quantity-left-minus" type="button" data-cart-id="{{ formatted_item.cart_item.id }}">-</button>
+                                            </div>
+                                            <input type="number" 
+                                                   name="quantity" 
+                                                   class="form-control text-center quantity-input" 
+                                                   value="{{ formatted_item.cart_item.quantity }}" 
+                                                   min="1" 
+                                                   max="100" 
+                                                   data-cart-id="{{ formatted_item.cart_item.id }}"
+                                                   onchange="updateCartQuantity(this)">
+                                            <div class="input-group-append">
+                                                <button class="btn btn-outline-secondary quantity-right-plus" type="button" data-cart-id="{{ formatted_item.cart_item.id }}">+</button>
+                                            </div>
+                                            <div id="warning-container-{{ formatted_item.cart_item.id }}"></div>
+                                        </div>
+                                    </td>
+                                    <td class="total">₹{{ formatted_item.item_total }}</td>
+                                    {% comment %} <td class="total">₹{{ formatted_item.cart_item.total_price|floatformat:2 }}</td> {% endcomment %}
                                 </tr>
-                            </thead>
-                            <tbody>
-                                {% comment %} {% url 'cart_remove' item.id %} {% endcomment %}
-                                {% comment %} {% for item in cart_items %}
-                                    <tr class="text-center">
-                                        <td class="product-remove">
-                                            <a href="#" class="remove-item" data-cart-id = "{{ item.id }}">
-                                              <span class="ion-ios-close"></span></a>
-                                        </td>
-
-                                        <td class="image-prod">
-                                            {% if item.product.images.exists %}
-                                                <div class="img" style="background-image:url('{{ item.product.images.first.images.url }}');"></div>
-                                            {% endif %}
-                                        </td>       
-
-                                        <td class="product-name">
-                                            <h3>{{ item.product.name }}</h3>
-                                            <p>{{ item.product.description }}</p>
-                                        </td>
-                                        <td class="price">₹{{ item.product.base_price }}</td>
-                                       
-
-                                            <td class="quantity">
-                                              <div class="input-group mb-3">
-                                                  <div class="input-group-prepend">
-                                                      <button class="btn btn-outline-secondary quantity-left-minus" type="button" data-cart-id="{{ item.id }}">-</button>
-                                                  </div>
-                                                  <input type="number" 
-                                                         name="quantity" 
-                                                         class="form-control text-center quantity-input" 
-                                                         value="{{ item.quantity }}" 
-                                                         min="1" 
-                                                         max="100" 
-                                                         data-cart-id="{{ item.id }}"
-                                                         onchange="updateCartQuantity(this)">
-                                                  <div class="input-group-append">
-                                                      <button class="btn btn-outline-secondary quantity-right-plus" type="button" data-cart-id="{{ item.id }}">+</button>
-                                                  </div>
-                                                  <div id="warning-container-{{ item.id }}"></div>
-                                              </div>
-                                          </td>
-
-                                          
-                                        </td>
-                                        <td class="total">₹{{ item.total_price }}</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody> {% endcomment %}
-                            <tbody>
-                              {% for formatted_item in cart_items %}
-                                  <tr class="text-center">
-                                      <td class="product-remove">
-                                          <a href="#" class="remove-item" data-cart-id="{{ formatted_item.cart_item.id }}">
-                                              <span class="ion-ios-close"></span>
-                                          </a>
-                                      </td>
-                              
-                                      <td class="image-prod">
-                                          {% if formatted_item.cart_item.product.images.exists %}
-                                              <div class="img" style="background-image:url('{{ formatted_item.cart_item.product.images.first.images.url }}');"></div>
-                                          {% endif %}
-                                      </td>
-                              
-                                      <td class="product-name">
-                                          <h3>{{ formatted_item.cart_item.product.name }}</h3>
-                                          <p>{{ formatted_item.variant_display }}{{ formatted_item.variant_unit }}</p>
-                                          <p>{{ formatted_item.cart_item.product.description }}</p>
-                                      </td>
-                                      
-                                      <td class="price">₹{{ formatted_item.cart_item.product.base_price }}</td>
-                              
-                                      <td class="quantity">
-                                          <div class="input-group mb-3">
-                                              <div class="input-group-prepend">
-                                                  <button class="btn btn-outline-secondary quantity-left-minus" type="button" data-cart-id="{{ formatted_item.cart_item.id }}">-</button>
-                                              </div>
-                                              <input type="number" 
-                                                     name="quantity" 
-                                                     class="form-control text-center quantity-input" 
-                                                     value="{{ formatted_item.cart_item.quantity }}" 
-                                                     min="1" 
-                                                     max="100" 
-                                                     data-cart-id="{{ formatted_item.cart_item.id }}"
-                                                     onchange="updateCartQuantity(this)">
-                                              <div class="input-group-append">
-                                                  <button class="btn btn-outline-secondary quantity-right-plus" type="button" data-cart-id="{{ formatted_item.cart_item.id }}">+</button>
-                                              </div>
-                                              <div id="warning-container-{{ formatted_item.cart_item.id }}"></div>
-                                          </div>
-                                      </td>
-                              
-                                      <td class="total">₹{{ formatted_item.cart_item.total_price|floatformat:2 }}</td>
-                                  </tr>
-                              {% endfor %}
-                            </tbody>
-                            
-                            
+                            {% endfor %}
+                          </tbody>
+                          
+                          
 
 
 
-                        </table>
-                    </div>
-                </div>
-            </div>
-    
-            <div class="row justify-content-end">
-                <div class="col-lg-4 mt-5 cart-wrap ftco-animate">
-                    <div class="cart-total mb-3">
-                        <h3>Coupon Code</h3>
-                        <p>Enter your coupon code if you have one</p>
-                        <form id="coupon-form" class="info">
-                          {% csrf_token %}
-                            <div class="form-group">
-                                <label for="">Coupon code</label>
-                                <input type="text" id="coupon-input" name="coupon_code" class="form-control text-left px-3" placeholder="Enter coupon code">
-                                <div id="coupon-message" class="mt-2"></div>
-                            </div>
-                        </form>
-                    </div>
-                    <button type="button" onclick="applyCoupon()" class="btn btn-primary py-2 px-3">Apply Coupon</button>
-                </div>
+                      </table>
+                  </div>
+              </div>
+          </div>
+  
+          <div class="row justify-content-end">
+              <div class="col-lg-4 mt-5 cart-wrap ftco-animate">
+                  <div class="cart-total mb-3">
+                      <h3>Coupon Code</h3>
+                      <p>Enter your coupon code if you have one</p>
+                      <form id="coupon-form" class="info">
+                        {% csrf_token %}
+                          <div class="form-group">
+                              <label for="">Coupon code</label>
+                              <input type="text" id="coupon-input" name="coupon_code" class="form-control text-left px-3" placeholder="Enter coupon code">
+                              <div id="coupon-message" class="mt-2"></div>
+                          </div>
+                      </form>
+                  </div>
+                  <button type="button" onclick="applyCoupon()" class="btn btn-primary py-2 px-3">Apply Coupon</button>
+              </div>
 
-                
-                <div class="col-lg-4 mt-5 cart-wrap ftco-animate">
-                    <div class="cart-total mb-3">
-                        <h3>Cart Totals</h3>
-                        <p class="d-flex">
-                            <span>Subtotal</span>
-                            <span>₹{{ cart_total|floatformat:2  }}</span>
-                        </p>
-                        <p class="d-flex">
-                            <span>Delivery</span>
-                            <span>₹10.00</span>
-                        </p>
-                        <p class="d-flex" id="discount-row" style="display: {% if cart_total > 0 %}block{% else %}none{% endif %};">
-                          <span>Discount</span>
-                          <span id="discount-amount">₹0.00</span>
+              
+             <div class="col-lg-4 mt-5 cart-wrap ftco-animate">
+                  <div class="cart-total mb-3">
+                      <h3>Cart Totals</h3>
+                     <p class="d-flex">
+                          <span>Subtotal</span>
+                          <span>₹{{ cart_subtotal|floatformat:2  }}</span>
                       </p>
-                        <hr>
-                        <p class="d-flex total-price">
-                          <span>Total</span>
-                          <span id="total-amount">₹{{ cart_total|floatformat:2  }}</span>
+                      <p class="d-flex">
+                          <span>Delivery</span>
+                          <span>₹10.00</span>
                       </p>
-                    </div>
+                      <p class="d-flex" id="discount-row" style="display: {% if cart_total > 0 %}block{% else %}none{% endif %};">
+                        <span>Discount</span>
+                        <span id="discount-amount">₹0.00</span>
+                    </p>
+                      <hr>
+                      <p class="d-flex total-price">
+                        <span>Total</span>
+                        <span id="total-amount">₹{{ cart_total|floatformat:2  }}</span>
+                    </p> 
+
+        
 
 
 
 
-                    {% comment %} <p><a href="{% url 'checkout' %}" class="btn btn-primary py-3 px-4">Proceed to Checkout</a></p> {% endcomment %}
-
-    {% if cart_empty %}
-    <p>
-        <button onclick="showEmptyCartAlert()" class="btn btn-primary py-3 px-4">
-            Proceed to Checkout
-        </button>
-    </p>
-    {% else %}
-    <p>
-        <a href="{% url 'checkout' %}" class="btn btn-primary py-3 px-4">
-            Proceed to Checkout
-        </a>
-    </p>
-    {% endif %}
-
-
+  {% if cart_empty %}
+  <p>
+      <button onclick="showEmptyCartAlert()" class="btn btn-primary py-3 px-4">
+          Proceed to Checkout
+      </button>
+  </p>
+  {% else %}
+  <p>
+      <a href="{% url 'checkout' %}" class="btn btn-primary py-3 px-4">
+          Proceed to Checkout
+      </a>
+  </p>
+  {% endif %}
+              </div>
+          </div> 
 
 
-                </div>
-            </div>
-        </div>
-    </section>
+          
+
+
+
+
+
+      </div>
+  </section>
     
 
 		<section class="ftco-section ftco-no-pt ftco-no-pb py-5 bg-light">
@@ -413,31 +382,120 @@
 
 
 
+// JavaScript for handling quantity updates
+function updateCartQuantity(element) {
+  const cartId = element.getAttribute('data-cart-id');
+  const quantity = parseInt(element.value);
+  const warningContainer = document.getElementById(`warning-container-${cartId}`);
+  
+  // Clear any previous warnings
+  warningContainer.innerHTML = '';
+  
+  fetch(`/update-cart-quantity/${cartId}/`, {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: JSON.stringify({
+          quantity: quantity
+      })
+  })
+  .then(response => response.json())
+  .then(data => {
+      if (data.success) {
+          // Update item total
+          const row = element.closest('tr');
+          const totalCell = row.querySelector('.total');
+          const priceCell = row.querySelector('.price');
+          
+          // Get the current price (handle both discounted and regular prices)
+          let currentPrice = parseFloat(priceCell.textContent.replace('₹', ''));
+          if (priceCell.querySelector('span')) {
+              // If there's a discount, use the discounted price
+              currentPrice = parseFloat(priceCell.querySelector('span').textContent.replace('₹', ''));
+          }
+          
+          // Calculate new total for this item
+          const newItemTotal = (currentPrice * quantity).toFixed(2);
+          totalCell.textContent = `₹${newItemTotal}`;
+          
+          // Update cart subtotal
+          updateCartTotals(data);
+          
+      } else {
+          warningContainer.innerHTML = `<div class="text-danger">${data.message}</div>`;
+          // Reset quantity if there was an error
+          element.value = element.defaultValue;
+      }
+  })
+  .catch(error => {
+      console.error('Error:', error);
+      warningContainer.innerHTML = '<div class="text-danger">An error occurred</div>';
+      element.value = element.defaultValue;
+  });
+}
+
+function updateCartTotals(data) {
+  // Update subtotal
+  const subtotalElement = document.getElementById('cart-subtotal');
+  if (subtotalElement) {
+      subtotalElement.textContent = `₹${data.cart_subtotal.toFixed(2)}`;
+  }
+  
+  // Update total discount if it exists
+  const discountElement = document.getElementById('total-discount');
+  if (discountElement && data.total_discount !== undefined) {
+      discountElement.textContent = `₹${data.total_discount.toFixed(2)}`;
+  }
+  
+  // Update final total
+  const totalElement = document.getElementById('cart-total');
+  if (totalElement) {
+      totalElement.textContent = `₹${data.cart_total.toFixed(2)}`;
+  }
+}
+
+// Event listeners for plus/minus buttons
 $(document).ready(function(){
-  // Plus button click handler
   $('.quantity-right-plus').click(function(e){
       e.preventDefault();
       const inputElement = $(this).closest('.input-group').find('.quantity-input');
       let currentValue = parseInt(inputElement.val());
       
-      if (currentValue < 100) {  // Max limit of 100
+      if (currentValue < 100) {
           inputElement.val(currentValue + 1);
           updateCartQuantity(inputElement[0]);
       }
   });
 
-  // Minus button click handler
   $('.quantity-left-minus').click(function(e){
       e.preventDefault();
       const inputElement = $(this).closest('.input-group').find('.quantity-input');
       let currentValue = parseInt(inputElement.val());
       
-      if (currentValue > 1) {  // Min limit of 1
+      if (currentValue > 1) {
           inputElement.val(currentValue - 1);
           updateCartQuantity(inputElement[0]);
       }
   });
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% comment %} ---------above------------------------------------------------------------------------------------------------------ {% endcomment %}
+
 
 function updateCartQuantity(inputElement) {
   const cartId = inputElement.getAttribute('data-cart-id');
@@ -501,7 +559,6 @@ function updateCartQuantity(inputElement) {
       alert("An error occurred while updating the cart.");
   });
 }
-
 
 
 

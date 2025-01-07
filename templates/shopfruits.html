@@ -263,8 +263,8 @@
                                 {% else %}
                                 <span class="text-danger mx-1">Out of Stock</span>
                                 {% endif %}
-                                <a href="#" class="heart d-flex justify-content-center align-items-center">
-                                    <span><i class="ion-ios-heart"></i></span>
+                                <a href="#" class="heart add-to-wishlist-btn d-flex justify-content-center align-items-center" data-product-id="{{ product.id }}">
+                                  <span><i class="ion-ios-heart"></i></span>
                                 </a>
                             </div>
                         </div>
@@ -423,3 +423,62 @@
     
   </body>
 </html>
+
+
+
+<script>
+  $(document).on('click', '.add-to-cart-btn', function(e) {
+      e.preventDefault(); // Prevents the default anchor link behavior (no page reload)
+      
+      let productId = $(this).data('product-id'); // Gets the product ID from the button's data attribute
+      
+      // Sends an Ajax POST request to add the product to the cart
+      $.ajax({
+          url: "{% url 'add_to_cart_ajax' %}", // The URL where the request will be sent
+          method: "POST", // HTTP method: POST
+          data: {
+              'product_id': productId, // The data being sent to the server (product ID)
+              'csrfmiddlewaretoken': '{{ csrf_token }}' // Django CSRF token for security
+          },
+          success: function(response) { // If the request is successful
+              if (response.success) {
+                  alert(response.message); // Show success message
+              } else {
+                  alert(response.error); // Show error message
+              }
+          },
+          error: function(xhr) { // If there is an error with the request
+              alert("An error occurred. Please try again.");
+          }
+      });
+  });
+
+
+
+
+  $(document).ready(function () {
+    $(".add-to-wishlist-btn").click(function (e) {
+        e.preventDefault();  // Prevent default anchor click behavior
+
+        const productId = $(this).data("product-id");
+
+        $.ajax({
+            url: "{% url 'add_to_wishlist' %}",
+            type: "POST",
+            data: {
+                product_id: productId,
+                csrfmiddlewaretoken: "{{ csrf_token }}",  // Ensure CSRF token is included
+            },
+            success: function (response) {
+                alert(response.message);  // Show success message
+            },
+            error: function (xhr) {
+                alert(xhr.responseJSON.message);  // Show error message
+            },
+        });
+    });
+});
+
+
+
+</script>

@@ -266,8 +266,8 @@
                                 {% else %}
                                 <span class="text-danger mx-1">Out of Stock</span>
                                 {% endif %}
-                                <a href="#" class="heart d-flex justify-content-center align-items-center">
-                                    <span><i class="ion-ios-heart"></i></span>
+                                <a href="#" class="heart add-to-wishlist-btn d-flex justify-content-center align-items-center" data-product-id="{{ product.id }}">
+                                  <span><i class="ion-ios-heart"></i></span>
                                 </a>
                             </div>
                         </div>
@@ -426,3 +426,38 @@
     
   </body>
 </html>
+
+
+
+<script>
+  
+
+
+
+
+  $(document).ready(function () {
+    $(".add-to-wishlist-btn").click(function (e) {
+        e.preventDefault();  // Prevent default anchor click behavior
+
+        const productId = $(this).data("product-id");
+
+        $.ajax({
+            url: "{% url 'add_to_wishlist' %}",
+            type: "POST",
+            data: {
+                product_id: productId,
+                csrfmiddlewaretoken: "{{ csrf_token }}",  // Ensure CSRF token is included
+            },
+            success: function (response) {
+                alert(response.message);  // Show success message
+            },
+            error: function (xhr) {
+                alert(xhr.responseJSON.message);  // Show error message
+            },
+        });
+    });
+});
+
+
+
+</script>

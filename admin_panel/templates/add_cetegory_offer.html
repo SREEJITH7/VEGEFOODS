@@ -75,3 +75,70 @@
 </div>
 
 {% endblock %}
+
+
+
+
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('offerForm');
+        const discountPercentage = document.getElementById('discountPercentage');
+        const startDate = document.getElementById('startDate');
+        const endDate = document.getElementById('endDate');
+    
+        // Client-side validations
+        form.addEventListener('submit', function(event) {
+            // Reset previous error messages
+            document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+    
+            let isValid = true;
+    
+            // Offer Name Validation
+            const offerName = document.getElementById('offerName');
+            if (!offerName.value.trim()) {
+                document.getElementById('offerNameError').textContent = 'Offer name is required';
+                isValid = false;
+            }
+    
+            // Discount Percentage Validation
+            if (discountPercentage.value < 0 || discountPercentage.value > 100) {
+                document.getElementById('discountPercentageError').textContent = 'Discount must be between 0 and 100';
+                isValid = false;
+            }
+    
+            // Date Validations
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const start = new Date(startDate.value);
+            const end = new Date(endDate.value);
+    
+            if (start < today) {
+                document.getElementById('startDateError').textContent = 'Start date must be today or later';
+                isValid = false;
+            }
+    
+            if (end < start) {
+                document.getElementById('endDateError').textContent = 'End date must be after start date';
+                isValid = false;
+            }
+    
+            // Prevent form submission if validation fails
+            if (!isValid) {
+                event.preventDefault();
+            }
+        });
+    
+        // Optional: Add real-time validation
+        discountPercentage.addEventListener('input', function() {
+            const error = document.getElementById('discountPercentageError');
+            if (this.value < 0 || this.value > 90) {
+                error.textContent = 'Discount must be between 0 and 90';
+            } else {
+                error.textContent = '';
+            }
+        });
+    });
+    </script>
+    {% endblock %}
