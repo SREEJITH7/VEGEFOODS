@@ -2678,56 +2678,7 @@ def order_details(request):
     return render(request, 'user_order_details.html', {'orders': user_orders})
 
 
-# @login_required
-# def retry_payment(request, order_id):
-#     try:
-#         order = get_object_or_404(Order, id=order_id, user=request.user)
 
-#         if not order.can_retry_payment():
-#             messages.error(request, "Payment retry window has expired")
-#             return JsonResponse({
-#                 'error': 'Payment retry window has expired'
-#             }, status=400)
-
-#         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
-
-#         payment_data = {
-#             'amount': int(order.total_amount * 100),
-#             'currency': 'INR',
-#             'receipt': str(order.id)
-#         }
-
-#         try:
-#             payment = client.order.create(data=payment_data)
-#             order.razorpay_order_id = payment['id']
-#             order.save()
-
-#             context = {
-#                 'order': order.id,
-#                 'razorpay_key': settings.RAZORPAY_KEY_ID,
-#                 'razorpay_order_id': payment['id'],
-#                 'amount': int(order.total_amount * 100),
-#                 'success': True
-#             }
-
-#             return JsonResponse(context)
-
-#         except razorpay.errors.BadRequestError as e:
-#             return JsonResponse({
-#                 'error': 'Failed to create Razorpay order',
-#                 'details': str(e)
-#             }, status=400)
-
-#     except Order.DoesNotExist:
-#         return JsonResponse({
-#             'error': 'Order not found'
-#         }, status=404)
-
-#     except Exception as e:
-#         return JsonResponse({
-#             'error': 'An unexpected error occurred',
-#             'details': str(e)
-#         }, status=500)
     
 
 
@@ -2833,20 +2784,6 @@ def retry_payment(request, order_id):
         'message': 'Invalid request method'
     }, status=405)
 
-# @login_required
-# def single_order_detail(request, order_id):
-#     # Fetch the specific order for the user
-#     order = get_object_or_404(Order, id=order_id, user=request.user)
-#     order_items = order.order_items.prefetch_related('product__images')
-
-#     for item in order_items:
-#         item.primary_image = item.product.images.filter(is_primary=True).first()
-
-#     context = {
-#         'order': order,
-#         'order_items': order_items,
-#     }
-#     return render(request, 'single_order_details.html', context)
 
 
 
@@ -2978,16 +2915,6 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from decimal import Decimal
 # -------------------------------- below working def ------------------------------------
-# @login_required
-# def wallet(request):
-#     # Get the logged-in user's wallet
-#     user_wallet = Wallet.objects.filter(user=request.user).first()
-
-#     # Check if the wallet exists; if not, set balance to 0
-#     wallet_balance = user_wallet.balance if user_wallet else Decimal('0.00')
-
-#     # Pass the balance to the template
-#     return render(request, 'User_wallet.html', {'wallet_balance': wallet_balance})
 
 import razorpay
 from django.conf import settings
@@ -3222,6 +3149,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 import os
 
+
 # def generate_invoice(request, order_id):
 #     try:
 #         # Fetch the order details
@@ -3240,7 +3168,7 @@ import os
 
 #         # Title and Header
 #         p.setFont("Helvetica-Bold", 24)
-#         p.drawCentredString(width / 2, height - 30, "Vegeefoods")
+#         p.drawCentredString(width / 2, height - 30, "VEGEFOODS")
 #         p.setFont("Helvetica-Bold", 14)
 #         p.drawCentredString(width / 2, height - 60, f"Invoice for Order-{order_id}")
 
@@ -3263,28 +3191,24 @@ import os
 #         p.drawString(500, y, "Price")
 #         y -= 20
 
-#         # Order Items
+#         # Order Items with fixed variant display
 #         p.setFont("Helvetica", 10)
 #         for item in order_items:
 #             product_name = item.product.name
-
-#             # variant_info = f"({item.variant.display_name})" if item.variant else ""
-
+            
+#             # Use the display_name property from Variant model
 #             if item.variant:
-#                 if item.variant.category == 'WEIGHT':
-#                     variant_info = f"{item.variant.get_weight_display()}"
-#                 elif item.variant.category == 'VOLUME':
-#                     variant_info = f"{item.variant.get_volume_display()}"
-#                 else:
-#                     variant_info = item.variant.variant_name or "Standard"
+#                 variant_info = item.variant.display_name
 #             else:
-#                 variant_info = "Standard"
-
-
+#                 # Check if product has a default variant
+#                 default_variant = item.product.get_default_variant()
+#                 variant_info = default_variant.display_name if default_variant else "Standard"
+            
+#             # Draw item information
 #             p.drawString(100, y, f"{product_name}")
-#             p.drawString(300, y, f"{variant_info}")
+#             p.drawString(300, y, variant_info)
 #             p.drawString(400, y, f"{item.quantity}")
-#             p.drawString(500, y, f"₹{item.total_price}")
+#             p.drawString(500, y, f"Rs.{item.total_price}")
 #             y -= 20
 
 #         # Line Separator
@@ -3356,20 +3280,61 @@ import os
 #     except Order.DoesNotExist:
 #         return HttpResponse('Order not found.', status=404)
 #     except Exception as e:
-#         return HttpResponse(f'Error generating invoice: {str(e)}', status=500) 
+#         return HttpResponse(f'Error generating invoice: {str(e)}', status=500)
 
 
 
+
+
+
+@user_required
 def generate_invoice(request, order_id):
     try:
-        # Fetch the order details
-        order = Order.objects.get(id=order_id)
-        order_items = order.order_items.all()
+        # Fetch the order with related data
+        order = Order.objects.select_related('user', 'address').get(id=order_id)
+        order_items = order.order_items.select_related('product', 'variant', 'product__catogery').all()
 
-        # Calculate total and any refunds
-        total_product_amount = sum(item.total_price for item in order_items)
-        refunded_amount = sum(item.total_price for item in order_items if item.is_cancelled)
-        remaining_amount = total_product_amount - refunded_amount
+        # Calculate totals using the same logic as checkout
+        cart_subtotal = Decimal('0')
+        total_discount = Decimal('0')
+        
+        # Calculate item-wise totals and discounts
+        item_details = []
+        for item in order_items:
+            # Get base price from variant or product
+            item_price = item.variant.variant_price if item.variant else item.product.base_price
+            
+            # Calculate best discount
+            best_discount = calculate_best_discount(item.product, item_price)
+            item_discount = Decimal(str(best_discount['amount'])) if best_discount else Decimal('0')
+            
+            # Calculate final price for item
+            discounted_price = item_price - item_discount
+            item_total = discounted_price * item.quantity
+            
+            # Add to running totals
+            cart_subtotal += item_total
+            total_discount += (item_discount * item.quantity)
+            
+            # Store item details for display
+            item_details.append({
+                'item': item,
+                'original_price': item_price,
+                'discounted_price': discounted_price,
+                'total': item_total,
+                'discount': item_discount * item.quantity
+            })
+
+        # Fixed delivery charge
+        delivery_charge = Decimal('10')
+        final_total = cart_subtotal + delivery_charge
+
+        # Calculate refund if any
+        refunded_amount = sum(
+            detail['total'] for detail in item_details 
+            if detail['item'].is_cancelled
+        )
+        remaining_amount = final_total - refunded_amount
 
         # Create PDF
         buffer = BytesIO()
@@ -3389,87 +3354,104 @@ def generate_invoice(request, order_id):
             f"Shipping Address: {order.address.street_address}, {order.address.city}, {order.address.state} - {order.address.postal_code}")
 
         # Line Separator
-        p.setLineWidth(1)
         p.line(50, height - 120, width - 50, height - 120)
 
         # Order Items Header
         y = height - 150
         p.setFont("Helvetica-Bold", 12)
-        p.drawString(100, y, "Product")
-        p.drawString(300, y, "Variant")
-        p.drawString(400, y, "Quantity")
-        p.drawString(500, y, "Price")
+        p.drawString(50, y, "Product")
+        p.drawString(200, y, "Variant")
+        p.drawString(300, y, "Qty")
+        p.drawString(350, y, "Price")
+        p.drawString(420, y, "Discount")
+        p.drawString(500, y, "Total")
         y -= 20
 
-        # Order Items with fixed variant display
+        # Order Items
         p.setFont("Helvetica", 10)
-        for item in order_items:
+        for detail in item_details:
+            item = detail['item']
             product_name = item.product.name
             
-            # Use the display_name property from Variant model
+            # Get variant display info
             if item.variant:
                 variant_info = item.variant.display_name
             else:
-                # Check if product has a default variant
                 default_variant = item.product.get_default_variant()
                 variant_info = default_variant.display_name if default_variant else "Standard"
             
             # Draw item information
-            p.drawString(100, y, f"{product_name}")
-            p.drawString(300, y, variant_info)
-            p.drawString(400, y, f"{item.quantity}")
-            p.drawString(500, y, f"Rs.{item.total_price}")
+            p.drawString(50, y, f"{product_name}")
+            p.drawString(200, y, variant_info)
+            p.drawString(300, y, f"{item.quantity}")
+            p.drawString(350, y, f"₹{detail['original_price']:.2f}")
+            p.drawString(420, y, f"₹{detail['discount']:.2f}")
+            p.drawString(500, y, f"₹{detail['total']:.2f}")
             y -= 20
 
         # Line Separator
         p.line(50, y, width - 50, y)
         y -= 20
 
-        # Payment Details
+        # Summary Section
         p.setFont("Helvetica-Bold", 12)
-        p.drawString(100, y, "Payment Method:")
-        p.setFont("Helvetica", 12)
-        p.drawString(300, y, f"{order.get_payment_method_display()}")
+        p.drawString(300, y, "Order Summary")
         y -= 20
 
-        # Payment Status
-        p.setFont("Helvetica-Bold", 12)
-        p.drawString(100, y, "Payment Status:")
+        # Subtotal
         p.setFont("Helvetica", 12)
-        p.drawString(300, y, f"{order.get_payment_status_display()}")
+        p.drawString(300, y, "Subtotal:")
+        p.drawString(500, y, f"₹{cart_subtotal:.2f}")
         y -= 20
 
-        # Total Amount
+        # Total Discount
+        if total_discount > 0:
+            p.drawString(300, y, "Total Discount:")
+            p.drawString(500, y, f"₹{total_discount:.2f}")
+            y -= 20
+
+        # Delivery Charge
+        p.drawString(300, y, "Delivery Charge:")
+        p.drawString(500, y, f"₹{delivery_charge:.2f}")
+        y -= 20
+
+        # Final Total
         p.setFont("Helvetica-Bold", 12)
-        p.drawString(100, y, "Total Amount:")
-        p.setFont("Helvetica", 12)
-        p.drawString(300, y, f"₹{total_product_amount}")
+        p.drawString(300, y, "Total Amount:")
+        p.drawString(500, y, f"₹{final_total:.2f}")
         y -= 20
 
         # Refunded Amount (if any)
         if refunded_amount > 0:
+            p.setFont("Helvetica", 12)
+            p.drawString(300, y, "Refunded Amount:")
+            p.drawString(500, y, f"₹{refunded_amount:.2f}")
+            y -= 20
+
             p.setFont("Helvetica-Bold", 12)
-            p.drawString(100, y, "Refunded Amount:")
-            p.setFont("Helvetica", 12)
-            p.drawString(300, y, f"₹{refunded_amount}")
+            p.drawString(300, y, "Final Amount:")
+            p.drawString(500, y, f"₹{remaining_amount:.2f}")
             y -= 20
 
-            p.drawString(100, y, "Final Amount:")
-            p.drawString(300, y, f"₹{remaining_amount}")
-            y -= 20
-
-        # Order Status
-        p.setFont("Helvetica-Bold", 12)
-        p.drawString(100, y, "Order Status:")
-        p.setFont("Helvetica", 12)
-        p.drawString(300, y, f"{order.get_order_status_display()}")
+        # Payment Details
         y -= 20
+        p.setFont("Helvetica-Bold", 12)
+        p.drawString(50, y, "Payment Details")
+        y -= 20
+        
+        p.setFont("Helvetica", 12)
+        p.drawString(50, y, f"Payment Method: {order.get_payment_method_display()}")
+        y -= 20
+        p.drawString(50, y, f"Payment Status: {order.get_payment_status_display()}")
+        y -= 20
+        p.drawString(50, y, f"Order Status: {order.get_order_status_display()}")
 
+        # Cancellation Details if applicable
         if order.is_canceled:
-            p.setFont("Helvetica", 12)
-            p.drawString(100, y, f"Canceled on: {order.cancel_date}")
-            p.drawString(100, y - 20, f"Reason: {order.cancel_description}")
-            y -= 40
+            y -= 20
+            p.drawString(50, y, f"Canceled on: {order.cancel_date}")
+            y -= 20
+            p.drawString(50, y, f"Reason: {order.cancel_description}")
 
         # Footer
         p.setFont("Helvetica", 10)
@@ -3479,7 +3461,7 @@ def generate_invoice(request, order_id):
         p.save()
         buffer.seek(0)
 
-        # Create the HTTP response with PDF content
+        # Create the HTTP response
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="invoice_{order_id}.pdf"'
         response.write(buffer.getvalue())
@@ -3490,93 +3472,12 @@ def generate_invoice(request, order_id):
     except Order.DoesNotExist:
         return HttpResponse('Order not found.', status=404)
     except Exception as e:
+        logger.error(f"Error generating invoice: {traceback.format_exc()}")
         return HttpResponse(f'Error generating invoice: {str(e)}', status=500)
-
-
 # ------ withdrawal ------------------------------------------------------------------
 
 
 
-# @login_required
-# def request_withdrawal(request):
-#     if request.method == 'POST':
-#         try:
-#             data = json.loads(request.body)
-#             amount = Decimal(data.get('amount'))
-#             bank_account = data.get('bank_account')
-#             ifsc_code = data.get('ifsc_code')
-#             account_holder = data.get('account_holder')
-
-#             # Validate amount
-#             if amount <= 0:
-#                 return JsonResponse({
-#                     'status': 'error',
-#                     'message': 'Invalid withdrawal amount'
-#                 }, status=400)
-
-#             # Get user's wallet
-#             wallet = Wallet.objects.get(user=request.user)
-
-#             # Check if user has sufficient balance
-#             if wallet.balance < amount:
-#                 return JsonResponse({
-#                     'status': 'error',
-#                     'message': 'Insufficient balance'
-#                 }, status=400)
-
-#             # Create withdrawal request
-#             withdrawal = WalletWithdrawal.objects.create(
-#                 user=request.user,
-#                 wallet=wallet,
-#                 amount=amount,
-#                 bank_account_number=bank_account,
-#                 bank_ifsc_code=ifsc_code,
-#                 account_holder_name=account_holder,
-#                 reference_id=f"WD-{uuid.uuid4().hex[:8].upper()}"
-#             )
-
-#             # Create corresponding transaction
-#             WalletTransaction.objects.create(
-#                 wallet=wallet,
-#                 transaction_type='DEBIT',
-#                 amount=amount,
-#                 payment_method='BANK_TRANSFER',
-#                 withdrawal=withdrawal
-#             )
-
-#             # Update wallet balance
-#             wallet.update_balance()
-
-#             return JsonResponse({
-#                 'status': 'success',
-#                 'message': 'Withdrawal request submitted successfully',
-#                 'withdrawal_id': withdrawal.reference_id,
-#                 'new_balance': float(wallet.balance)
-#             })
-
-#         except Wallet.DoesNotExist:
-#             return JsonResponse({
-#                 'status': 'error',
-#                 'message': 'Wallet not found'
-#             }, status=404)
-#         except Exception as e:
-#             return JsonResponse({
-#                 'status': 'error',
-#                 'message': str(e)
-#             }, status=400)
-    
-#     elif request.method == 'GET':
-#         user_wallet = Wallet.objects.get(user=request.user)
-#         withdrawals = WalletWithdrawal.objects.filter(user=request.user).order_by('-created_at')
-        
-#         context = {
-#             'wallet_balance': user_wallet.balance,
-#             'withdrawals': withdrawals,
-#             'min_withdrawal': 100,  # You can set your minimum withdrawal amount
-#             'max_withdrawal': user_wallet.balance  # Maximum they can withdraw is their balance
-#         }
-        
-#         return render(request, 'User_wallet', context)
 
 
 
@@ -3587,81 +3488,9 @@ def request_withdrawal(request):
 
 
 
-# @login_required
-# def process_withdrawal(request):
-#     if request.method == 'POST':
-#         try:
-#             amount = Decimal(request.POST.get('amount'))
-#             account_holder = request.POST.get('account_holder_name')
-#             account_number = request.POST.get('bank_account_number')
-#             ifsc_code = request.POST.get('bank_ifsc_code')
-#             remarks = request.POST.get('remarks', '')
-
-#             # Get user's wallet
-#             wallet = request.user.wallet
-
-#             # Check if amount is valid
-#             if amount <= 0:
-#                 return JsonResponse({
-#                     'status': 'error',
-#                     'message': 'Invalid withdrawal amount'
-#                 })
-
-#             # Check if user has sufficient balance
-#             if amount > wallet.balance:
-#                 return JsonResponse({
-#                     'status': 'error',
-#                     'message': 'Insufficient wallet balance'
-#                 })
-
-#             # Create withdrawal request
-#             withdrawal = WalletWithdrawal.objects.create(
-#                 user=request.user,
-#                 wallet=wallet,
-#                 amount=amount,
-#                 bank_account_number=account_number,
-#                 bank_ifsc_code=ifsc_code,
-#                 account_holder_name=account_holder,
-#                 reference_id=str(uuid.uuid4()),
-#                 remarks=remarks
-#             )
-
-#             # Create wallet transaction
-#             WalletTransaction.objects.create(
-#                 wallet=wallet,
-#                 amount=amount,
-#                 transaction_type='DEBIT',
-#                 payment_method='BANK_TRANSFER' 
-#             )
-
-#             # Update wallet balance
-#             wallet.update_balance()
-
-#             return JsonResponse({
-#                 'status': 'success',
-#                 'message': 'Your withdrawal request has been submitted successfully',
-#                 'new_balance': str(wallet.balance)
-#             })
-
-#         except Exception as e:
-#             return JsonResponse({
-#                 'status': 'error',
-#                 'message': str(e)
-#             })
-
-#     return JsonResponse({
-#         'status': 'error',
-#         'message': 'Invalid request method'
-#     })
 
 
 
-
-
-
-import logging
-
-logger = logging.getLogger(__name__)
 
 @user_required
 def process_withdrawal(request):
