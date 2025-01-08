@@ -257,33 +257,39 @@ ACCOUNT_FORMS = {
 RAZORPAY_KEY_ID = env('RAZORPAY_KEY_ID')
 RAZORPAY_KEY_SECRET = env('RAZORPAY_KEY_SECRET')
 
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'level': 'ERROR',
         },
-    },
-    'root': {
-        'handlers': ['console'],
-        'level': 'ERROR',
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': '/home/ubuntu/vegefoods/VEGEFOODS/debug.log',
+            'formatter': 'verbose',
+            'level': 'DEBUG',
+        },
     },
     'loggers': {
         'django': {
-            'handlers': ['console'],
+            'handlers': ['console', 'file'],
             'level': 'ERROR',
             'propagate': False,
         },
         '': {  # Root logger
-            'handlers': ['console'],
-            'level': 'ERROR',
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',  # This will capture all DEBUG level logs
         },
     },
 }
-
-
 
 
 
