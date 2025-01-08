@@ -1894,14 +1894,62 @@ logger = logging.getLogger(__name__)
 
 
 
+# @login_required
+# @transaction.atomic
+# def update_cart_quantity_ajax(request, cart_id):
+#     try:
+#         data = json.loads(request.body)
+#         quantity = int(data.get('quantity', 1))
+#         variant_id = data.get('variant_id')
+
+#         if quantity < 1:
+#             return JsonResponse({
+#                 'success': False,
+#                 'message': 'Quantity must be at least 1'
+#             }, status=400)
+
+#         cart_item = get_object_or_404(Cart, id=cart_id, user=request.user)
+        
+#         try:
+#             # Optional: Validate new variant if changed
+#             if variant_id and variant_id != cart_item.variant_id:
+#                 new_variant = get_object_or_404(Variant, id=variant_id, product=cart_item.product)
+#                 cart_item.variant = new_variant
+
+#             # Update quantity
+#             cart_item.quantity = quantity
+#             cart_item.save()
+
+#             # Recalculate totals
+#             cart_items = Cart.objects.filter(user=request.user)
+#             cart_total = sum(item.total_price for item in cart_items)
+
+#             return JsonResponse({
+#                 'success': True,
+#                 'cart_total': float(cart_total),
+#                 'item_total': float(cart_item.total_price),
+#                 'message': 'Cart updated successfully'
+#             })
+
+#         except ValidationError as e:
+#             return JsonResponse({
+#                 'success': False,
+#                 'message': str(e)
+#             }, status=400)
+
+#     except Exception as e:
+#         return JsonResponse({
+#             'success': False,
+#             'message': 'An error occurred while updating the cart'
+#         }, status=400)
+
 @login_required
 @transaction.atomic
 def update_cart_quantity_ajax(request, cart_id):
     try:
         data = json.loads(request.body)
         quantity = int(data.get('quantity', 1))
-        variant_id = data.get('variant_id')
-
+        
         if quantity < 1:
             return JsonResponse({
                 'success': False,
@@ -1910,40 +1958,61 @@ def update_cart_quantity_ajax(request, cart_id):
 
         cart_item = get_object_or_404(Cart, id=cart_id, user=request.user)
         
-        try:
-            # Optional: Validate new variant if changed
-            if variant_id and variant_id != cart_item.variant_id:
-                new_variant = get_object_or_404(Variant, id=variant_id, product=cart_item.product)
-                cart_item.variant = new_variant
+        # Update quantity
+        cart_item.quantity = quantity
+        cart_item.save()
 
-            # Update quantity
-            cart_item.quantity = quantity
-            cart_item.save()
+        # Get base price
+        item_price = cart_item.variant.variant_price if cart_item.variant else cart_item.product.base_price
+        
+        # Calculate best discount
+        best_discount = calculate_best_discount(cart_item.product, item_price)
+        item_discount = Decimal(str(best_discount['amount'])) if best_discount else Decimal('0')
+        
+        # Add coupon discount if any
+        coupon_discount = Decimal(str(cart_item.discount_amount)) if cart_item.applied_coupon else Decimal('0')
+        
+        # Calculate discounted price
+        discounted_price = item_price - item_discount - coupon_discount
+        item_total = discounted_price * quantity
 
-            # Recalculate totals
-            cart_items = Cart.objects.filter(user=request.user)
-            cart_total = sum(item.total_price for item in cart_items)
+        # Recalculate cart totals
+        cart_items = Cart.objects.filter(user=request.user)
+        cart_subtotal = sum(
+            (item.variant.variant_price if item.variant else item.product.base_price) * item.quantity
+            for item in cart_items
+        )
+        total_discount = Decimal('0')
+        coupon_discount = Decimal('0')
+        
+        for item in cart_items:
+            item_price = item.variant.variant_price if item.variant else item.product.base_price
+            best_disc = calculate_best_discount(item.product, item_price)
+            if best_disc:
+                total_discount += Decimal(str(best_disc['amount'])) * item.quantity
+            if item.applied_coupon:
+                coupon_discount += item.discount_amount * item.quantity
 
-            return JsonResponse({
-                'success': True,
-                'cart_total': float(cart_total),
-                'item_total': float(cart_item.total_price),
-                'message': 'Cart updated successfully'
-            })
+        delivery_charge = Decimal('10')
+        cart_total = cart_subtotal - total_discount - coupon_discount + delivery_charge
 
-        except ValidationError as e:
-            return JsonResponse({
-                'success': False,
-                'message': str(e)
-            }, status=400)
+        return JsonResponse({
+            'success': True,
+            'item_total': float(item_total),
+            'original_price': float(item_price),
+            'discounted_price': float(discounted_price),
+            'cart_subtotal': float(cart_subtotal),
+            'cart_total': float(cart_total),
+            'total_discount': float(total_discount),
+            'coupon_discount': float(coupon_discount),
+            'message': 'Cart updated successfully'
+        })
 
     except Exception as e:
         return JsonResponse({
             'success': False,
             'message': 'An error occurred while updating the cart'
         }, status=400)
-
-
 
 # ------------------------------------------------------------------------------------------------------------
 
@@ -2014,32 +2083,104 @@ def remove_cart_item(request, item_id):
 #                                              'cart_items' : cart_items,
 #                                              })
 
+# def checkout(request):
+#     cart_items = Cart.objects.filter(user=request.user)
+    
+#     # Calculate cart total before discount
+#     cart_total = sum(item.total_price for item in cart_items)
+    
+#     # Calculate total discount
+#     total_discount = sum(item.discount_amount or 0 for item in cart_items)
+    
+#     delivery_charge = 10
+
+#     # Calculate final total
+#     final_total = cart_total - total_discount + delivery_charge
+
+#     if not request.user.is_authenticated:
+#         return redirect('login') 
+    
+#     addresses = Address.objects.filter(user=request.user)
+
+#     return render(request, 'checkout.html', {
+#         'addresses': addresses,
+#         'cart_total': cart_total,
+#         'cart_items': cart_items,
+#         'total_discount': total_discount,
+#         'final_total': final_total
+#     })
+
+
+@user_required
 def checkout(request):
-    cart_items = Cart.objects.filter(user=request.user)
-    
-    # Calculate cart total before discount
-    cart_total = sum(item.total_price for item in cart_items)
-    
-    # Calculate total discount
-    total_discount = sum(item.discount_amount or 0 for item in cart_items)
-    
-    delivery_charge = 10
-
-    # Calculate final total
-    final_total = cart_total - total_discount + delivery_charge
-
-    if not request.user.is_authenticated:
-        return redirect('login') 
-    
-    addresses = Address.objects.filter(user=request.user)
-
-    return render(request, 'checkout.html', {
-        'addresses': addresses,
-        'cart_total': cart_total,
-        'cart_items': cart_items,
-        'total_discount': total_discount,
-        'final_total': final_total
-    })
+    try:
+        if not request.user.is_authenticated:
+            return redirect('login')
+            
+        # Fetch cart items with all necessary related data
+        cart_items = Cart.objects.select_related(
+            'product', 
+            'variant', 
+            'product__catogery',
+            'applied_coupon'
+        ).filter(user=request.user)
+        
+        cart_subtotal = Decimal('0')
+        total_discount = Decimal('0')
+        coupon_discount = Decimal('0')
+        
+        formatted_cart_items = []
+        for item in cart_items:
+            # Get base price from variant or product
+            item_price = item.variant.variant_price if item.variant else item.product.base_price
+            
+            # Calculate best discount
+            best_discount = calculate_best_discount(item.product, item_price)
+            
+            # Calculate item discounts
+            item_discount = Decimal(str(best_discount['amount'])) if best_discount else Decimal('0')
+            coupon_discount_per_item = Decimal(str(item.discount_amount)) if item.applied_coupon else Decimal('0')
+            
+            # Calculate final price for item
+            discounted_price = item_price - item_discount - coupon_discount_per_item
+            item_total = discounted_price * item.quantity
+            
+            # Add to running totals
+            cart_subtotal += item_total
+            total_discount += (item_discount * item.quantity)
+            coupon_discount += (coupon_discount_per_item * item.quantity)
+            
+            formatted_cart_items.append({
+                'cart_item': item,
+                'original_price': float(item_price),
+                'discount_info': best_discount,
+                'coupon_discount': float(coupon_discount_per_item),
+                'discounted_price': float(discounted_price),
+                'item_total': float(item_total)
+            })
+        
+        delivery_charge = Decimal('10')
+        final_total = cart_subtotal + delivery_charge
+        
+        # Fetch user addresses
+        addresses = Address.objects.filter(user=request.user)
+        
+        context = {
+            'addresses': addresses,
+            'cart_items': formatted_cart_items,
+            'cart_subtotal': float(cart_subtotal),
+            'total_discount': float(total_discount + coupon_discount),  # Combined product and coupon discounts
+            'coupon_discount': float(coupon_discount),
+            'delivery_charge': float(delivery_charge),
+            'final_total': float(final_total)
+        }
+        
+        return render(request, 'checkout.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error in checkout view: {traceback.format_exc()}")
+        messages.error(request, f"An error occurred during checkout: {str(e)}")
+        return redirect('cart')
 
 
 
@@ -2058,176 +2199,383 @@ logger = logging.getLogger(__name__)
 @ensure_csrf_cookie
 
 
+# def place_order(request):
+#     if request.method == "POST":
+#         user = request.user
+#         cart_items = Cart.objects.filter(user=user)
+#         default_address = Address.objects.filter(user=user, is_default=True).first()
+
+#         # Validate cart and address
+#         if not cart_items.exists():
+#             return JsonResponse({'success': False, 'message': 'Your cart is empty.'})
+
+#         if not default_address:
+#             return JsonResponse({'success': False, 'message': 'Please select a shipping address.'})
+
+#         payment_method = request.POST.get("payment_method")
+#         if not payment_method:
+#             return JsonResponse({'success': False, 'message': 'Please select a payment method.'})
+
+#         cart_total = sum(item.total_price for item in cart_items)
+#         total_discount = sum(item.discount_amount or 0 for item in cart_items)
+#         total_price = cart_total - total_discount
+
+
+#         if payment_method == 'COD' and total_price > 1000:
+#             return JsonResponse({
+#                 'success': False,
+#                 'message': 'Cash on Delivery is not available for orders above ₹1000. Please choose another payment method.',
+#                 'cod_limit_exceeded': True  # Add this flag to handle specific SweetAlert
+#             })
+
+#         # Handle Wallet Payment
+#         if payment_method == 'Wallet':
+#             try:
+#                 wallet = Wallet.objects.get(user=user)
+#                 if wallet.balance < total_price:
+#                     return JsonResponse({
+#                         'success': False,
+#                         'message': f'Insufficient wallet balance. Available: ₹{wallet.balance}, Required: ₹{total_price}'
+#                     })
+
+#                 # Create order with success payment status
+#                 order = Order.objects.create(
+#                     user=user,
+#                     address=default_address,
+#                     payment_method='WALLET',
+#                     total_amount=total_price,
+#                     payment_status='success'
+#                 )
+
+#                 # Create order items
+#                 for cart_item in cart_items:
+#                     OrderItem.objects.create(
+#                         order=order,
+#                         product=cart_item.product,
+#                         quantity=cart_item.quantity,
+#                         price_per_unit=cart_item.product.base_price,
+#                         total_price=cart_item.product.base_price * cart_item.quantity
+#                     )
+
+#                 # Create wallet transaction
+#                 WalletTransaction.objects.create(
+#                     wallet=wallet,
+#                     transaction_type='DEBIT',
+#                     amount=total_price,
+#                     payment_method='INTERNAL'
+#                 )
+
+#                 # Update wallet balance
+#                 wallet.balance -= total_price
+#                 wallet.save()
+
+#                 # Clear cart
+#                 cart_items.delete()
+
+#                 return JsonResponse({
+#                 'success': True,
+#                 'message': 'Order placed successfully using wallet balance!',
+#                 'new_balance': wallet.balance
+#                 })
+#             except Wallet.DoesNotExist:
+#                 logger.error("Wallet not found for user.")
+#                 return JsonResponse({
+#                 'success': False,
+#                 'message': 'Wallet not found for this user.'
+#                 })
+#             except Exception as e:
+#                 logger.error(f"Unexpected error: {str(e)}")
+#                 return JsonResponse({
+#                     "success": False,
+#                     "message": "Internal server error"
+#             }, status=500)
+
+#         # Create order for COD
+#         elif payment_method == 'COD':
+#             order = Order.objects.create(
+#                 user=user,
+#                 address=default_address,
+#                 payment_method='COD',
+#                 total_amount=total_price,
+#                 payment_status='success'
+#             )
+
+#             # Create order items
+#             for cart_item in cart_items:
+#                 OrderItem.objects.create(
+#                     order=order,
+#                     product=cart_item.product,
+#                     quantity=cart_item.quantity,
+#                     price_per_unit=cart_item.product.base_price,
+#                     total_price=cart_item.product.base_price * cart_item.quantity
+#                 )
+
+#             # Clear cart
+#             cart_items.delete()
+
+#             return JsonResponse({
+#                 'success': True, 
+#                 'message': 'Order placed successfully!',
+#                 'is_cod': True
+#             })
+
+#         # Handle Online Payment
+#         elif payment_method == 'Online':
+#             env = environ.Env()
+#             client = razorpay.Client(
+#                 auth=(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET'))
+#             )
+            
+#             order = Order.objects.create(
+#                 user=user,
+#                 address=default_address,
+#                 payment_method='ONLINE',
+#                 total_amount=total_price,
+#                 payment_status='pending'
+#             )
+
+#             razorpay_order = client.order.create({
+#                 'amount': int(total_price * 100),
+#                 'currency': 'INR',
+#                 'receipt': str(order.id),
+#                 'payment_capture': 1
+#             })
+
+#             order.razorpay_order_id = razorpay_order['id']
+#             order.save()
+
+#             for cart_item in cart_items:
+#                 OrderItem.objects.create(
+#                     order=order,
+#                     product=cart_item.product,
+#                     quantity=cart_item.quantity,
+#                     price_per_unit=cart_item.product.base_price,
+#                     total_price=cart_item.product.base_price * cart_item.quantity
+#                 )
+
+#             return JsonResponse({
+#                 'success': True,
+#                 'is_cod': False,
+#                 'razorpay_key': env('RAZORPAY_KEY_ID'),
+#                 'razorpay_order_id': razorpay_order['id'],
+#                 'amount': int(total_price * 100),
+#                 'name': user.username,
+#                 'email': user.email,
+#                 'contact': user.phone_number
+#             })
+
+#     return JsonResponse({'success': False, 'message': 'Invalid request method.'})
+
+
+
+@user_required
 def place_order(request):
     if request.method == "POST":
-        user = request.user
-        cart_items = Cart.objects.filter(user=user)
-        default_address = Address.objects.filter(user=user, is_default=True).first()
+        try:
+            user = request.user
+            cart_items = Cart.objects.select_related(
+                'product', 
+                'variant', 
+                'product__catogery',
+                'applied_coupon'
+            ).filter(user=user)
+            default_address = Address.objects.filter(user=user, is_default=True).first()
 
-        # Validate cart and address
-        if not cart_items.exists():
-            return JsonResponse({'success': False, 'message': 'Your cart is empty.'})
+            # Validate cart and address
+            if not cart_items.exists():
+                return JsonResponse({'success': False, 'message': 'Your cart is empty.'})
 
-        if not default_address:
-            return JsonResponse({'success': False, 'message': 'Please select a shipping address.'})
+            if not default_address:
+                return JsonResponse({'success': False, 'message': 'Please select a shipping address.'})
 
-        payment_method = request.POST.get("payment_method")
-        if not payment_method:
-            return JsonResponse({'success': False, 'message': 'Please select a payment method.'})
+            payment_method = request.POST.get("payment_method")
+            if not payment_method:
+                return JsonResponse({'success': False, 'message': 'Please select a payment method.'})
 
-        cart_total = sum(item.total_price for item in cart_items)
-        total_discount = sum(item.discount_amount or 0 for item in cart_items)
-        total_price = cart_total - total_discount
+            # Calculate final total using the same logic as cart/checkout
+            cart_subtotal = Decimal('0')
+            total_discount = Decimal('0')
+            coupon_discount = Decimal('0')
+            
+            order_items_data = []
+            for item in cart_items:
+                # Get base price from variant or product
+                item_price = item.variant.variant_price if item.variant else item.product.base_price
+                
+                # Calculate best discount
+                best_discount = calculate_best_discount(item.product, item_price)
+                item_discount = Decimal(str(best_discount['amount'])) if best_discount else Decimal('0')
+                
+                # Add coupon discount if any
+                coupon_discount_per_item = Decimal(str(item.discount_amount)) if item.applied_coupon else Decimal('0')
+                
+                # Calculate final price for item
+                discounted_price = item_price - item_discount - coupon_discount_per_item
+                item_total = discounted_price * item.quantity
+                
+                # Add to running totals
+                cart_subtotal += item_total
+                total_discount += (item_discount * item.quantity)
+                coupon_discount += (coupon_discount_per_item * item.quantity)
+                
+                # Store item data for order creation
+                order_items_data.append({
+                    'product': item.product,
+                    'variant': item.variant,
+                    'quantity': item.quantity,
+                    'price_per_unit': float(discounted_price),
+                    'total_price': float(item_total)
+                })
 
+            delivery_charge = Decimal('10')
+            final_total = cart_subtotal + delivery_charge
 
-        if payment_method == 'COD' and total_price > 1000:
-            return JsonResponse({
-                'success': False,
-                'message': 'Cash on Delivery is not available for orders above ₹1000. Please choose another payment method.',
-                'cod_limit_exceeded': True  # Add this flag to handle specific SweetAlert
-            })
+            # Check COD limit
+            if payment_method == 'COD' and final_total > 1000:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Cash on Delivery is not available for orders above ₹1000. Please choose another payment method.',
+                    'cod_limit_exceeded': True
+                })
 
-        # Handle Wallet Payment
-        if payment_method == 'Wallet':
-            try:
-                wallet = Wallet.objects.get(user=user)
-                if wallet.balance < total_price:
+            # Handle Wallet Payment
+            if payment_method == 'Wallet':
+                try:
+                    wallet = Wallet.objects.get(user=user)
+                    if wallet.balance < final_total:
+                        return JsonResponse({
+                            'success': False,
+                            'message': f'Insufficient wallet balance. Available: ₹{wallet.balance}, Required: ₹{final_total}'
+                        })
+
+                    order = Order.objects.create(
+                        user=user,
+                        address=default_address,
+                        payment_method='WALLET',
+                        total_amount=final_total,
+                        payment_status='success'
+                    )
+
+                    # Create order items with correct prices
+                    for item_data in order_items_data:
+                        OrderItem.objects.create(
+                            order=order,
+                            product=item_data['product'],
+                            variant=item_data['variant'],
+                            quantity=item_data['quantity'],
+                            price_per_unit=item_data['price_per_unit'],
+                            total_price=item_data['total_price']
+                        )
+
+                    # Create wallet transaction
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        transaction_type='DEBIT',
+                        amount=final_total,
+                        payment_method='INTERNAL'
+                    )
+
+                    wallet.balance -= final_total
+                    wallet.save()
+
+                    cart_items.delete()
+
                     return JsonResponse({
-                        'success': False,
-                        'message': f'Insufficient wallet balance. Available: ₹{wallet.balance}, Required: ₹{total_price}'
+                        'success': True,
+                        'message': 'Order placed successfully using wallet balance!',
+                        'new_balance': float(wallet.balance)
                     })
 
-                # Create order with success payment status
+                except Wallet.DoesNotExist:
+                    return JsonResponse({
+                        'success': False,
+                        'message': 'Wallet not found for this user.'
+                    })
+
+            # Create order for COD
+            elif payment_method == 'COD':
                 order = Order.objects.create(
                     user=user,
                     address=default_address,
-                    payment_method='WALLET',
-                    total_amount=total_price,
+                    payment_method='COD',
+                    total_amount=final_total,
                     payment_status='success'
                 )
 
-                # Create order items
-                for cart_item in cart_items:
+                # Create order items with correct prices
+                for item_data in order_items_data:
                     OrderItem.objects.create(
                         order=order,
-                        product=cart_item.product,
-                        quantity=cart_item.quantity,
-                        price_per_unit=cart_item.product.base_price,
-                        total_price=cart_item.product.base_price * cart_item.quantity
+                        product=item_data['product'],
+                        variant=item_data['variant'],
+                        quantity=item_data['quantity'],
+                        price_per_unit=item_data['price_per_unit'],
+                        total_price=item_data['total_price']
                     )
 
-                # Create wallet transaction
-                WalletTransaction.objects.create(
-                    wallet=wallet,
-                    transaction_type='DEBIT',
-                    amount=total_price,
-                    payment_method='INTERNAL'
-                )
-
-                # Update wallet balance
-                wallet.balance -= total_price
-                wallet.save()
-
-                # Clear cart
                 cart_items.delete()
 
                 return JsonResponse({
-                'success': True,
-                'message': 'Order placed successfully using wallet balance!',
-                'new_balance': wallet.balance
+                    'success': True,
+                    'message': 'Order placed successfully!',
+                    'is_cod': True
                 })
-            except Wallet.DoesNotExist:
-                logger.error("Wallet not found for user.")
+
+            # Handle Online Payment
+            elif payment_method == 'Online':
+                env = environ.Env()
+                client = razorpay.Client(
+                    auth=(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET'))
+                )
+                
+                order = Order.objects.create(
+                    user=user,
+                    address=default_address,
+                    payment_method='ONLINE',
+                    total_amount=final_total,
+                    payment_status='pending'
+                )
+
+                razorpay_order = client.order.create({
+                    'amount': int(final_total * 100),
+                    'currency': 'INR',
+                    'receipt': str(order.id),
+                    'payment_capture': 1
+                })
+
+                order.razorpay_order_id = razorpay_order['id']
+                order.save()
+
+                # Create order items with correct prices
+                for item_data in order_items_data:
+                    OrderItem.objects.create(
+                        order=order,
+                        product=item_data['product'],
+                        variant=item_data['variant'],
+                        quantity=item_data['quantity'],
+                        price_per_unit=item_data['price_per_unit'],
+                        total_price=item_data['total_price']
+                    )
+
                 return JsonResponse({
+                    'success': True,
+                    'is_cod': False,
+                    'razorpay_key': env('RAZORPAY_KEY_ID'),
+                    'razorpay_order_id': razorpay_order['id'],
+                    'amount': int(final_total * 100),
+                    'name': user.username,
+                    'email': user.email,
+                    'contact': user.phone_number
+                })
+
+        except Exception as e:
+            logger.error(f"Error in place_order: {traceback.format_exc()}")
+            return JsonResponse({
                 'success': False,
-                'message': 'Wallet not found for this user.'
-                })
-            except Exception as e:
-                logger.error(f"Unexpected error: {str(e)}")
-                return JsonResponse({
-                    "success": False,
-                    "message": "Internal server error"
-            }, status=500)
-
-        # Create order for COD
-        elif payment_method == 'COD':
-            order = Order.objects.create(
-                user=user,
-                address=default_address,
-                payment_method='COD',
-                total_amount=total_price,
-                payment_status='success'
-            )
-
-            # Create order items
-            for cart_item in cart_items:
-                OrderItem.objects.create(
-                    order=order,
-                    product=cart_item.product,
-                    quantity=cart_item.quantity,
-                    price_per_unit=cart_item.product.base_price,
-                    total_price=cart_item.product.base_price * cart_item.quantity
-                )
-
-            # Clear cart
-            cart_items.delete()
-
-            return JsonResponse({
-                'success': True, 
-                'message': 'Order placed successfully!',
-                'is_cod': True
-            })
-
-        # Handle Online Payment
-        elif payment_method == 'Online':
-            env = environ.Env()
-            client = razorpay.Client(
-                auth=(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET'))
-            )
-            
-            order = Order.objects.create(
-                user=user,
-                address=default_address,
-                payment_method='ONLINE',
-                total_amount=total_price,
-                payment_status='pending'
-            )
-
-            razorpay_order = client.order.create({
-                'amount': int(total_price * 100),
-                'currency': 'INR',
-                'receipt': str(order.id),
-                'payment_capture': 1
-            })
-
-            order.razorpay_order_id = razorpay_order['id']
-            order.save()
-
-            for cart_item in cart_items:
-                OrderItem.objects.create(
-                    order=order,
-                    product=cart_item.product,
-                    quantity=cart_item.quantity,
-                    price_per_unit=cart_item.product.base_price,
-                    total_price=cart_item.product.base_price * cart_item.quantity
-                )
-
-            return JsonResponse({
-                'success': True,
-                'is_cod': False,
-                'razorpay_key': env('RAZORPAY_KEY_ID'),
-                'razorpay_order_id': razorpay_order['id'],
-                'amount': int(total_price * 100),
-                'name': user.username,
-                'email': user.email,
-                'contact': user.phone_number
+                'message': f'An error occurred while processing your order: {str(e)}'
             })
 
     return JsonResponse({'success': False, 'message': 'Invalid request method.'})
-
-
-
-
 
 
 
