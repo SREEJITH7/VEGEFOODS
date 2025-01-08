@@ -336,7 +336,7 @@ tr:hover {
 
 {% block content %}
 
-
+<h1> Users list </h1>
 {% comment %} ################################################################### {% endcomment %}
     <div class="container">
         <div class="messages-container">   {% comment %} Messages section right after containe {% endcomment %}
@@ -359,14 +359,14 @@ tr:hover {
                 <input type="text" placeholder="Search">
             </div>
             <div class="actions">
-                <button class="btn btn-primary">
+                {% comment %} <button class="btn btn-primary">
                     <span>+</span>
                     Add new user
                 </button>
                 <button class="btn btn-secondary">
                     <span>⚙️</span>
                     Filter
-                </button>
+                </button> {% endcomment %}
             </div>
         </div>
     

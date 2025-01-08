@@ -10,6 +10,7 @@
 
 
 {% block content%}
+<h1>category</h1>
 
 <div class="container">
     <div class="messages-container">   {% comment %} Messages section right after containe {% endcomment %}
@@ -28,18 +29,18 @@
     <!-- Header Section -->
     <div class="header">
         <div class="search-container">
-            <span class="search-icon">🔍</span>
-            <input type="text" placeholder="Search">
+            {% comment %} <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Search"> {% endcomment %}
         </div>
         <div class="actions">
             <a href ="{% url 'add_category'%}" class ="btn btn-primary">
                 <span>+</span>
                 Add new category
             </a>
-            <button class="btn btn-secondary">
+            {% comment %} <button class="btn btn-secondary">
                 <span>⚙️</span>
                 Filter
-            </button>
+            </button> {% endcomment %}
         </div>
     </div>
 

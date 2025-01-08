@@ -5,6 +5,7 @@
             {% endblock %} <!-- Dynamic breadcrumbs for child templates -->
 
 {% block content%}
+<h1>Orders</h1>
 
 {% comment %} -------- {% endcomment %}
 <!-- Add these before the table -->
@@ -38,15 +39,15 @@
 
 {% comment %} ------ {% endcomment %}
     <div class="search-container">
-        <span class="search-icon">🔍</span>
-        <input type="text" placeholder="Search">
+        {% comment %} <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Search"> {% endcomment %}
         
     </div>
 
     <div class="dropdown">  {% comment %} -- css for drown is not given and drop down is not in function ---- {% endcomment %}
-        <button class="btn btn-light border dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        {% comment %} <button class="btn btn-light border dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
             Filter
-        </button>
+        </button> {% endcomment %}
         <ul class="dropdown-menu shadow-sm" aria-labelledby="filterDropdown">
             <li><a class="dropdown-item" href="?filter=pending">Pending</a></li>
             <li><a class="dropdown-item" href="?filter=completed">Completed</a></li>
