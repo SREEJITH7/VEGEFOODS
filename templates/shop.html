@@ -169,7 +169,7 @@
 			  </li>
 		  {% endif %}
       <li class="nav-item cta cta-colored"><a href="{% url 'wishlist' %}" class="nav-link"><span class="fas fa-heart" style="color: black;"></span></a></li>
-	          <li class="nav-item cta cta-colored"><a href="{% url 'cart' %}" class="nav-link"><span class="icon-shopping_cart"></span>[0]</a></li>
+	          <li class="nav-item cta cta-colored"><a href="{% url 'cart' %}" class="nav-link"><span class="icon-shopping_cart"></span>[{{ cart_count }}]</a></li>
 
 	        </ul>
 	      </div>

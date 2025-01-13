@@ -405,6 +405,8 @@
         <strong>Order ID:</strong> {{ order.id }}<br>
         <strong>Date:</strong> {{ order.order_date|date:"Y-m-d H:i" }}<br>
         <strong>Total Amount:</strong> ${{ order.total_amount }}<br>
+        <strong>Delivery charge:</strong> ₹ 10 <br>
+
         <strong>Status:</strong> {{ order.get_order_status_display }}<br>
         <strong>Payment Status:</strong> {{ order.get_payment_status_display }}
     </div>

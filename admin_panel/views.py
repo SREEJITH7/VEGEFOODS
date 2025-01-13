@@ -42,6 +42,11 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 
+
+import traceback
+
+
+
 # from .decorators import user_required
 
 # Create your views here.

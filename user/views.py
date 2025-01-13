@@ -201,7 +201,9 @@ def shopsection(request):
     search_query = request.GET.get('q', '').lower()
     sort_option = request.GET.get('sort', '')
     
-
+    cart_count = 0
+    if request.user.is_authenticated:
+        cart_count = Cart.objects.filter(user=request.user).count()
 
         # Category-specific redirection
     category_mapping = {
@@ -299,7 +301,8 @@ def shopsection(request):
     return render(request, 'shop.html', {
         'products': products,
         'paginate': paginate,
-        'total_products': products.count() if paginate else products.count()
+        'total_products': products.count() if paginate else products.count(),
+        'cart_count': cart_count
     })
 
 
@@ -312,6 +315,9 @@ def shopvegetables(request):
     search_query = request.GET.get('q', '')
     sort_option = request.GET.get('sort', '')
 
+    cart_count = 0
+    if request.user.is_authenticated:
+        cart_count = Cart.objects.filter(user=request.user).count()
 
     category_mapping = {
         'vegetable': 'shopvegetables',
@@ -414,7 +420,8 @@ def shopvegetables(request):
         'paginate': paginate,
         'search_query': search_query,
         'sort_option': sort_option,
-        'total_products': products.count() if paginate else products.count()
+        'total_products': products.count() if paginate else products.count(),
+        'cart_count': cart_count
     })
 
 ##### shop fruits  ###########################################################################################################################################################
@@ -426,6 +433,9 @@ def shopfruits(request):
     search_query = request.GET.get('q', '')
     sort_option = request.GET.get('sort', '')
     
+    cart_count = 0
+    if request.user.is_authenticated:
+        cart_count = Cart.objects.filter(user=request.user).count()
 
     category_mapping = {
         'vegetable': 'shopvegetables',
@@ -531,7 +541,8 @@ def shopfruits(request):
         'paginate': paginate,
         'search_query': search_query,
         'sort_option': sort_option,
-        'total_products': products.count() if paginate else products.count()
+        'total_products': products.count() if paginate else products.count(),
+        'cart_count': cart_count
     })
 ###### shop juice #####################################################################################################################################################
 
@@ -644,6 +655,7 @@ def shopjuice(request):
         'search_query': search_query,
         'sort_option': sort_option,
         'total_products': products.count() if paginate else products.count()
+        
     })
 
 ###### shop dried #####################################################################################################################################################
@@ -654,6 +666,9 @@ def shopdried(request):
     search_query = request.GET.get('q', '')
     sort_option = request.GET.get('sort', '')
 
+    cart_count = 0
+    if request.user.is_authenticated:
+        cart_count = Cart.objects.filter(user=request.user).count()
 
     category_mapping = {
         'vegetable': 'shopvegetables',
@@ -761,7 +776,8 @@ def shopdried(request):
         'paginate': paginate,
         'search_query': search_query,
         'sort_option': sort_option,
-        'total_products': products.count() if paginate else products.count()
+        'total_products': products.count() if paginate else products.count(),
+        'cart_count': cart_count
     })
 
 ###### single product #####################################################################################################################################################
@@ -819,6 +835,12 @@ def shopdried(request):
 
 def product_details(request, product_id):
     # Fetch the product with its images and offers
+
+    cart_count = 0
+    if request.user.is_authenticated:
+        cart_count = Cart.objects.filter(user=request.user).count()
+
+
     product = get_object_or_404(
         Product.objects.prefetch_related(
             'images',
@@ -897,6 +919,7 @@ def product_details(request, product_id):
         'size_options': size_options,
         'variants': variants,
         'selected_variant': selected_variant,
+        'cart_count': cart_count
     })
 
 
@@ -2813,32 +2836,75 @@ def single_order_detail(request, order_id):
 @require_POST
 def cancel_order_item(request, order_item_id):
     try:
-        # Fetch the specific order item
-        order_item = OrderItem.objects.get(
+        # Use select_related to optimize queries
+        order_item = OrderItem.objects.select_related(
+            'order', 
+            'product', 
+            'variant',
+            'order__user'
+        ).get(
             id=order_item_id, 
             order__user=request.user
         )
         
-        # Check if the order is still cancellable (e.g., not shipped or delivered)
+        # Check if the order is still cancellable
         if order_item.order.order_status in ['delivered', 'shipped']:
             return JsonResponse({
                 'success': False, 
                 'message': 'Cannot cancel items in delivered or shipped orders'
             }, status=400)
-        
-        # Optional: Create a cancellation record or update inventory
-        # You might want to add more complex logic here
-        
-        # Mark the order item as cancelled
-        order_item.is_cancelled = True
-        order_item.save()
-        
-        # Recalculate order total
-        order_item.order.calculate_total()
+            
+        # Check if item is already cancelled
+        if order_item.is_cancelled:
+            return JsonResponse({
+                'success': False, 
+                'message': 'This item is already cancelled'
+            }, status=400)
+
+        # Start database transaction
+        with transaction.atomic():
+            # Get or create user wallet
+            wallet, created = Wallet.objects.get_or_create(user=request.user)
+            
+            # Calculate refund amount (includes any discounts applied during order)
+            refund_amount = order_item.total_price + 10
+            
+            # Create wallet transaction for refund
+            WalletTransaction.objects.create(
+                wallet=wallet,
+                transaction_type='REFUND',
+                amount=refund_amount,
+                payment_method='INTERNAL'
+            )
+            
+            # Update wallet balance
+            wallet.balance += refund_amount
+            wallet.save()
+            
+            # Mark the order item as cancelled
+            order_item.is_cancelled = True
+            order_item.save()
+            
+            # Recalculate order total
+            order = order_item.order
+            order.calculate_total()
+            
+            # If all items in order are cancelled, mark order as cancelled
+            if not order.order_items.filter(is_cancelled=False).exists():
+                order.order_status = 'cancelled'
+                order.is_canceled = True
+                order.cancel_date = timezone.now()
+                order.save()
+            
+            # Update product stock quantity
+            order_item.product.stock_quantity += order_item.quantity
+            order_item.product.save()
         
         return JsonResponse({
             'success': True, 
-            'message': 'Product successfully cancelled'
+            'message': 'Product cancelled successfully and amount refunded to wallet',
+            'refund_amount': float(refund_amount),
+            'new_wallet_balance': float(wallet.balance)
         })
     
     except OrderItem.DoesNotExist:
@@ -2846,6 +2912,14 @@ def cancel_order_item(request, order_item_id):
             'success': False, 
             'message': 'Order item not found'
         }, status=404)
+        
+    except Exception as e:
+        logger.error(f"Error in cancel_order_item: {traceback.format_exc()}")
+        return JsonResponse({
+            'success': False, 
+            'message': f'An error occurred while cancelling the order item: {str(e)}'
+        }, status=500)
+
 
 
 # ---------------------------------------------------------------------------------------------------

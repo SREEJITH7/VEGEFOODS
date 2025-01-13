@@ -206,7 +206,7 @@
 	          <li class="nav-item"><a href="blog.html" class="nav-link">Blog</a></li>
 	          <li class="nav-item active"><a href="contact.html" class="nav-link">Contact</a></li>
               <li class="nav-item cta cta-colored"><a href="{% url 'wishlist' %}" class="nav-link"><span class="fas fa-heart" style="color: black;"></span></a></li>
-			  <li class="nav-item"><a href="{% url 'cart' %}" class="nav-link"><i class="fas fa-shopping-cart"></i> [0]</a></li>
+			  <li class="nav-item"><a href="{% url 'cart' %}" class="nav-link"><i class="fas fa-shopping-cart"></i> [{{ cart_count }}]</a></li>
 	        </ul>
 	      </div>
 	    </div>
@@ -258,6 +258,8 @@
             <h3 class="mb-4">Order Details - Order #{{ order.id }}</h3>
             <p><strong>Date:</strong> {{ order.order_date|date:"Y-m-d H:i" }}</p>
             <p><strong>Total Amount:</strong> ₹{{ order.total_amount }}</p>
+            <strong>Delivery charge:</strong> ₹ 10 <br>
+
             <p><strong>Status:</strong> {{ order.get_order_status_display }}</p>
             <p><strong>Payment Method:</strong> {{ order.get_payment_method_display }}</p>
 
