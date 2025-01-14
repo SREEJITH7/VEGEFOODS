@@ -22,7 +22,7 @@ from datetime import datetime
 from .decorators import user_required
 from .forms import AddressForm
 from .models import Address
-from .models import Cart,Order, OrderItem , Wishlist , OrderReturn, Wallet, WalletTransaction, WalletWithdrawal
+from .models import Cart,Order, OrderItem , Wishlist , OrderReturn, Wallet, WalletTransaction, WalletWithdrawal, OrderAddress
 import json
 import json
 from django.http import JsonResponse
@@ -1473,14 +1473,181 @@ def calculate_best_discount(product, variant_price):
 
 
 
+# @user_required
+# @require_http_methods(["GET", "POST"])
+# def cart(request):
+#     logger.debug("Starting cart view")
+#     logger.debug(f"Server timezone: {timezone.get_current_timezone()}")
+#     logger.debug(f"Current server time: {timezone.now()}")
+
+
+#     try:
+#         if request.method == 'POST':
+#             coupon_code = request.POST.get('coupon_code')
+            
+#             if coupon_code:
+#                 try:
+#                     coupon = CouponTable.objects.get(code=coupon_code, is_active=True)
+#                     cart_items = Cart.objects.select_related('product', 'variant').filter(user=request.user)
+                    
+#                     temp_subtotal = Decimal(str(sum(
+#                         (item.variant.variant_price if item.variant else item.product.base_price) * item.quantity 
+#                         for item in cart_items
+#                     )))
+                    
+#                     if coupon.max_uses is None or coupon.max_uses > 0:
+#                         if temp_subtotal >= coupon.min_purchase_amount:
+#                             # Calculate discount
+#                             if coupon.coupon_type == 'percentage':
+#                                 discount_amount = round(temp_subtotal * (Decimal(str(coupon.discount_value)) / Decimal('100')), 2)
+#                             else:
+#                                 discount_amount = round(min(Decimal(str(coupon.discount_value)), temp_subtotal), 2)
+                            
+#                             if cart_items.exists():
+#                                 discount_per_item = round(discount_amount / len(cart_items), 2)
+#                                 for item in cart_items:
+#                                     item.applied_coupon = coupon
+#                                     item.discount_amount = discount_per_item
+#                                     item.save()
+
+#                             CouponUsage.objects.create(
+#                                 user=request.user,
+#                                 coupon=coupon,
+#                                 discount_value=discount_amount
+#                             )
+
+#                             if coupon.max_uses is not None:
+#                                 coupon.max_uses -= 1
+#                                 coupon.save()
+
+#                             return JsonResponse({
+#                                 'success': True,
+#                                 'message': f"Coupon '{coupon_code}' applied successfully!",
+#                                 'discount_amount': float(discount_amount),
+#                                 'final_total': float(temp_subtotal - discount_amount + 10)
+#                             })
+#                         else:
+#                             return JsonResponse({
+#                                 'success': False,
+#                                 'message': f"Minimum purchase amount of ₹{coupon.min_purchase_amount:.2f} is required to use this coupon."
+#                             })
+#                     else:
+#                         return JsonResponse({
+#                             'success': False,
+#                             'message': "This coupon has been exhausted."
+#                         })
+#                 except CouponTable.DoesNotExist:
+#                     return JsonResponse({
+#                         'success': False,
+#                         'message': "Invalid coupon code."
+#                     })
+#                 except Exception as e:
+#                     logger.error(f"Coupon application error: {str(e)}")
+#                     return JsonResponse({
+#                         'success': False,
+#                         'message': f"An error occurred: {str(e)}"
+#                     })
+#             else:
+#                 return JsonResponse({
+#                     'success': False,
+#                     'message': "Please enter a coupon code."
+#                 })
+
+#         # GET request handling - Show cart
+#         # Clear any previous applied coupons if not POST request
+#         Cart.objects.filter(user=request.user).update(applied_coupon=None, discount_amount=0)
+
+#         # Fetch all cart items with necessary related data
+#         cart_items = Cart.objects.select_related(
+#             'product', 
+#             'variant', 
+#             'product__catogery'
+#         ).filter(user=request.user)
+        
+#         formatted_cart_items = []
+#         cart_subtotal = Decimal('0')
+#         total_discount = Decimal('0')
+#         coupon_discount = Decimal('0')
+        
+#         for item in cart_items:
+#             # Get base price from variant or product
+#             item_price = item.variant.variant_price if item.variant else item.product.base_price
+            
+#             # Calculate best discount using the same logic as product_details
+#             best_discount = calculate_best_discount(item.product, item_price)
+            
+#             # Calculate prices with discount
+#             item_discount = Decimal(str(best_discount['amount'])) if best_discount else Decimal('0')
+            
+#             # Add coupon discount if any
+#             coupon_discount_per_item = Decimal(str(item.discount_amount)) if item.applied_coupon else Decimal('0')
+            
+#             discounted_price = item_price - item_discount - coupon_discount_per_item
+#             item_total = discounted_price * item.quantity
+
+#             logger.debug(f"""
+#             Item: {item.product.name}
+#             Original Price: {item_price}
+#             Best Discount: {best_discount}
+#             Coupon Discount: {coupon_discount_per_item}
+#             Final Price: {discounted_price}
+#             Item Total: {item_total}
+#             """)
+            
+#             # Get variant display info
+#             variant_display = ''
+#             if item.variant:
+#                 if item.product.category.name.lower() in ['vegetables', 'fruits', 'dried']:
+#                     variant_display = f"{item.variant.weight} kg"
+#                 elif item.product.category.name.lower() == 'juice':
+#                     variant_display = f"{item.variant.volume} liter" if item.variant.volume else ''
+#                 else:
+#                     variant_display = item.variant.weight or ''
+            
+#             # Add to running totals
+#             cart_subtotal += item_total
+#             total_discount += (item_discount * item.quantity)
+#             coupon_discount += (coupon_discount_per_item * item.quantity)
+            
+#             formatted_item = {
+#                 'cart_item': item,
+#                 'variant_display': variant_display,
+#                 'original_price': float(item_price),
+#                 'discount_info': best_discount,
+#                 'coupon_discount': float(coupon_discount_per_item),
+#                 'discounted_price': float(discounted_price),
+#                 'item_total': float(item_total),
+#                 'item_discount': float(item_discount)
+#             }
+#             formatted_cart_items.append(formatted_item)
+
+#         delivery_charge = Decimal('10')
+#         cart_total = cart_subtotal + delivery_charge
+#         cart_empty = not cart_items.exists()
+
+#         context = {
+#             'cart_items': formatted_cart_items,
+#             'cart_subtotal': float(cart_subtotal),
+#             'delivery_charge': float(delivery_charge),
+#             'cart_total': float(cart_total),
+#             'total_discount': float(total_discount),
+#             'coupon_discount': float(coupon_discount),
+#             'cart_empty': cart_empty,
+#         }
+        
+#         return render(request, 'cart.html', context)
+
+#     except Exception as e:
+#         logger.error(f"Error in cart view: {traceback.format_exc()}")
+#         return JsonResponse({'success': False, 'message': f'An error occurred: {str(e)}'})
+
+# -------------------new cart view-- coupon prob solved ---------------------
+
+
 @user_required
 @require_http_methods(["GET", "POST"])
 def cart(request):
     logger.debug("Starting cart view")
-    logger.debug(f"Server timezone: {timezone.get_current_timezone()}")
-    logger.debug(f"Current server time: {timezone.now()}")
-
-
     try:
         if request.method == 'POST':
             coupon_code = request.POST.get('coupon_code')
@@ -1488,28 +1655,59 @@ def cart(request):
             if coupon_code:
                 try:
                     coupon = CouponTable.objects.get(code=coupon_code, is_active=True)
-                    cart_items = Cart.objects.select_related('product', 'variant').filter(user=request.user)
+                    # First get base prices and calculate initial subtotal
+                    cart_items = Cart.objects.select_related(
+                        'product', 
+                        'variant', 
+                        'product__catogery'
+                    ).filter(user=request.user)
                     
-                    temp_subtotal = Decimal(str(sum(
-                        (item.variant.variant_price if item.variant else item.product.base_price) * item.quantity 
-                        for item in cart_items
-                    )))
+                    # Calculate initial subtotal before any discounts
+                    temp_subtotal = Decimal('0')
+                    
+                    # Log initial cart state
+                    logger.debug("Initial cart state:")
+                    for item in cart_items:
+                        base_price = item.variant.variant_price if item.variant else item.product.base_price
+                        # Calculate any existing product/category discounts
+                        best_discount = calculate_best_discount(item.product, base_price)
+                        item_discount = Decimal(str(best_discount['amount'])) if best_discount else Decimal('0')
+                        
+                        # Calculate actual price after existing discounts
+                        actual_price = base_price - item_discount
+                        item_total = actual_price * item.quantity
+                        temp_subtotal += item_total
+                        
+                        logger.debug(f"""
+                        Item: {item.product.name}
+                        Base price: {base_price}
+                        Existing discount: {item_discount}
+                        Price after discount: {actual_price}
+                        Quantity: {item.quantity}
+                        Item total: {item_total}
+                        Running subtotal: {temp_subtotal}
+                        """)
                     
                     if coupon.max_uses is None or coupon.max_uses > 0:
                         if temp_subtotal >= coupon.min_purchase_amount:
-                            # Calculate discount
+                            # Calculate coupon discount
                             if coupon.coupon_type == 'percentage':
                                 discount_amount = round(temp_subtotal * (Decimal(str(coupon.discount_value)) / Decimal('100')), 2)
                             else:
                                 discount_amount = round(min(Decimal(str(coupon.discount_value)), temp_subtotal), 2)
                             
+                            logger.debug(f"Calculated coupon discount: {discount_amount}")
+                            
                             if cart_items.exists():
+                                # Distribute coupon discount across items
                                 discount_per_item = round(discount_amount / len(cart_items), 2)
                                 for item in cart_items:
                                     item.applied_coupon = coupon
                                     item.discount_amount = discount_per_item
                                     item.save()
+                                    logger.debug(f"Applied discount per item: {discount_per_item} to {item.product.name}")
 
+                            # Record coupon usage
                             CouponUsage.objects.create(
                                 user=request.user,
                                 coupon=coupon,
@@ -1520,11 +1718,25 @@ def cart(request):
                                 coupon.max_uses -= 1
                                 coupon.save()
 
+                            # Calculate final totals
+                            delivery_charge = Decimal('10')
+                            final_subtotal = temp_subtotal - discount_amount
+                            final_total = final_subtotal + delivery_charge
+
+                            logger.debug(f"""
+                            Final calculation breakdown:
+                            Original subtotal: {temp_subtotal}
+                            Coupon discount: {discount_amount}
+                            After discount: {final_subtotal}
+                            Delivery charge: {delivery_charge}
+                            Final total: {final_total}
+                            """)
+
                             return JsonResponse({
                                 'success': True,
                                 'message': f"Coupon '{coupon_code}' applied successfully!",
                                 'discount_amount': float(discount_amount),
-                                'final_total': float(temp_subtotal - discount_amount + 10)
+                                'final_total': float(final_total)
                             })
                         else:
                             return JsonResponse({
@@ -1553,11 +1765,9 @@ def cart(request):
                     'message': "Please enter a coupon code."
                 })
 
-        # GET request handling - Show cart
-        # Clear any previous applied coupons if not POST request
+        # GET request handling
         Cart.objects.filter(user=request.user).update(applied_coupon=None, discount_amount=0)
 
-        # Fetch all cart items with necessary related data
         cart_items = Cart.objects.select_related(
             'product', 
             'variant', 
@@ -1569,29 +1779,32 @@ def cart(request):
         total_discount = Decimal('0')
         coupon_discount = Decimal('0')
         
+        logger.debug("Processing GET request - calculating cart totals")
+        
         for item in cart_items:
-            # Get base price from variant or product
+            # Get base price
             item_price = item.variant.variant_price if item.variant else item.product.base_price
             
-            # Calculate best discount using the same logic as product_details
+            # Calculate product/category discounts
             best_discount = calculate_best_discount(item.product, item_price)
-            
-            # Calculate prices with discount
             item_discount = Decimal(str(best_discount['amount'])) if best_discount else Decimal('0')
             
             # Add coupon discount if any
             coupon_discount_per_item = Decimal(str(item.discount_amount)) if item.applied_coupon else Decimal('0')
             
+            # Calculate final price and total
             discounted_price = item_price - item_discount - coupon_discount_per_item
             item_total = discounted_price * item.quantity
 
             logger.debug(f"""
+            Cart item calculation:
             Item: {item.product.name}
-            Original Price: {item_price}
-            Best Discount: {best_discount}
-            Coupon Discount: {coupon_discount_per_item}
-            Final Price: {discounted_price}
-            Item Total: {item_total}
+            Base price: {item_price}
+            Product discount: {item_discount}
+            Coupon discount: {coupon_discount_per_item}
+            Final price: {discounted_price}
+            Quantity: {item.quantity}
+            Item total: {item_total}
             """)
             
             # Get variant display info
@@ -1604,7 +1817,7 @@ def cart(request):
                 else:
                     variant_display = item.variant.weight or ''
             
-            # Add to running totals
+            # Update running totals
             cart_subtotal += item_total
             total_discount += (item_discount * item.quantity)
             coupon_discount += (coupon_discount_per_item * item.quantity)
@@ -1625,6 +1838,15 @@ def cart(request):
         cart_total = cart_subtotal + delivery_charge
         cart_empty = not cart_items.exists()
 
+        logger.debug(f"""
+        Final cart totals:
+        Subtotal: {cart_subtotal}
+        Total discount: {total_discount}
+        Coupon discount: {coupon_discount}
+        Delivery charge: {delivery_charge}
+        Final total: {cart_total}
+        """)
+
         context = {
             'cart_items': formatted_cart_items,
             'cart_subtotal': float(cart_subtotal),
@@ -1640,6 +1862,12 @@ def cart(request):
     except Exception as e:
         logger.error(f"Error in cart view: {traceback.format_exc()}")
         return JsonResponse({'success': False, 'message': f'An error occurred: {str(e)}'})
+
+
+
+
+
+
 
 
 # --------add to cart ajax new for varient ---------------------------------------------------------------------------------------
@@ -2091,47 +2319,80 @@ def remove_cart_item(request, item_id):
 
 
 
+# @user_required
 # def checkout(request):
-#     cart_items = Cart.objects.filter(user=request.user)
-#     cart_total = sum(item.product.base_price * item.quantity for item in cart_items)
+#     try:
+#         if not request.user.is_authenticated:
+#             return redirect('login')
+            
+#         # Fetch cart items with all necessary related data
+#         cart_items = Cart.objects.select_related(
+#             'product', 
+#             'variant', 
+#             'product__catogery',
+#             'applied_coupon'
+#         ).filter(user=request.user)
+        
+#         cart_subtotal = Decimal('0')
+#         total_discount = Decimal('0')
+#         coupon_discount = Decimal('0')
+        
+#         formatted_cart_items = []
+#         for item in cart_items:
+#             # Get base price from variant or product
+#             item_price = item.variant.variant_price if item.variant else item.product.base_price
+            
+#             # Calculate best discount
+#             best_discount = calculate_best_discount(item.product, item_price)
+            
+#             # Calculate item discounts
+#             item_discount = Decimal(str(best_discount['amount'])) if best_discount else Decimal('0')
+#             coupon_discount_per_item = Decimal(str(item.discount_amount)) if item.applied_coupon else Decimal('0')
+            
+#             # Calculate final price for item
+#             discounted_price = item_price - item_discount - coupon_discount_per_item
+#             item_total = discounted_price * item.quantity
+            
+#             # Add to running totals
+#             cart_subtotal += item_total
+#             total_discount += (item_discount * item.quantity)
+#             coupon_discount += (coupon_discount_per_item * item.quantity)
+            
+#             formatted_cart_items.append({
+#                 'cart_item': item,
+#                 'original_price': float(item_price),
+#                 'discount_info': best_discount,
+#                 'coupon_discount': float(coupon_discount_per_item),
+#                 'discounted_price': float(discounted_price),
+#                 'item_total': float(item_total)
+#             })
+        
+#         delivery_charge = Decimal('10')
+#         final_total = cart_subtotal + delivery_charge
+        
+#         # Fetch user addresses
+#         addresses = Address.objects.filter(user=request.user)
+        
+#         context = {
+#             'addresses': addresses,
+#             'cart_items': formatted_cart_items,
+#             'cart_subtotal': float(cart_subtotal),
+#             'total_discount': float(total_discount + coupon_discount),  # Combined product and coupon discounts
+#             'coupon_discount': float(coupon_discount),
+#             'delivery_charge': float(delivery_charge),
+#             'final_total': float(final_total)
+#         }
+        
+#         return render(request, 'checkout.html', context)
+        
+#     except Exception as e:
+#         logger.error(f"Error in checkout view: {traceback.format_exc()}")
+#         messages.error(request, f"An error occurred during checkout: {str(e)}")
+#         return redirect('cart')
 
-#     if not request.user.is_authenticated:
-#         return redirect('login') 
-    
-    
-#     addresses = Address.objects.filter(user=request.user)
+# --------------new checkout page view ---------------
 
-#     return render(request, 'checkout.html', {'addresses': addresses ,
-#                                              'cart_total': cart_total,
-#                                              'cart_items' : cart_items,
-#                                              })
 
-# def checkout(request):
-#     cart_items = Cart.objects.filter(user=request.user)
-    
-#     # Calculate cart total before discount
-#     cart_total = sum(item.total_price for item in cart_items)
-    
-#     # Calculate total discount
-#     total_discount = sum(item.discount_amount or 0 for item in cart_items)
-    
-#     delivery_charge = 10
-
-#     # Calculate final total
-#     final_total = cart_total - total_discount + delivery_charge
-
-#     if not request.user.is_authenticated:
-#         return redirect('login') 
-    
-#     addresses = Address.objects.filter(user=request.user)
-
-#     return render(request, 'checkout.html', {
-#         'addresses': addresses,
-#         'cart_total': cart_total,
-#         'cart_items': cart_items,
-#         'total_discount': total_discount,
-#         'final_total': final_total
-#     })
 
 
 @user_required
@@ -2140,7 +2401,6 @@ def checkout(request):
         if not request.user.is_authenticated:
             return redirect('login')
             
-        # Fetch cart items with all necessary related data
         cart_items = Cart.objects.select_related(
             'product', 
             'variant', 
@@ -2148,30 +2408,78 @@ def checkout(request):
             'applied_coupon'
         ).filter(user=request.user)
         
-        cart_subtotal = Decimal('0')
-        total_discount = Decimal('0')
-        coupon_discount = Decimal('0')
+        # First calculate subtotal before coupon discount
+        temp_subtotal = Decimal('0')
+        total_product_discount = Decimal('0')
+        
+        logger.debug("Starting checkout calculations")
         
         formatted_cart_items = []
         for item in cart_items:
-            # Get base price from variant or product
+            # Get base price
             item_price = item.variant.variant_price if item.variant else item.product.base_price
             
-            # Calculate best discount
+            # Calculate product discount first
             best_discount = calculate_best_discount(item.product, item_price)
-            
-            # Calculate item discounts
             item_discount = Decimal(str(best_discount['amount'])) if best_discount else Decimal('0')
-            coupon_discount_per_item = Decimal(str(item.discount_amount)) if item.applied_coupon else Decimal('0')
             
-            # Calculate final price for item
-            discounted_price = item_price - item_discount - coupon_discount_per_item
-            item_total = discounted_price * item.quantity
+            # Calculate price after product discount but before coupon
+            price_after_product_discount = item_price - item_discount
+            item_subtotal = price_after_product_discount * item.quantity
             
             # Add to running totals
-            cart_subtotal += item_total
-            total_discount += (item_discount * item.quantity)
-            coupon_discount += (coupon_discount_per_item * item.quantity)
+            temp_subtotal += item_subtotal
+            total_product_discount += (item_discount * item.quantity)
+            
+            logger.debug(f"""
+            Initial item calculation:
+            Item: {item.product.name}
+            Base price: {item_price}
+            Product discount: {item_discount}
+            Price after product discount: {price_after_product_discount}
+            Item subtotal: {item_subtotal}
+            Running subtotal: {temp_subtotal}
+            """)
+        
+        # Calculate coupon discount from the subtotal
+        coupon_discount = Decimal('0')
+        if any(item.applied_coupon for item in cart_items):
+            coupon = cart_items.first().applied_coupon
+            if coupon.coupon_type == 'percentage':
+                coupon_discount = round(temp_subtotal * (Decimal(str(coupon.discount_value)) / Decimal('100')), 2)
+            else:
+                coupon_discount = round(min(Decimal(str(coupon.discount_value)), temp_subtotal), 2)
+            
+            logger.debug(f"Calculated coupon discount: {coupon_discount}")
+        
+        # Calculate final values
+        delivery_charge = Decimal('10')
+        cart_subtotal = temp_subtotal - coupon_discount
+        final_total = cart_subtotal + delivery_charge
+        
+        logger.debug(f"""
+        Final checkout calculations:
+        Initial subtotal: {temp_subtotal}
+        Total product discounts: {total_product_discount}
+        Coupon discount: {coupon_discount}
+        Final subtotal: {cart_subtotal}
+        Delivery charge: {delivery_charge}
+        Final total: {final_total}
+        """)
+        
+        # Format cart items for display
+        formatted_cart_items = []
+        coupon_discount_per_item = Decimal('0')
+        if cart_items.exists() and coupon_discount > 0:
+            coupon_discount_per_item = round(coupon_discount / len(cart_items), 2)
+        
+        for item in cart_items:
+            item_price = item.variant.variant_price if item.variant else item.product.base_price
+            best_discount = calculate_best_discount(item.product, item_price)
+            item_discount = Decimal(str(best_discount['amount'])) if best_discount else Decimal('0')
+            
+            discounted_price = item_price - item_discount - coupon_discount_per_item
+            item_total = discounted_price * item.quantity
             
             formatted_cart_items.append({
                 'cart_item': item,
@@ -2182,9 +2490,6 @@ def checkout(request):
                 'item_total': float(item_total)
             })
         
-        delivery_charge = Decimal('10')
-        final_total = cart_subtotal + delivery_charge
-        
         # Fetch user addresses
         addresses = Address.objects.filter(user=request.user)
         
@@ -2192,7 +2497,7 @@ def checkout(request):
             'addresses': addresses,
             'cart_items': formatted_cart_items,
             'cart_subtotal': float(cart_subtotal),
-            'total_discount': float(total_discount + coupon_discount),  # Combined product and coupon discounts
+            'total_discount': float(total_product_discount),
             'coupon_discount': float(coupon_discount),
             'delivery_charge': float(delivery_charge),
             'final_total': float(final_total)
@@ -2206,11 +2511,6 @@ def checkout(request):
         return redirect('cart')
 
 
-
-
-
-
-
 #------------ order placing    normal working without razorpay ---------------------------------------------------------------
 # ----------adding wallet payment ---------------------------------------------------------------------------------------------
 
@@ -2222,173 +2522,219 @@ logger = logging.getLogger(__name__)
 @ensure_csrf_cookie
 
 
+
+
+
+# @user_required
 # def place_order(request):
 #     if request.method == "POST":
-#         user = request.user
-#         cart_items = Cart.objects.filter(user=user)
-#         default_address = Address.objects.filter(user=user, is_default=True).first()
+#         try:
+#             user = request.user
+#             cart_items = Cart.objects.select_related(
+#                 'product', 
+#                 'variant', 
+#                 'product__catogery',
+#                 'applied_coupon'
+#             ).filter(user=user)
+#             default_address = Address.objects.filter(user=user, is_default=True).first()
 
-#         # Validate cart and address
-#         if not cart_items.exists():
-#             return JsonResponse({'success': False, 'message': 'Your cart is empty.'})
+#             # Validate cart and address
+#             if not cart_items.exists():
+#                 return JsonResponse({'success': False, 'message': 'Your cart is empty.'})
 
-#         if not default_address:
-#             return JsonResponse({'success': False, 'message': 'Please select a shipping address.'})
+#             if not default_address:
+#                 return JsonResponse({'success': False, 'message': 'Please select a shipping address.'})
 
-#         payment_method = request.POST.get("payment_method")
-#         if not payment_method:
-#             return JsonResponse({'success': False, 'message': 'Please select a payment method.'})
+#             payment_method = request.POST.get("payment_method")
+#             if not payment_method:
+#                 return JsonResponse({'success': False, 'message': 'Please select a payment method.'})
 
-#         cart_total = sum(item.total_price for item in cart_items)
-#         total_discount = sum(item.discount_amount or 0 for item in cart_items)
-#         total_price = cart_total - total_discount
+#             # Calculate final total using the same logic as cart/checkout
+#             cart_subtotal = Decimal('0')
+#             total_discount = Decimal('0')
+#             coupon_discount = Decimal('0')
+            
+#             order_items_data = []
+#             for item in cart_items:
+#                 # Get base price from variant or product
+#                 item_price = item.variant.variant_price if item.variant else item.product.base_price
+                
+#                 # Calculate best discount
+#                 best_discount = calculate_best_discount(item.product, item_price)
+#                 item_discount = Decimal(str(best_discount['amount'])) if best_discount else Decimal('0')
+                
+#                 # Add coupon discount if any
+#                 coupon_discount_per_item = Decimal(str(item.discount_amount)) if item.applied_coupon else Decimal('0')
+                
+#                 # Calculate final price for item
+#                 discounted_price = item_price - item_discount - coupon_discount_per_item
+#                 item_total = discounted_price * item.quantity
+                
+#                 # Add to running totals
+#                 cart_subtotal += item_total
+#                 total_discount += (item_discount * item.quantity)
+#                 coupon_discount += (coupon_discount_per_item * item.quantity)
+                
+#                 # Store item data for order creation
+#                 order_items_data.append({
+#                     'product': item.product,
+#                     'variant': item.variant,
+#                     'quantity': item.quantity,
+#                     'price_per_unit': float(discounted_price),
+#                     'total_price': float(item_total)
+#                 })
 
+#             delivery_charge = Decimal('10')
+#             final_total = cart_subtotal + delivery_charge
 
-#         if payment_method == 'COD' and total_price > 1000:
-#             return JsonResponse({
-#                 'success': False,
-#                 'message': 'Cash on Delivery is not available for orders above ₹1000. Please choose another payment method.',
-#                 'cod_limit_exceeded': True  # Add this flag to handle specific SweetAlert
-#             })
+#             # Check COD limit
+#             if payment_method == 'COD' and final_total > 1000:
+#                 return JsonResponse({
+#                     'success': False,
+#                     'message': 'Cash on Delivery is not available for orders above ₹1000. Please choose another payment method.',
+#                     'cod_limit_exceeded': True
+#                 })
 
-#         # Handle Wallet Payment
-#         if payment_method == 'Wallet':
-#             try:
-#                 wallet = Wallet.objects.get(user=user)
-#                 if wallet.balance < total_price:
+#             # Handle Wallet Payment
+#             if payment_method == 'Wallet':
+#                 try:
+#                     wallet = Wallet.objects.get(user=user)
+#                     if wallet.balance < final_total:
+#                         return JsonResponse({
+#                             'success': False,
+#                             'message': f'Insufficient wallet balance. Available: ₹{wallet.balance}, Required: ₹{final_total}'
+#                         })
+
+#                     order = Order.objects.create(
+#                         user=user,
+#                         address=default_address,
+#                         payment_method='WALLET',
+#                         total_amount=final_total,
+#                         payment_status='success'
+#                     )
+
+#                     # Create order items with correct prices
+#                     for item_data in order_items_data:
+#                         OrderItem.objects.create(
+#                             order=order,
+#                             product=item_data['product'],
+#                             variant=item_data['variant'],
+#                             quantity=item_data['quantity'],
+#                             price_per_unit=item_data['price_per_unit'],
+#                             total_price=item_data['total_price']
+#                         )
+
+#                     # Create wallet transaction
+#                     WalletTransaction.objects.create(
+#                         wallet=wallet,
+#                         transaction_type='DEBIT',
+#                         amount=final_total,
+#                         payment_method='INTERNAL'
+#                     )
+
+#                     wallet.balance -= final_total
+#                     wallet.save()
+
+#                     cart_items.delete()
+
 #                     return JsonResponse({
-#                         'success': False,
-#                         'message': f'Insufficient wallet balance. Available: ₹{wallet.balance}, Required: ₹{total_price}'
+#                         'success': True,
+#                         'message': 'Order placed successfully using wallet balance!',
+#                         'new_balance': float(wallet.balance)
 #                     })
 
-#                 # Create order with success payment status
+#                 except Wallet.DoesNotExist:
+#                     return JsonResponse({
+#                         'success': False,
+#                         'message': 'Wallet not found for this user.'
+#                     })
+
+#             # Create order for COD
+#             elif payment_method == 'COD':
 #                 order = Order.objects.create(
 #                     user=user,
 #                     address=default_address,
-#                     payment_method='WALLET',
-#                     total_amount=total_price,
+#                     payment_method='COD',
+#                     total_amount=final_total,
 #                     payment_status='success'
 #                 )
 
-#                 # Create order items
-#                 for cart_item in cart_items:
+#                 # Create order items with correct prices
+#                 for item_data in order_items_data:
 #                     OrderItem.objects.create(
 #                         order=order,
-#                         product=cart_item.product,
-#                         quantity=cart_item.quantity,
-#                         price_per_unit=cart_item.product.base_price,
-#                         total_price=cart_item.product.base_price * cart_item.quantity
+#                         product=item_data['product'],
+#                         variant=item_data['variant'],
+#                         quantity=item_data['quantity'],
+#                         price_per_unit=item_data['price_per_unit'],
+#                         total_price=item_data['total_price']
 #                     )
 
-#                 # Create wallet transaction
-#                 WalletTransaction.objects.create(
-#                     wallet=wallet,
-#                     transaction_type='DEBIT',
-#                     amount=total_price,
-#                     payment_method='INTERNAL'
-#                 )
-
-#                 # Update wallet balance
-#                 wallet.balance -= total_price
-#                 wallet.save()
-
-#                 # Clear cart
 #                 cart_items.delete()
 
 #                 return JsonResponse({
-#                 'success': True,
-#                 'message': 'Order placed successfully using wallet balance!',
-#                 'new_balance': wallet.balance
+#                     'success': True,
+#                     'message': 'Order placed successfully!',
+#                     'is_cod': True
 #                 })
-#             except Wallet.DoesNotExist:
-#                 logger.error("Wallet not found for user.")
+
+#             # Handle Online Payment
+#             elif payment_method == 'Online':
+#                 env = environ.Env()
+#                 client = razorpay.Client(
+#                     auth=(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET'))
+#                 )
+                
+#                 order = Order.objects.create(
+#                     user=user,
+#                     address=default_address,
+#                     payment_method='ONLINE',
+#                     total_amount=final_total,
+#                     payment_status='pending'
+#                 )
+
+#                 razorpay_order = client.order.create({
+#                     'amount': int(final_total * 100),
+#                     'currency': 'INR',
+#                     'receipt': str(order.id),
+#                     'payment_capture': 1
+#                 })
+
+#                 order.razorpay_order_id = razorpay_order['id']
+#                 order.save()
+
+#                 # Create order items with correct prices
+#                 for item_data in order_items_data:
+#                     OrderItem.objects.create(
+#                         order=order,
+#                         product=item_data['product'],
+#                         variant=item_data['variant'],
+#                         quantity=item_data['quantity'],
+#                         price_per_unit=item_data['price_per_unit'],
+#                         total_price=item_data['total_price']
+#                     )
+
 #                 return JsonResponse({
+#                     'success': True,
+#                     'is_cod': False,
+#                     'razorpay_key': env('RAZORPAY_KEY_ID'),
+#                     'razorpay_order_id': razorpay_order['id'],
+#                     'amount': int(final_total * 100),
+#                     'name': user.username,
+#                     'email': user.email,
+#                     'contact': user.phone_number
+#                 })
+
+#         except Exception as e:
+#             logger.error(f"Error in place_order: {traceback.format_exc()}")
+#             return JsonResponse({
 #                 'success': False,
-#                 'message': 'Wallet not found for this user.'
-#                 })
-#             except Exception as e:
-#                 logger.error(f"Unexpected error: {str(e)}")
-#                 return JsonResponse({
-#                     "success": False,
-#                     "message": "Internal server error"
-#             }, status=500)
-
-#         # Create order for COD
-#         elif payment_method == 'COD':
-#             order = Order.objects.create(
-#                 user=user,
-#                 address=default_address,
-#                 payment_method='COD',
-#                 total_amount=total_price,
-#                 payment_status='success'
-#             )
-
-#             # Create order items
-#             for cart_item in cart_items:
-#                 OrderItem.objects.create(
-#                     order=order,
-#                     product=cart_item.product,
-#                     quantity=cart_item.quantity,
-#                     price_per_unit=cart_item.product.base_price,
-#                     total_price=cart_item.product.base_price * cart_item.quantity
-#                 )
-
-#             # Clear cart
-#             cart_items.delete()
-
-#             return JsonResponse({
-#                 'success': True, 
-#                 'message': 'Order placed successfully!',
-#                 'is_cod': True
-#             })
-
-#         # Handle Online Payment
-#         elif payment_method == 'Online':
-#             env = environ.Env()
-#             client = razorpay.Client(
-#                 auth=(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET'))
-#             )
-            
-#             order = Order.objects.create(
-#                 user=user,
-#                 address=default_address,
-#                 payment_method='ONLINE',
-#                 total_amount=total_price,
-#                 payment_status='pending'
-#             )
-
-#             razorpay_order = client.order.create({
-#                 'amount': int(total_price * 100),
-#                 'currency': 'INR',
-#                 'receipt': str(order.id),
-#                 'payment_capture': 1
-#             })
-
-#             order.razorpay_order_id = razorpay_order['id']
-#             order.save()
-
-#             for cart_item in cart_items:
-#                 OrderItem.objects.create(
-#                     order=order,
-#                     product=cart_item.product,
-#                     quantity=cart_item.quantity,
-#                     price_per_unit=cart_item.product.base_price,
-#                     total_price=cart_item.product.base_price * cart_item.quantity
-#                 )
-
-#             return JsonResponse({
-#                 'success': True,
-#                 'is_cod': False,
-#                 'razorpay_key': env('RAZORPAY_KEY_ID'),
-#                 'razorpay_order_id': razorpay_order['id'],
-#                 'amount': int(total_price * 100),
-#                 'name': user.username,
-#                 'email': user.email,
-#                 'contact': user.phone_number
+#                 'message': f'An error occurred while processing your order: {str(e)}'
 #             })
 
 #     return JsonResponse({'success': False, 'message': 'Invalid request method.'})
 
+# ---------new place order-----------------
 
 
 @user_required
@@ -2415,43 +2761,63 @@ def place_order(request):
             if not payment_method:
                 return JsonResponse({'success': False, 'message': 'Please select a payment method.'})
 
-            # Calculate final total using the same logic as cart/checkout
-            cart_subtotal = Decimal('0')
-            total_discount = Decimal('0')
-            coupon_discount = Decimal('0')
+            # Calculate subtotal before coupon discount
+            temp_subtotal = Decimal('0')
+            total_product_discount = Decimal('0')
             
             order_items_data = []
             for item in cart_items:
-                # Get base price from variant or product
+                # Get base price
                 item_price = item.variant.variant_price if item.variant else item.product.base_price
                 
-                # Calculate best discount
+                # Calculate product discount first
                 best_discount = calculate_best_discount(item.product, item_price)
                 item_discount = Decimal(str(best_discount['amount'])) if best_discount else Decimal('0')
                 
-                # Add coupon discount if any
-                coupon_discount_per_item = Decimal(str(item.discount_amount)) if item.applied_coupon else Decimal('0')
-                
-                # Calculate final price for item
-                discounted_price = item_price - item_discount - coupon_discount_per_item
-                item_total = discounted_price * item.quantity
+                # Calculate price after product discount but before coupon
+                price_after_product_discount = item_price - item_discount
+                item_subtotal = price_after_product_discount * item.quantity
                 
                 # Add to running totals
-                cart_subtotal += item_total
-                total_discount += (item_discount * item.quantity)
-                coupon_discount += (coupon_discount_per_item * item.quantity)
+                temp_subtotal += item_subtotal
+                total_product_discount += (item_discount * item.quantity)
+
+            # Calculate coupon discount from the subtotal
+            coupon_discount = Decimal('0')
+            applied_coupon = None
+            if any(item.applied_coupon for item in cart_items):
+                applied_coupon = cart_items.first().applied_coupon
+                if applied_coupon.coupon_type == 'percentage':
+                    coupon_discount = round(temp_subtotal * (Decimal(str(applied_coupon.discount_value)) / Decimal('100')), 2)
+                else:
+                    coupon_discount = round(min(Decimal(str(applied_coupon.discount_value)), temp_subtotal), 2)
+
+            # Calculate final totals
+            delivery_charge = Decimal('10')
+            cart_subtotal = temp_subtotal - coupon_discount
+            final_total = cart_subtotal + delivery_charge
+
+            # Prepare order items data with correct price distribution
+            coupon_discount_per_item = Decimal('0')
+            if cart_items.exists() and coupon_discount > 0:
+                coupon_discount_per_item = round(coupon_discount / len(cart_items), 2)
+
+            order_items_data = []
+            for item in cart_items:
+                item_price = item.variant.variant_price if item.variant else item.product.base_price
+                best_discount = calculate_best_discount(item.product, item_price)
+                item_discount = Decimal(str(best_discount['amount'])) if best_discount else Decimal('0')
                 
-                # Store item data for order creation
+                final_price_per_unit = item_price - item_discount - coupon_discount_per_item
+                item_total = final_price_per_unit * item.quantity
+                
                 order_items_data.append({
                     'product': item.product,
                     'variant': item.variant,
                     'quantity': item.quantity,
-                    'price_per_unit': float(discounted_price),
+                    'price_per_unit': float(final_price_per_unit),
                     'total_price': float(item_total)
                 })
-
-            delivery_charge = Decimal('10')
-            final_total = cart_subtotal + delivery_charge
 
             # Check COD limit
             if payment_method == 'COD' and final_total > 1000:
@@ -2476,10 +2842,15 @@ def place_order(request):
                         address=default_address,
                         payment_method='WALLET',
                         total_amount=final_total,
-                        payment_status='success'
+                        payment_status='success',
+                        applied_coupon=applied_coupon,
+                        coupon_discount=coupon_discount
                     )
+                    
+                    # Create order address
+                    OrderAddress.create_from_address(order, default_address)
 
-                    # Create order items with correct prices
+                    # Create order items
                     for item_data in order_items_data:
                         OrderItem.objects.create(
                             order=order,
@@ -2522,10 +2893,15 @@ def place_order(request):
                     address=default_address,
                     payment_method='COD',
                     total_amount=final_total,
-                    payment_status='success'
+                    payment_status='success',
+                    applied_coupon=applied_coupon,
+                    coupon_discount=coupon_discount
                 )
 
-                # Create order items with correct prices
+                # Create order address
+                OrderAddress.create_from_address(order, default_address)
+
+                # Create order items
                 for item_data in order_items_data:
                     OrderItem.objects.create(
                         order=order,
@@ -2556,8 +2932,13 @@ def place_order(request):
                     address=default_address,
                     payment_method='ONLINE',
                     total_amount=final_total,
-                    payment_status='pending'
+                    payment_status='pending',
+                    applied_coupon=applied_coupon,
+                    coupon_discount=coupon_discount
                 )
+
+                # Create order address
+                OrderAddress.create_from_address(order, default_address)
 
                 razorpay_order = client.order.create({
                     'amount': int(final_total * 100),
@@ -2569,7 +2950,7 @@ def place_order(request):
                 order.razorpay_order_id = razorpay_order['id']
                 order.save()
 
-                # Create order items with correct prices
+                # Create order items
                 for item_data in order_items_data:
                     OrderItem.objects.create(
                         order=order,
@@ -2599,10 +2980,6 @@ def place_order(request):
             })
 
     return JsonResponse({'success': False, 'message': 'Invalid request method.'})
-
-
-
-
 
 
 # Razorpay Payment Verification View
@@ -2832,6 +3209,94 @@ def single_order_detail(request, order_id):
 # --------------------------------------------------------------------------------------------------------------------------
 
 
+# @user_required
+# @require_POST
+# def cancel_order_item(request, order_item_id):
+#     try:
+#         # Use select_related to optimize queries
+#         order_item = OrderItem.objects.select_related(
+#             'order', 
+#             'product', 
+#             'variant',
+#             'order__user'
+#         ).get(
+#             id=order_item_id, 
+#             order__user=request.user
+#         )
+        
+#         # Check if the order is still cancellable
+#         if order_item.order.order_status in ['delivered', 'shipped']:
+#             return JsonResponse({
+#                 'success': False, 
+#                 'message': 'Cannot cancel items in delivered or shipped orders'
+#             }, status=400)
+            
+#         # Check if item is already cancelled
+#         if order_item.is_cancelled:
+#             return JsonResponse({
+#                 'success': False, 
+#                 'message': 'This item is already cancelled'
+#             }, status=400)
+
+#         # Start database transaction
+#         with transaction.atomic():
+#             # Get or create user wallet
+#             wallet, created = Wallet.objects.get_or_create(user=request.user)
+            
+#             # Calculate refund amount (includes any discounts applied during order)
+#             refund_amount = order_item.total_price + 10
+            
+#             # Create wallet transaction for refund
+#             WalletTransaction.objects.create(
+#                 wallet=wallet,
+#                 transaction_type='REFUND',
+#                 amount=refund_amount,
+#                 payment_method='INTERNAL'
+#             )
+            
+#             # Update wallet balance
+#             wallet.balance += refund_amount
+#             wallet.save()
+            
+#             # Mark the order item as cancelled
+#             order_item.is_cancelled = True
+#             order_item.save()
+            
+#             # Recalculate order total
+#             order = order_item.order
+#             order.calculate_total()
+            
+#             # If all items in order are cancelled, mark order as cancelled
+#             if not order.order_items.filter(is_cancelled=False).exists():
+#                 order.order_status = 'cancelled'
+#                 order.is_canceled = True
+#                 order.cancel_date = timezone.now()
+#                 order.save()
+            
+#             # Update product stock quantity
+#             order_item.product.stock_quantity += order_item.quantity
+#             order_item.product.save()
+        
+#         return JsonResponse({
+#             'success': True, 
+#             'message': 'Product cancelled successfully and amount refunded to wallet',
+#             'refund_amount': float(refund_amount),
+#             'new_wallet_balance': float(wallet.balance)
+#         })
+    
+#     except OrderItem.DoesNotExist:
+#         return JsonResponse({
+#             'success': False, 
+#             'message': 'Order item not found'
+#         }, status=404)
+        
+#     except Exception as e:
+#         logger.error(f"Error in cancel_order_item: {traceback.format_exc()}")
+#         return JsonResponse({
+#             'success': False, 
+#             'message': f'An error occurred while cancelling the order item: {str(e)}'
+#         }, status=500)
+
 @user_required
 @require_POST
 def cancel_order_item(request, order_item_id):
@@ -2919,8 +3384,6 @@ def cancel_order_item(request, order_item_id):
             'success': False, 
             'message': f'An error occurred while cancelling the order item: {str(e)}'
         }, status=500)
-
-
 
 # ---------------------------------------------------------------------------------------------------
 @login_required
@@ -3224,16 +3687,57 @@ from reportlab.lib.pagesizes import letter
 import os
 
 
+
+
+
+# @user_required
 # def generate_invoice(request, order_id):
 #     try:
-#         # Fetch the order details
-#         order = Order.objects.get(id=order_id)
-#         order_items = order.order_items.all()
+#         # Fetch the order with related data
+#         order = Order.objects.select_related('user', 'address').get(id=order_id)
+#         order_items = order.order_items.select_related('product', 'variant', 'product__catogery').all()
 
-#         # Calculate total and any refunds
-#         total_product_amount = sum(item.total_price for item in order_items)
-#         refunded_amount = sum(item.total_price for item in order_items if item.is_cancelled)
-#         remaining_amount = total_product_amount - refunded_amount
+#         # Calculate totals using the same logic as checkout
+#         cart_subtotal = Decimal('0')
+#         total_discount = Decimal('0')
+        
+#         # Calculate item-wise totals and discounts
+#         item_details = []
+#         for item in order_items:
+#             # Get base price from variant or product
+#             item_price = item.variant.variant_price if item.variant else item.product.base_price
+            
+#             # Calculate best discount
+#             best_discount = calculate_best_discount(item.product, item_price)
+#             item_discount = Decimal(str(best_discount['amount'])) if best_discount else Decimal('0')
+            
+#             # Calculate final price for item
+#             discounted_price = item_price - item_discount
+#             item_total = discounted_price * item.quantity
+            
+#             # Add to running totals
+#             cart_subtotal += item_total
+#             total_discount += (item_discount * item.quantity)
+            
+#             # Store item details for display
+#             item_details.append({
+#                 'item': item,
+#                 'original_price': item_price,
+#                 'discounted_price': discounted_price,
+#                 'total': item_total,
+#                 'discount': item_discount * item.quantity
+#             })
+
+#         # Fixed delivery charge
+#         delivery_charge = Decimal('10')
+#         final_total = cart_subtotal + delivery_charge
+
+#         # Calculate refund if any
+#         refunded_amount = sum(
+#             detail['total'] for detail in item_details 
+#             if detail['item'].is_cancelled
+#         )
+#         remaining_amount = final_total - refunded_amount
 
 #         # Create PDF
 #         buffer = BytesIO()
@@ -3253,87 +3757,104 @@ import os
 #             f"Shipping Address: {order.address.street_address}, {order.address.city}, {order.address.state} - {order.address.postal_code}")
 
 #         # Line Separator
-#         p.setLineWidth(1)
 #         p.line(50, height - 120, width - 50, height - 120)
 
 #         # Order Items Header
 #         y = height - 150
 #         p.setFont("Helvetica-Bold", 12)
-#         p.drawString(100, y, "Product")
-#         p.drawString(300, y, "Variant")
-#         p.drawString(400, y, "Quantity")
-#         p.drawString(500, y, "Price")
+#         p.drawString(50, y, "Product")
+#         p.drawString(200, y, "Variant")
+#         p.drawString(300, y, "Qty")
+#         p.drawString(350, y, "Price")
+#         p.drawString(420, y, "Discount")
+#         p.drawString(500, y, "Total")
 #         y -= 20
 
-#         # Order Items with fixed variant display
+#         # Order Items
 #         p.setFont("Helvetica", 10)
-#         for item in order_items:
+#         for detail in item_details:
+#             item = detail['item']
 #             product_name = item.product.name
             
-#             # Use the display_name property from Variant model
+#             # Get variant display info
 #             if item.variant:
 #                 variant_info = item.variant.display_name
 #             else:
-#                 # Check if product has a default variant
 #                 default_variant = item.product.get_default_variant()
 #                 variant_info = default_variant.display_name if default_variant else "Standard"
             
 #             # Draw item information
-#             p.drawString(100, y, f"{product_name}")
-#             p.drawString(300, y, variant_info)
-#             p.drawString(400, y, f"{item.quantity}")
-#             p.drawString(500, y, f"Rs.{item.total_price}")
+#             p.drawString(50, y, f"{product_name}")
+#             p.drawString(200, y, variant_info)
+#             p.drawString(300, y, f"{item.quantity}")
+#             p.drawString(350, y, f"₹{detail['original_price']:.2f}")
+#             p.drawString(420, y, f"₹{detail['discount']:.2f}")
+#             p.drawString(500, y, f"₹{detail['total']:.2f}")
 #             y -= 20
 
 #         # Line Separator
 #         p.line(50, y, width - 50, y)
 #         y -= 20
 
-#         # Payment Details
+#         # Summary Section
 #         p.setFont("Helvetica-Bold", 12)
-#         p.drawString(100, y, "Payment Method:")
-#         p.setFont("Helvetica", 12)
-#         p.drawString(300, y, f"{order.get_payment_method_display()}")
+#         p.drawString(300, y, "Order Summary")
 #         y -= 20
 
-#         # Payment Status
-#         p.setFont("Helvetica-Bold", 12)
-#         p.drawString(100, y, "Payment Status:")
+#         # Subtotal
 #         p.setFont("Helvetica", 12)
-#         p.drawString(300, y, f"{order.get_payment_status_display()}")
+#         p.drawString(300, y, "Subtotal:")
+#         p.drawString(500, y, f"₹{cart_subtotal:.2f}")
 #         y -= 20
 
-#         # Total Amount
+#         # Total Discount
+#         if total_discount > 0:
+#             p.drawString(300, y, "Total Discount:")
+#             p.drawString(500, y, f"₹{total_discount:.2f}")
+#             y -= 20
+
+#         # Delivery Charge
+#         p.drawString(300, y, "Delivery Charge:")
+#         p.drawString(500, y, f"₹{delivery_charge:.2f}")
+#         y -= 20
+
+#         # Final Total
 #         p.setFont("Helvetica-Bold", 12)
-#         p.drawString(100, y, "Total Amount:")
-#         p.setFont("Helvetica", 12)
-#         p.drawString(300, y, f"₹{total_product_amount}")
+#         p.drawString(300, y, "Total Amount:")
+#         p.drawString(500, y, f"₹{final_total:.2f}")
 #         y -= 20
 
 #         # Refunded Amount (if any)
 #         if refunded_amount > 0:
+#             p.setFont("Helvetica", 12)
+#             p.drawString(300, y, "Refunded Amount:")
+#             p.drawString(500, y, f"₹{refunded_amount:.2f}")
+#             y -= 20
+
 #             p.setFont("Helvetica-Bold", 12)
-#             p.drawString(100, y, "Refunded Amount:")
-#             p.setFont("Helvetica", 12)
-#             p.drawString(300, y, f"₹{refunded_amount}")
+#             p.drawString(300, y, "Final Amount:")
+#             p.drawString(500, y, f"₹{remaining_amount:.2f}")
 #             y -= 20
 
-#             p.drawString(100, y, "Final Amount:")
-#             p.drawString(300, y, f"₹{remaining_amount}")
-#             y -= 20
-
-#         # Order Status
-#         p.setFont("Helvetica-Bold", 12)
-#         p.drawString(100, y, "Order Status:")
-#         p.setFont("Helvetica", 12)
-#         p.drawString(300, y, f"{order.get_order_status_display()}")
+#         # Payment Details
 #         y -= 20
+#         p.setFont("Helvetica-Bold", 12)
+#         p.drawString(50, y, "Payment Details")
+#         y -= 20
+        
+#         p.setFont("Helvetica", 12)
+#         p.drawString(50, y, f"Payment Method: {order.get_payment_method_display()}")
+#         y -= 20
+#         p.drawString(50, y, f"Payment Status: {order.get_payment_status_display()}")
+#         y -= 20
+#         p.drawString(50, y, f"Order Status: {order.get_order_status_display()}")
 
+#         # Cancellation Details if applicable
 #         if order.is_canceled:
-#             p.setFont("Helvetica", 12)
-#             p.drawString(100, y, f"Canceled on: {order.cancel_date}")
-#             p.drawString(100, y - 20, f"Reason: {order.cancel_description}")
-#             y -= 40
+#             y -= 20
+#             p.drawString(50, y, f"Canceled on: {order.cancel_date}")
+#             y -= 20
+#             p.drawString(50, y, f"Reason: {order.cancel_description}")
 
 #         # Footer
 #         p.setFont("Helvetica", 10)
@@ -3343,7 +3864,7 @@ import os
 #         p.save()
 #         buffer.seek(0)
 
-#         # Create the HTTP response with PDF content
+#         # Create the HTTP response
 #         response = HttpResponse(content_type='application/pdf')
 #         response['Content-Disposition'] = f'attachment; filename="invoice_{order_id}.pdf"'
 #         response.write(buffer.getvalue())
@@ -3354,6 +3875,7 @@ import os
 #     except Order.DoesNotExist:
 #         return HttpResponse('Order not found.', status=404)
 #     except Exception as e:
+#         logger.error(f"Error generating invoice: {traceback.format_exc()}")
 #         return HttpResponse(f'Error generating invoice: {str(e)}', status=500)
 
 
@@ -3364,8 +3886,8 @@ import os
 @user_required
 def generate_invoice(request, order_id):
     try:
-        # Fetch the order with related data
-        order = Order.objects.select_related('user', 'address').get(id=order_id)
+        # Fetch the order with related data including shipping_address
+        order = Order.objects.select_related('user', 'shipping_address').get(id=order_id)
         order_items = order.order_items.select_related('product', 'variant', 'product__catogery').all()
 
         # Calculate totals using the same logic as checkout
@@ -3421,17 +3943,39 @@ def generate_invoice(request, order_id):
         p.setFont("Helvetica-Bold", 14)
         p.drawCentredString(width / 2, height - 60, f"Invoice for Order-{order_id}")
 
-        # Customer Info
+        # Customer Info with OrderAddress in multiple lines
         p.setFont("Helvetica", 12)
-        p.drawCentredString(width / 2, height - 80, f"Customer: {order.user.username} ({order.user.phone_number})")
-        p.drawCentredString(width / 2, height - 100, 
-            f"Shipping Address: {order.address.street_address}, {order.address.city}, {order.address.state} - {order.address.postal_code}")
+        shipping_address = order.shipping_address
+        
+        # Customer name and phone
+        p.drawCentredString(width / 2, height - 80, 
+            f"Customer: {shipping_address.full_name} ({shipping_address.phone_number})")
 
-        # Line Separator
-        p.line(50, height - 120, width - 50, height - 120)
+        # Format address in two lines
+        line1_parts = [
+            shipping_address.street_address,
+            shipping_address.apartment_suite,
+            shipping_address.landmark
+        ]
+        line1 = ', '.join(filter(None, line1_parts))
 
-        # Order Items Header
-        y = height - 150
+        line2_parts = [
+            shipping_address.city,
+            shipping_address.state,
+            shipping_address.postal_code
+        ]
+        line2 = ', '.join(filter(None, line2_parts))
+
+        # Draw address lines
+        p.drawCentredString(width / 2, height - 100, f"Shipping Address:")
+        p.drawCentredString(width / 2, height - 120, line1)
+        p.drawCentredString(width / 2, height - 140, line2)
+
+        # Adjust the line separator position
+        p.line(50, height - 160, width - 50, height - 160)
+
+        # Adjust Order Items Header position
+        y = height - 190
         p.setFont("Helvetica-Bold", 12)
         p.drawString(50, y, "Product")
         p.drawString(200, y, "Variant")
@@ -3548,6 +4092,7 @@ def generate_invoice(request, order_id):
     except Exception as e:
         logger.error(f"Error generating invoice: {traceback.format_exc()}")
         return HttpResponse(f'Error generating invoice: {str(e)}', status=500)
+
 # ------ withdrawal ------------------------------------------------------------------
 
 

@@ -519,6 +519,10 @@ class Order(models.Model):
         ('refunded', 'Refunded')
     ]
 
+    applied_coupon = models.ForeignKey('admin_panel.CouponTable' , on_delete=models.SET_NULL, null=True, blank=True)
+    coupon_discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+
     # Use your CustomUser model
     user = models.ForeignKey(
         CustomUser,
@@ -1164,3 +1168,57 @@ class WalletWithdrawal(models.Model):
     def __str__(self):
         return f"Withdrawal #{self.id} - {self.user.email} - {self.amount} - {self.status}"
     
+
+
+
+
+
+
+
+
+class OrderAddress(models.Model):
+    order = models.OneToOneField(
+        'Order',
+        on_delete=models.CASCADE,
+        related_name='shipping_address'
+    )
+    full_name = models.CharField(max_length=255, null=True, blank=True)
+    street_address = models.TextField(null=True, blank=True)
+    apartment_suite = models.CharField(max_length=255, null=True, blank=True)
+    landmark = models.CharField(max_length=255, null=True, blank=True)
+    city = models.CharField(max_length=100, null=True, blank=True)
+    postal_code = models.CharField(max_length=20, null=True, blank=True)
+    phone_number = models.CharField(max_length=15, null=True, blank=True)
+    state = models.CharField(max_length=100, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'order_address'
+
+    def __str__(self):
+        return f"Order #{self.order.id} - {self.full_name or 'No Name'}, {self.city or 'No City'}"
+
+    @classmethod
+    def create_from_address(cls, order, address):
+        """
+        Create OrderAddress from user's Address instance
+        """
+        return cls.objects.create(
+            order=order,
+            full_name=address.full_name,
+            street_address=address.street_address,
+            apartment_suite=address.apartment_suite,
+            landmark=address.landmark,
+            city=address.city,
+            postal_code=address.postal_code,
+            phone_number=address.phone_number,
+            state=address.state
+        )        
+
+
+
+
+
+
+
+

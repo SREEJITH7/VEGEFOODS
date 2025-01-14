@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
-from user.models import CustomUser, Address , OrderItem ,Order,OrderReturn,Refund
+from user.models import CustomUser, Address , OrderItem ,Order,OrderReturn,Refund, OrderAddress
 from .models import Catogery, ProductImage, Product , CouponTable,CouponUsage, Offer
 from django.core.paginator import Paginator
 from django.views.decorators.http import require_POST
@@ -770,64 +770,223 @@ def admin_order(request):
 # -------------------------testing for above ----------------------------------------------------------------
 
 
+# @admin_required
+# def admin_orderdetails(request, order_id):
+#     order = get_object_or_404(Order, id=order_id)
+#     user = order.user  
+#     address = Address.objects.filter(user=user, is_default=True).first()  
+#     order_items = order.order_items.all()  
+
+#     for item in order_items:
+        
+
+        
+#         # Check if variants exist for this product
+#         product_variants = item.product.variants.all()
+#         print(f"Product Variants: {list(product_variants)}")
+
+#         item.primary_image = (
+#             item.product.images.filter(is_primary=True).first()
+#         )
+
+#         # Attempt to assign variant if not already assigned
+#         if not item.variant and product_variants.exists():
+#             # Assign the first variant if available
+#             item.variant = product_variants.first()
+#             item.save()
+
+#         item.variant_display = ''
+#         if item.variant:
+#             # Your existing variant display logic
+#             if item.product.catogery.name in ['Vegetables', 'fruits', 'dried']:
+#                 item.variant_display = f"{item.variant.weight} kg"
+#             elif item.product.catogery.name == 'juice':
+#                 item.variant_display = f"{item.variant.volume} liter"
+#             else:
+#                 item.variant_display = str(item.variant.weight) if item.variant.weight else ''
+    
+
+
+#     subtotal = sum(item.product.base_price * item.quantity for item in order_items)
+    
+#     shipping = 0
+#     total_discount = sum(
+#         ((item.product.base_price * item.product.discount_percentage / 100) if item.product.discount_percentage else 0) * item.quantity
+#         for item in order_items
+#     )
+#     total_amount = subtotal + shipping - total_discount
+
+    
+#     context = {
+#         'order': order,
+#         'user': user,
+#         'address': address,
+#         'order_items': order_items,
+#         'subtotal': subtotal,
+#         'shipping': shipping,
+#         'total_discount': total_discount,
+#         'total_amount': total_amount,
+#     }
+#     return render(request, 'order_details.html', context)
+
+
+# --------------------- new admin order details with calculations ---------
+
+
+def calculate_best_discount(product, variant_price):
+    """Calculate the best applicable discount for a product."""
+    today = timezone.now().date()
+    
+    # Convert to Decimal for precise calculations
+    variant_price = Decimal(str(variant_price))
+    
+    # 1. Product's base discount
+    base_discount = Decimal(str(product.discount_percentage or '0'))
+    
+    # 2. Active Product Offers - Get the best one
+    product_offer_discount = Decimal('0')
+    product_offers = Offer.objects.filter(
+        product=product,
+        offer_type='PRODUCT',
+        is_active=True,
+        start_date__lte=today,
+        end_date__gte=today
+    )
+    if product_offers.exists():
+        product_offer_discount = Decimal(str(max(offer.discount_percentage for offer in product_offers)))
+    
+    # 3. Active Category Offers - Get the best one
+    category_offer_discount = Decimal('0')
+    category_offers = Offer.objects.filter(
+        category=product.catogery,
+        offer_type='CATEGORY',
+        is_active=True,
+        start_date__lte=today,
+        end_date__gte=today
+    )
+    if category_offers.exists():
+        category_offer_discount = Decimal(str(max(offer.discount_percentage for offer in category_offers)))
+    
+    # Get the best discount percentage
+    best_discount_percentage = max(base_discount, product_offer_discount, category_offer_discount)
+    
+    # If there's any discount, return the discount info
+    if best_discount_percentage > 0:
+        discount_amount = (variant_price * best_discount_percentage) / Decimal('100')
+        
+        # Determine the discount type
+        if best_discount_percentage == base_discount:
+            discount_type = 'Product Discount'
+        elif best_discount_percentage == product_offer_discount:
+            discount_type = 'Product Offer'
+        else:
+            discount_type = 'Category Offer'
+            
+        return {
+            'type': discount_type,
+            'percentage': float(best_discount_percentage),  # Convert to float for JSON serialization
+            'amount': float(discount_amount)  # Convert to float for JSON serialization
+        }
+    
+    return None
+
+
 @admin_required
 def admin_orderdetails(request, order_id):
-    order = get_object_or_404(Order, id=order_id)
-    user = order.user  
-    address = Address.objects.filter(user=user, is_default=True).first()  
-    order_items = order.order_items.all()  
+    try:
+        order = get_object_or_404(Order, id=order_id)
+        user = order.user
 
-    for item in order_items:
+        # address = Address.objects.filter(user=user, is_default=True).first()
+        shipping_address = order.shipping_address
+        order_items = order.order_items.select_related(
+            'product',
+            'variant',
+            'product__catogery'
+        ).prefetch_related(
+            'product__images'
+        ).all()
+
+        # First calculate subtotal before coupon discount
+        temp_subtotal = Decimal('0')
+        total_product_discount = Decimal('0')
         
-
+        formatted_order_items = []
         
-        # Check if variants exist for this product
-        product_variants = item.product.variants.all()
-        print(f"Product Variants: {list(product_variants)}")
+        # Calculate number of non-cancelled items for coupon distribution
+        active_items = sum(1 for item in order_items if not item.is_cancelled)
+        coupon_discount_per_item = Decimal('0')
+        if active_items > 0 and order.coupon_discount:
+            coupon_discount_per_item = order.coupon_discount / active_items
 
-        item.primary_image = (
-            item.product.images.filter(is_primary=True).first()
-        )
+        for item in order_items:
+            # Get primary image
+            primary_image = item.product.images.filter(is_primary=True).first()
 
-        # Attempt to assign variant if not already assigned
-        if not item.variant and product_variants.exists():
-            # Assign the first variant if available
-            item.variant = product_variants.first()
-            item.save()
+            # Get base price
+            item_price = item.variant.variant_price if item.variant else item.product.base_price
+            
+            # Calculate product discount
+            best_discount = calculate_best_discount(item.product, item_price)
+            item_discount = Decimal(str(best_discount['amount'])) if best_discount else Decimal('0')
+            
+            # Calculate price after product discount
+            price_after_product_discount = item_price - item_discount
+            
+            # Add coupon discount only if item is not cancelled
+            final_price = price_after_product_discount
+            if not item.is_cancelled:
+                final_price -= coupon_discount_per_item
+            
+            item_total = final_price * item.quantity
 
-        item.variant_display = ''
-        if item.variant:
-            # Your existing variant display logic
-            if item.product.catogery.name in ['Vegetables', 'fruits', 'dried']:
-                item.variant_display = f"{item.variant.weight} kg"
-            elif item.product.catogery.name == 'juice':
-                item.variant_display = f"{item.variant.volume} liter"
-            else:
-                item.variant_display = str(item.variant.weight) if item.variant.weight else ''
-    
+            # Add to running totals (only if not cancelled)
+            if not item.is_cancelled:
+                temp_subtotal += item_total
+                total_product_discount += (item_discount * item.quantity)
 
+            # Set variant display
+            variant_display = ''
+            if item.variant:
+                if item.product.catogery.name.lower() in ['vegetables', 'fruits', 'dried']:
+                    variant_display = f"{item.variant.weight} kg"
+                elif item.product.catogery.name.lower() == 'juice':
+                    variant_display = f"{item.variant.volume} liter"
+                else:
+                    variant_display = str(item.variant.weight) if item.variant.weight else ''
 
-    subtotal = sum(item.product.base_price * item.quantity for item in order_items)
-    
-    shipping = 0
-    total_discount = sum(
-        ((item.product.base_price * item.product.discount_percentage / 100) if item.product.discount_percentage else 0) * item.quantity
-        for item in order_items
-    )
-    total_amount = subtotal + shipping - total_discount
+            formatted_item = {
+                'order_item': item,
+                'primary_image': primary_image,
+                'variant_display': variant_display,
+                'original_price': float(item_price),
+                'discount_info': best_discount,
+                'discounted_price': float(final_price),
+                'item_total': float(item_total),
+                'item_discount': float(item_discount)
+            }
+            formatted_order_items.append(formatted_item)
 
-    
-    context = {
-        'order': order,
-        'user': user,
-        'address': address,
-        'order_items': order_items,
-        'subtotal': subtotal,
-        'shipping': shipping,
-        'total_discount': total_discount,
-        'total_amount': total_amount,
-    }
-    return render(request, 'order_details.html', context)
+        shipping = Decimal('10')
+        final_total = temp_subtotal + shipping
+
+        context = {
+            'order': order,
+            'user': user,
+            'address': shipping_address,
+            'order_items': formatted_order_items,
+            'subtotal': float(temp_subtotal),
+            'shipping': float(shipping),
+            'total_discount': float(total_product_discount),
+            'coupon_discount': float(order.coupon_discount),
+            'total_amount': float(final_total)
+        }
+        return render(request, 'order_details.html', context)
+
+    except Exception as e:
+        logger.error(f"Error in admin_orderdetails view: {traceback.format_exc()}")
+        messages.error(request, f"An error occurred: {str(e)}")
+        return redirect('admin_order')
 
 
 # ---------------------------------------------------------------------------------------------------------------------------------

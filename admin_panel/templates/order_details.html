@@ -140,26 +140,46 @@
   <div class="col">
       <div class="section-title-custom">Order Items</div>
       {% for item in order_items %}
-      <div class="order-item-block">
-          <div class="product-info">
-              {% if item.primary_image %}
-              <img src="{{ item.primary_image.images.url }}" alt="{{ item.product.name }}" class="product-image">
-              {% else %}
-              <img src="/static/img/placeholder.png" alt="{{ item.product.name }}" class="product-image">
-              {% endif %}
-              <div class="product-details">
-                  <span class="product-name">
-                      {{ item.product.name }} 
-                      {% if item.variant_display %}
-                      <span class="variant-display">({{ item.variant_display }})</span>
-                      {% endif %}
-                  </span>
-                  <span class="product-quantity">Qty: {{ item.quantity }}</span>
-                  <span class="product-price">Actual price ₹ {{ item.product.base_price|floatformat:2 }}</span>
-              </div>
-          </div>
-      </div>
-      {% endfor %}
+<div class="order-item-block">
+    <div class="product-info">
+        {% if item.primary_image %}
+        <img src="{{ item.primary_image.images.url }}" alt="{{ item.order_item.product.name }}" class="product-image">
+        {% else %}
+        <img src="/static/img/placeholder.png" alt="{{ item.order_item.product.name }}" class="product-image">
+        {% endif %}
+        <div class="product-details">
+            <span class="product-name">
+                {{ item.order_item.product.name }} 
+                {% if item.variant_display %}
+                <span class="variant-display">({{ item.variant_display }})</span>
+                {% endif %}
+                {% if item.order_item.is_cancelled %}
+                <span class="text-red-500 ml-2">(Cancelled)</span>
+                {% endif %}
+            </span>
+            <span class="product-quantity">Qty: {{ item.order_item.quantity }}</span>
+            <span class="product-price">
+                {% if item.discount_info.amount > 0 or item.coupon_discount > 0 %}
+                    <span class="original-price text-gray-500 line-through">
+                        Actual price ₹{{ item.original_price|floatformat:2 }}
+                    </span>
+                    <br>
+                    <span class="final-price">
+                        Final price ₹{{ item.discounted_price|floatformat:2 }}
+                    </span>
+                    {% if item.discount_info.amount > 0 %}
+                    <span class="discount text-green-500 ml-2">
+                        (-{{ item.discount_info.percentage }}% off)
+                    </span>
+                    {% endif %}
+                {% else %}
+                    Price ₹{{ item.original_price|floatformat:2 }}
+                {% endif %}
+            </span>
+        </div>
+    </div>
+</div>
+{% endfor %}
   </div>
 </div>
 {% comment %} ----------------------------------------------------------------------------------------------------------------------------- {% endcomment %}
@@ -180,6 +200,56 @@
 {% block css %}
 
 <style>
+
+
+
+  .text-red-500 {
+    color: #ef4444;
+}
+
+.text-green-500 {
+    color: #22c55e;
+}
+
+.text-gray-500 {
+    color: #6b7280;
+}
+
+.line-through {
+    text-decoration: line-through;
+}
+
+.ml-2 {
+    margin-left: 0.5rem;
+}
+
+.final-price {
+    font-weight: 600;
+    color: #22c55e;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     {% comment %} ------------------- {% endcomment %}
     .variant-display {
       color: #fff;
