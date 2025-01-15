@@ -891,6 +891,8 @@ def calculate_best_discount(product, variant_price):
     return None
 
 
+# hosted website code
+
 @admin_required
 def admin_orderdetails(request, order_id):
     try:
