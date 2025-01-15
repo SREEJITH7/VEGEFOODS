@@ -42,14 +42,33 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 
-
+from django.http import HttpResponse, JsonResponse
+from django.db.models import Count, Sum, F, Q, Case, When, FloatField, IntegerField
+from django.db.models.functions import TruncDate, TruncWeek, TruncMonth, TruncYear, Cast
+from datetime import datetime
+import pandas as pd
+import matplotlib.pyplot as plt
+import io
 import traceback
 
+from django.shortcuts import render
+from django.db.models import Sum, Count, Value, FloatField
+from django.db.models.functions import TruncDate, TruncWeek, TruncMonth, TruncYear, Cast
+from django.http import JsonResponse, HttpResponse
+# from .models import Order, OrderItem, CouponUsage
+from decimal import Decimal
+import pandas as pd
+from datetime import datetime, timedelta
+from django.db.models import Sum, Count, F, DecimalField
+
+from django.db.models import OuterRef, Subquery, Value
+from decimal import Decimal
+from datetime import datetime
 
 
-# from .decorators import user_required
 
-# Create your views here.
+
+
 
 
 def admin_login(request):
@@ -93,18 +112,18 @@ from collections import Counter, defaultdict
 @never_cache
 @login_required(login_url='admin_login')
 def admin_dashboard(request):
-    # Get all orders
+    
     order_data = Order.objects.all()
     
-    # Get active users count
+    
     active_users_count = CustomUser.objects.filter(is_deleted=False).count()
     
-    # Calculate current time periods
+    
     current_date = timezone.now()
     current_year = current_date.year
     current_month = current_date.month
 
-    # Calculate total revenue and total discount
+    
     total_revenue = order_data.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
     
     total_discount = OrderItem.objects.annotate(
@@ -114,7 +133,7 @@ def admin_dashboard(request):
         )
     ).aggregate(total_discount=Sum(F('discount') * F('quantity')))['total_discount'] or 0
 
-    # Previous month revenue calculation
+    
     previous_month_end = current_date.replace(day=1) - timedelta(days=1)
     previous_month_start = previous_month_end.replace(day=1)
     previous_month_revenue = order_data.filter(
@@ -122,19 +141,19 @@ def admin_dashboard(request):
         order_date__lte=previous_month_end
     ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
 
-    # calculate revenue 
+     
     percentage_change = 0
     if previous_month_revenue > 0:
         percentage_change = ((total_revenue - previous_month_revenue) / previous_month_revenue) * 100
 
-    # daily revenue data
+    
     daily_data = order_data.annotate(
         day=TruncDay('order_date')
     ).values('day').annotate(
         total_amount_sum=Sum('total_amount')
     ).order_by('day')
 
-    # monthly revenue data
+    
     monthly_data = order_data.annotate(
         month=TruncMonth('order_date')
     ).values('month').annotate(
@@ -148,7 +167,7 @@ def admin_dashboard(request):
         total_amount_sum=Sum('total_amount')
     ).order_by('year')
 
-    # Product and Category Analysis
+    
     product_sales = Counter()
     category_sales = Counter()
     for order in order_data:
@@ -159,7 +178,7 @@ def admin_dashboard(request):
     top_products = product_sales.most_common(3)
     top_categories = category_sales.most_common(3)
 
-    # Payment method analysis
+    
     payment_methods = defaultdict(int)
     for order in order_data:
         payment_methods[order.payment_method] += 1
@@ -170,7 +189,7 @@ def admin_dashboard(request):
         {"label": "Wallet", "count": payment_methods.get("WALLET", 0)},
     ]
 
-    # Order status analysis
+    
     cancelled_count = order_data.filter(order_status='cancelled').count()
     delivered_count = order_data.filter(order_status='delivered').count()
     total_orders = order_data.count()
@@ -184,7 +203,7 @@ def admin_dashboard(request):
         'percentage_change': round(percentage_change, 2),
         'active_users_count': active_users_count,
         
-        # Time series data
+        
         'daily_data': json.dumps([{
             'date': entry['day'].strftime('%d %b'),
             'amount': float(entry['total_amount_sum'])
@@ -201,13 +220,13 @@ def admin_dashboard(request):
             'amount': float(entry['total_amount_sum'])
         } for entry in yearly_data]),
 
-        # Product and category analysis
+        
         'top_products': json.dumps(top_products),
         'top_categories': json.dumps(top_categories),
         'products': top_products,
         'categories': top_categories,
 
-        # Payment and order status
+        
         'payment_method_data': json.dumps(payment_method_data),
         'cancelled_count': cancelled_count,
         'delivered_count': delivered_count,
@@ -256,14 +275,14 @@ def admin_user(request):
 @require_POST
 def toggle_user_status(request, user_id):
     try:
-        # Add authentication check
+        
 
         if not request.user.is_superuser:
             messages.error(request, "You don't have permission to perform this action.")
             return redirect('admin_user')
             
         user = CustomUser.objects.get(user_id=user_id)
-        # Prevent blocking yourself
+        
         if user.user_id == request.user.user_id:
             messages.error(request, "You cannot block your own account.")
             return redirect('admin_user')
@@ -318,7 +337,7 @@ def add_submit_category(request):
 def toggle_category_status(request, category_id):
     if request.method == "POST":
 
-        #fetch category id 
+        
 
         category = get_object_or_404(Catogery, id=category_id)
 
@@ -368,19 +387,19 @@ def admin_product(request):
             except Product.DoesNotExist:
                 messages.error(request, 'Product not found')
         
-    #product acc to date of creation
+    
     products = Product.objects.all().order_by('-created_at')
 
-    #page no.
+    
     page_number = request.GET.get('page', 1)
 
-    #number of items per page
+    
     items_per_page = 15
 
-    #object of paginator
+    
     paginator = Paginator(products, items_per_page)
 
-    #for getting page
+    
     page_obj = paginator.get_page(page_number)
 
     context = {
@@ -393,105 +412,7 @@ def admin_product(request):
 
 #############   add product   #####################################################################################################################
 
-# @admin_required
-# @csrf_exempt  # remove in production  
-# @require_http_methods(["GET", "POST"])
-# def add_product(request):
-#     if request.method == 'GET':
-#         categories = Catogery.objects.all()
-#         return render(request, 'admin_addproduct.html', {'categories': categories})
-    
-#     elif request.method == 'POST':
-#         try:
-#             #debugging 
-#             print("Request POST data:", request.POST)
-#             print("Request FILES:", request.FILES)
-            
-#             #get from data
-#             name = request.POST.get('name')
-#             base_price = request.POST.get('base_price')  
-#             stock_quantity = request.POST.get('stock_quantity')
-#             category_id = request.POST.get('category')
 
-#             #validate data
-#             if not all([name, base_price, stock_quantity, category_id]):  # Updated 'price' to 'base_price'
-#                 missing_fields = []
-#                 if not name: missing_fields.append('name')
-#                 if not base_price: missing_fields.append('base_price')  # Updated field name
-#                 if not stock_quantity: missing_fields.append('stock_quantity')
-#                 if not category_id: missing_fields.append('category')
-                
-#                 return JsonResponse({
-#                     'success': False,
-#                     'message': f'Missing required fields: {", ".join(missing_fields)}'
-#                 }, status=400)
-
-#             #validate daata
-#             images = []
-#             for i in range(3):
-#                 if f'image_{i}' in request.FILES:
-#                     images.append(request.FILES[f'image_{i}'])
-
-#             if not images:
-#                 return JsonResponse({
-#                     'success': False,
-#                     'message': 'At least one image is required'
-#                 }, status=400)
-
-#             try:
-#                 #fetch category instance
-#                 category = Catogery.objects.get(id=int(category_id))
-
-#                 #create productt
-#                 product = Product.objects.create(
-#                     name=name,
-#                     base_price=float(base_price),  
-#                     stock_quantity=int(stock_quantity),
-#                     catogery=category 
-#                 )
-
-#                 #save image 
-#                 for image in images:
-#                     ProductImage.objects.create(
-#                         product=product,
-#                         images=image
-#                     )
-
-#                 return JsonResponse({
-#                     'success': True,
-#                     'message': 'Product added successfully',
-#                     'product_id': product.id
-#                 })
-
-#             except ValueError as ve:
-#                 return JsonResponse({
-#                     'success': False,
-#                     'message': f'Invalid data format: {str(ve)}'
-#                 }, status=400)
-
-#             except Catogery.DoesNotExist:
-#                 return JsonResponse({
-#                     'success': False,
-#                     'message': 'Invalid category ID'
-#                 }, status=400)
-
-#             except Exception as e:
-#                 print(f"Error creating product: {str(e)}")
-#                 return JsonResponse({
-#                     'success': False,
-#                     'message': f'Error creating product: {str(e)}'
-#                 }, status=500)
-
-#         except Exception as e:
-#             print(f"Unexpected error: {str(e)}")
-#             return JsonResponse({
-#                 'success': False,
-#                 'message': f'Server error: {str(e)}'
-#             }, status=500)
-
-
-
-# ------------------above is working code ---------------------
 
 # -------------after adding the varients-----------------------
 
@@ -505,20 +426,20 @@ def add_product(request):
     
     elif request.method == 'POST':
         try:
-            # Get basic product data
+            
             name = request.POST.get('name')
             base_price = request.POST.get('base_price')
             stock_quantity = request.POST.get('stock_quantity')
             category_id = request.POST.get('category')
             
-            # Get variant prices
+            
             variant_prices = {
                 '1': request.POST.get('variant_1kg_price'),
                 '1.5': request.POST.get('variant_1_5kg_price'),
                 '2': request.POST.get('variant_2kg_price')
             }
 
-            # Validate basic fields
+            
             if not all([name, base_price, stock_quantity, category_id]):
                 missing_fields = []
                 if not name: missing_fields.append('name')
@@ -531,7 +452,7 @@ def add_product(request):
                     'message': f'Missing required fields: {", ".join(missing_fields)}'
                 }, status=400)
 
-            # Process images
+            
             images = []
             for i in range(3):
                 if f'image_{i}' in request.FILES:
@@ -545,7 +466,7 @@ def add_product(request):
 
             try:
                 with transaction.atomic():
-                    # Create product with Decimal price
+                    
                     category = Catogery.objects.get(id=int(category_id))
                     product = Product.objects.create(
                         name=name,
@@ -554,7 +475,7 @@ def add_product(request):
                         catogery=category
                     )
 
-                    # Save images
+                    
                     for image in images:
                         ProductImage.objects.create(
                             product=product,
@@ -562,16 +483,16 @@ def add_product(request):
                         )
 
 
-                     #    Save images and set the first one as primary
+                     
                     for index, image in enumerate(images):
                         ProductImage.objects.create(
                             product=product,
                             images=image,
-                            is_primary=(index == 0)  # Set first image as primary
+                            is_primary=(index == 0)  
                         )
 
 
-                    # Create base variant (0.5 kg)
+                    
                     Variant.objects.create(
                         product=product,
                         category='WEIGHT',
@@ -580,9 +501,9 @@ def add_product(request):
                         stock_quantity=int(stock_quantity)
                     )
 
-                    # Create other variants using the same stock quantity
+                    
                     for weight, price in variant_prices.items():
-                        if price:  # Only create variant if price is provided
+                        if price: 
                             Variant.objects.create(
                                 product=product,
                                 category='WEIGHT',
@@ -625,12 +546,12 @@ def add_product(request):
 @admin_required
 def edit_product(request, pk):
 
-    #fetch the product to be edited..
+    
 
     product = get_object_or_404(Product, id=pk)
     
     
-    #get the existing imagess
+    
     existing_images = product.images.all()
 
     if request.method == 'POST':
@@ -643,7 +564,7 @@ def edit_product(request, pk):
         discount_percentage = request.POST.get('discount_percentage', None) # add discoun
         images = request.FILES.getlist('images') 
         
-        #updating the needed fields..
+        
 
         if name:
             product.name = name
@@ -660,7 +581,7 @@ def edit_product(request, pk):
 
         product.save()
 
-        #new image are uploaded then remove old one and mark 1st image main primaryyy
+        
 
         if images:  
             product.images.all().delete()  
@@ -700,7 +621,7 @@ def edit_product(request, pk):
 
 @admin_required
 def admin_order(request):
-    # Annotate orders with the return request status dynamically
+    
     orders_queryset = Order.objects.select_related('user').annotate(
         has_return_request=Exists(
             OrderReturn.objects.filter(
@@ -716,7 +637,7 @@ def admin_order(request):
         )
     )
 
-    # Filtering logic
+    
     status = request.GET.get('status')
     payment_method = request.GET.get('payment_method')
     search_query = request.GET.get('search')
@@ -734,7 +655,7 @@ def admin_order(request):
             Q(user__email__icontains=search_query)
         )
 
-    # Pagination logic
+    
     entries_per_page = request.GET.get('entries', 15)
     try:
         entries_per_page = int(entries_per_page)
@@ -760,9 +681,9 @@ def admin_order(request):
         'current_payment_method': payment_method,
         'current_search': search_query,
         'current_entries': entries_per_page,
-        # Annotated fields added to context for display in templates
-        'has_return_request': True,  # Used to signify the existence of a requested return
-        'is_returning': True  # Used to signify the existence of an approved return
+        
+        'has_return_request': True,  
+        'is_returning': True  
     }
 
     return render(request, 'admin_orderdetails.html', context)
@@ -837,13 +758,13 @@ def calculate_best_discount(product, variant_price):
     """Calculate the best applicable discount for a product."""
     today = timezone.now().date()
     
-    # Convert to Decimal for precise calculations
+    
     variant_price = Decimal(str(variant_price))
     
-    # 1. Product's base discount
+    
     base_discount = Decimal(str(product.discount_percentage or '0'))
     
-    # 2. Active Product Offers - Get the best one
+    
     product_offer_discount = Decimal('0')
     product_offers = Offer.objects.filter(
         product=product,
@@ -855,7 +776,7 @@ def calculate_best_discount(product, variant_price):
     if product_offers.exists():
         product_offer_discount = Decimal(str(max(offer.discount_percentage for offer in product_offers)))
     
-    # 3. Active Category Offers - Get the best one
+    
     category_offer_discount = Decimal('0')
     category_offers = Offer.objects.filter(
         category=product.catogery,
@@ -867,14 +788,14 @@ def calculate_best_discount(product, variant_price):
     if category_offers.exists():
         category_offer_discount = Decimal(str(max(offer.discount_percentage for offer in category_offers)))
     
-    # Get the best discount percentage
+    
     best_discount_percentage = max(base_discount, product_offer_discount, category_offer_discount)
     
-    # If there's any discount, return the discount info
+    
     if best_discount_percentage > 0:
         discount_amount = (variant_price * best_discount_percentage) / Decimal('100')
         
-        # Determine the discount type
+        
         if best_discount_percentage == base_discount:
             discount_type = 'Product Discount'
         elif best_discount_percentage == product_offer_discount:
@@ -884,14 +805,14 @@ def calculate_best_discount(product, variant_price):
             
         return {
             'type': discount_type,
-            'percentage': float(best_discount_percentage),  # Convert to float for JSON serialization
-            'amount': float(discount_amount)  # Convert to float for JSON serialization
+            'percentage': float(best_discount_percentage),  
+            'amount': float(discount_amount)  
         }
     
     return None
 
 
-# hosted website code
+
 
 @admin_required
 def admin_orderdetails(request, order_id):
@@ -899,7 +820,7 @@ def admin_orderdetails(request, order_id):
         order = get_object_or_404(Order, id=order_id)
         user = order.user
 
-        # address = Address.objects.filter(user=user, is_default=True).first()
+        
         shipping_address = order.shipping_address
         order_items = order.order_items.select_related(
             'product',
@@ -909,45 +830,37 @@ def admin_orderdetails(request, order_id):
             'product__images'
         ).all()
 
-        # First calculate subtotal before coupon discount
+        
         temp_subtotal = Decimal('0')
         total_product_discount = Decimal('0')
         
         formatted_order_items = []
         
-        # Calculate number of non-cancelled items for coupon distribution
         active_items = sum(1 for item in order_items if not item.is_cancelled)
         coupon_discount_per_item = Decimal('0')
         if active_items > 0 and order.coupon_discount:
             coupon_discount_per_item = order.coupon_discount / active_items
 
         for item in order_items:
-            # Get primary image
             primary_image = item.product.images.filter(is_primary=True).first()
 
-            # Get base price
             item_price = item.variant.variant_price if item.variant else item.product.base_price
             
-            # Calculate product discount
             best_discount = calculate_best_discount(item.product, item_price)
             item_discount = Decimal(str(best_discount['amount'])) if best_discount else Decimal('0')
             
-            # Calculate price after product discount
             price_after_product_discount = item_price - item_discount
             
-            # Add coupon discount only if item is not cancelled
             final_price = price_after_product_discount
             if not item.is_cancelled:
                 final_price -= coupon_discount_per_item
             
             item_total = final_price * item.quantity
 
-            # Add to running totals (only if not cancelled)
             if not item.is_cancelled:
                 temp_subtotal += item_total
                 total_product_discount += (item_discount * item.quantity)
 
-            # Set variant display
             variant_display = ''
             if item.variant:
                 if item.product.catogery.name.lower() in ['vegetables', 'fruits', 'dried']:
@@ -1008,47 +921,37 @@ def admin_edit_order(request, order_id):
             'product__images'
         ).all()
 
-        # Initialize totals
         temp_subtotal = Decimal('0')
         total_product_discount = Decimal('0')
         formatted_order_items = []
         
-        # Calculate number of non-cancelled items for coupon distribution
         active_items = sum(1 for item in order_items if not item.is_cancelled)
         coupon_discount_per_item = Decimal('0')
         if active_items > 0 and order.coupon_discount:
             coupon_discount_per_item = order.coupon_discount / active_items
 
         for item in order_items:
-            # Get primary image
             primary_image = item.product.images.filter(is_primary=True).first()
             
-            # Get base price
             item_price = item.variant.variant_price if item.variant else item.product.base_price
             
-            # Calculate product discount
             best_discount = calculate_best_discount(item.product, item_price)
             item_discount = Decimal(str(best_discount['amount'])) if best_discount else Decimal('0')
             
-            # Calculate price after product discount
             price_after_product_discount = item_price - item_discount
             
-            # Add coupon discount if item is not cancelled
             final_price = price_after_product_discount
             if not item.is_cancelled:
                 final_price -= coupon_discount_per_item
             
             item_total = final_price * item.quantity
             
-            # Calculate available stock
             stock_quantity = item.product.stock_quantity - item.quantity
             
-            # Add to running totals (only if not cancelled)
             if not item.is_cancelled:
                 temp_subtotal += item_total
                 total_product_discount += (item_discount * item.quantity)
 
-            # Set variant display
             variant_display = ''
             if item.variant:
                 if item.product.catogery.name.lower() in ['vegetables', 'fruits', 'dried']:
@@ -1202,10 +1105,8 @@ def create_coupon(request):
         )
         coupon.save()
 
-        # Return a JSON response with a success message
         return JsonResponse({'success': 'Coupon created successfully.'})
 
-    # Render the coupon management template
     return render(request, 'admin_add_coupons.html')
 
 
@@ -1217,7 +1118,6 @@ from django.db.models import Count
 
 @admin_required
 def coupons(request):
-    # Calculate uses left in the view
     coupons = CouponTable.objects.annotate(
         uses_count=Count('couponusage'),
         uses_left=F('max_uses') - Count('couponusage')
@@ -1243,7 +1143,6 @@ def edit_coupon(request, coupon_id):
         return render(request, 'admin_coupon_edit.html', context)
     
     except CouponTable.DoesNotExist:
-        # Handle case where coupon is not found
         messages.error(request, 'Coupon not found.')
         return redirect('coupon_list')
 
@@ -1271,26 +1170,20 @@ logger = logging.getLogger(__name__)
 @admin_required
 def update_coupon(request):
     try:
-        # Parse the JSON data from the request
         data = json.loads(request.body)
         
-        # Validate input
         if not data.get('id'):
             return JsonResponse({
                 'status': 'error',
                 'message': 'Coupon ID is required'
             }, status=400)
         
-        # Retrieve the coupon by ID
         coupon = CouponTable.objects.get(id=data['id'])
         
-        # Use a transaction to ensure atomic updates
         with transaction.atomic():
-            # Update fields with validation
             coupon.code = data.get('code', coupon.code)
             coupon.coupon_type = data.get('couponType', coupon.coupon_type)  # Updated field name
             
-            # Discount Value
             if data.get('discountValue'):
                 try:
                     coupon.discount_value = float(data['discountValue'])
@@ -1300,7 +1193,6 @@ def update_coupon(request):
                         'message': 'Invalid discount value'
                     }, status=400)
             
-            # Valid Until Date
             if data.get('validUntil'):
                 try:
                     coupon.valid_to = datetime.strptime(data['validUntil'], '%Y-%m-%d').date()
@@ -1310,28 +1202,24 @@ def update_coupon(request):
                         'message': 'Invalid date format'
                     }, status=400)
             
-            # Uses Left
             if data.get('usesLeft') is not None:
                 try:
-                    # Ensure uses_left doesn't exceed max_uses
                     uses_left = int(data['usesLeft'])
                     if uses_left < 0:
                         return JsonResponse({
                             'status': 'error',
                             'message': 'Uses left cannot be negative'
                         }, status=400)
-                    coupon.max_uses = uses_left  # Assuming max_uses is the intended field
+                    coupon.max_uses = uses_left  
                 except ValueError:
                     return JsonResponse({
                         'status': 'error',
                         'message': 'Invalid uses left value'
                     }, status=400)
             
-            # Active Status
             if data.get('isActive') is not None:
                 coupon.is_active = data['isActive']
             
-            # Validate the entire model
             try:
                 coupon.full_clean()
             except ValidationError as ve:
@@ -1340,7 +1228,6 @@ def update_coupon(request):
                     'message': str(ve)
                 }, status=400)
             
-            # Save the updated coupon
             coupon.save()
         
         return JsonResponse({
@@ -1355,7 +1242,6 @@ def update_coupon(request):
         }, status=404)
     
     except Exception as e:
-        # Log the full error for server-side debugging
         logger.error(f"Unexpected error in update_coupon: {str(e)}", exc_info=True)
         
         return JsonResponse({
@@ -1381,7 +1267,7 @@ def delete_coupon(request):
                     'message': 'Coupon ID is required'
                 }, status=400)
 
-            # Delete the coupon
+            
             coupon = CouponTable.objects.get(id=coupon_id)
             coupon.delete()
 
@@ -1402,15 +1288,7 @@ def delete_coupon(request):
             }, status=500)
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
-
-
-# ----------------
-
-
-
-
-
-# added here
+# ---------------
 
 @admin_required
 def admin_return_requests(request, order_id):
@@ -1428,19 +1306,16 @@ def admin_return_requests(request, order_id):
 
         return render(request, 'return_request_details.html', context)
     except Order.DoesNotExist:
-        # Handle case where order doesn't exist
+        
         messages.error(request, "Order not found")
         return redirect('admin_order')
 
-
-
-# added here 
 
 from decimal import Decimal
 @admin_required
 @transaction.atomic
 def process_return_request(request, return_request_id):
-    # Ensure only admin can access this view
+    
     if not request.user.is_staff:
         messages.error(request, "Unauthorized access")
         return redirect('admin_login')
@@ -1451,29 +1326,25 @@ def process_return_request(request, return_request_id):
             action = request.POST.get('action')
 
             if action == 'approve':
-                # Approve the return request
+                
                 return_request.status = 'APPROVED' 
                 
-                # Ensure order item and product exist
+                
                 if not return_request.order_item or not return_request.order_item.product:
                     messages.error(request, "Invalid order item or product.")
                     return redirect('admin_order')
 
-                # Get or create user's wallet
+                
                 wallet, created = Wallet.objects.get_or_create(
                     user=return_request.order_item.order.user
                 )
                 
-                # Calculate refund amount 
                 refund_amount = return_request.refund_amount
                 
-                # Validate refund amount
                 if refund_amount <= 0:
                     messages.error(request, "Invalid refund amount.")
                     return redirect('admin_order')
 
-                # Create Refund record
-                # This will now create a new Refund for each return
                 refund = Refund.objects.create(
                     order_return=return_request,
                     refund_amount=refund_amount,
@@ -1481,18 +1352,15 @@ def process_return_request(request, return_request_id):
                     refund_status='PROCESSED'
                 )
                 
-                # Update wallet balance
                 wallet.balance = (wallet.balance or Decimal('0.00')) + refund_amount
                 wallet.save()
                 
-                # Create wallet transaction
                 WalletTransaction.objects.create(
                     wallet=wallet,
                     transaction_type='REFUND',
                     amount=refund_amount
                 )
                 
-                # Process return
                 return_request.save()
             
             elif action == 'reject':
@@ -1500,10 +1368,8 @@ def process_return_request(request, return_request_id):
             
             return_request.save()
 
-            # Print debug information
             print(f"Return request {return_request_id} processed. Redirecting...")
             
-            # Add success message with specific action
             messages.success(request, f"Return request {action}d successfully.")
             
             return redirect('admin_order')
@@ -1513,7 +1379,7 @@ def process_return_request(request, return_request_id):
             return redirect('admin_order')
         
         except Exception as e:
-            # More comprehensive error handling
+            
             import traceback
             print(traceback.format_exc())
             messages.error(request, f"An error occurred: {str(e)}")
@@ -1521,10 +1387,7 @@ def process_return_request(request, return_request_id):
     
     return redirect('admin_order')
 
-
-
 # -----------------------------------------------------------------------------------------------------------
-# added here 
 
 logger = logging.getLogger(__name__)
 
@@ -1532,12 +1395,10 @@ logger = logging.getLogger(__name__)
 @csrf_protect
 @require_http_methods(["GET", "POST"])
 def offer(request):
-    # Move this line before the GET request handling
     all_offers = Offer.objects.all()
 
     if request.method == 'POST':
         try:
-            # Existing POST method logic remains the same
             offer_name = request.POST.get('offer_name')
             description = request.POST.get('description')
             discount_percentage = request.POST.get('discount_percentage')
@@ -1549,12 +1410,10 @@ def offer(request):
 
 
 
-            # Convert string dates to datetime objects
             start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
             end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
             today = timezone.now().date()
 
-            # Validate dates
             if start_date_obj < today:
                 return JsonResponse({
                     'status': 'error',
@@ -1569,7 +1428,6 @@ def offer(request):
 
                 
 
-            # Create new Offer instance
             new_offer = Offer.objects.create(
                 offer_name=offer_name,
                 description=description,
@@ -1580,7 +1438,6 @@ def offer(request):
                 is_active=is_active
             )
 
-            # Return JSON response for AJAX
             return JsonResponse({
                 'status': 'success', 
                 'message': f'Offer {offer_name} is created'
@@ -1594,7 +1451,6 @@ def offer(request):
                 'message': f'Error creating offer: {str(e)}'
             }, status=400)
     
-    # Render the page for GET requests
     return render(request, 'admin_offer.html', {'all_offers': all_offers})
 
 
@@ -1613,22 +1469,9 @@ from django.shortcuts import get_object_or_404
 
 
 
-from django.shortcuts import render
-from django.db.models import Sum, Count, Value, FloatField
-from django.db.models.functions import TruncDate, TruncWeek, TruncMonth, TruncYear, Cast
-from django.http import JsonResponse, HttpResponse
-# from .models import Order, OrderItem, CouponUsage
-from decimal import Decimal
-import pandas as pd
-from datetime import datetime, timedelta
-from django.db.models import Sum, Count, F, DecimalField
-
-from django.db.models import OuterRef, Subquery, Value
-from decimal import Decimal
-from datetime import datetime
 
 
-# added here
+
 
 @admin_required
 def report(request):
@@ -1636,17 +1479,10 @@ def report(request):
 
 
 
-
-
 import io
 import matplotlib.pyplot as plt
 from datetime import datetime
 import pandas as pd
-
-
-
-
-# ----------new both test set -----------------------------------------------
 
 from django.db.models import (
     F, Sum, Count, Value, Q, 
@@ -1663,26 +1499,21 @@ import json
 
 def generate_sales_report(request):
     try:
-        # Get filter parameters
         start_date = request.GET.get('start_date')
         end_date = request.GET.get('end_date')
         report_type = request.GET.get('report_type', 'daily')
 
-        # Validate input
         if not (start_date and end_date):
             return JsonResponse({
                 'error': 'Start and end dates are required'
             }, status=400)
 
-        # Convert dates
         start_date = datetime.strptime(start_date, '%Y-%m-%d')
         end_date = datetime.strptime(end_date, '%Y-%m-%d')
 
-        # Base queryset - filter successful orders
         orders = Order.objects.filter(payment_status='success')
         orders = orders.filter(order_date__range=[start_date, end_date])
 
-        # Dynamically group by period based on report type
         if report_type == 'daily':
             grouping = TruncDate('order_date')
         elif report_type == 'weekly':
@@ -1692,7 +1523,6 @@ def generate_sales_report(request):
         else:  # yearly
             grouping = TruncYear('order_date')
 
-        # Detailed sales aggregation
         sales_data = orders.annotate(
             period=grouping
         ).annotate(
@@ -1725,13 +1555,11 @@ def generate_sales_report(request):
             'total_returns', 'total_return_amount'
         )
 
-        # Convert period to string for JSON serialization
         sales_data = [
             {**item, 'period': item['period'].strftime('%Y-%m-%d') if item['period'] else None}
             for item in sales_data
         ]
 
-        # Overall summary
         overall_summary = {
             'total_orders': orders.count(),
             'total_revenue': float(orders.aggregate(total=Sum('total_amount'))['total'] or 0.00),
@@ -1761,7 +1589,6 @@ def generate_sales_report(request):
             ),
         }
 
-        # Prepare response data
         data = {
             'sales_data': sales_data,
             'overall_summary': overall_summary
@@ -1780,38 +1607,27 @@ def generate_sales_report(request):
 
 
 
-from django.http import HttpResponse, JsonResponse
-from django.db.models import Count, Sum, F, Q, Case, When, FloatField, IntegerField
-from django.db.models.functions import TruncDate, TruncWeek, TruncMonth, TruncYear, Cast
-from datetime import datetime
-import pandas as pd
-import matplotlib.pyplot as plt
-import io
-# added here
+
+
 @admin_required
 def download_sales_report(request):
     try:
-        # Get filter parameters
         start_date = request.GET.get('start_date')
         end_date = request.GET.get('end_date')
         report_type = request.GET.get('report_type', 'daily')
         file_format = request.GET.get('format', 'excel')
 
-        # Validate input
         if not (start_date and end_date):
             return JsonResponse({
                 'error': 'Start and end dates are required'
             }, status=400)
 
-        # Convert dates
         start_date = datetime.strptime(start_date, '%Y-%m-%d')
         end_date = datetime.strptime(end_date, '%Y-%m-%d')
 
-        # Base queryset - filter successful orders
         orders = Order.objects.filter(payment_status='success')
         orders = orders.filter(order_date__range=[start_date, end_date])
 
-        # Dynamically group by period based on report type
         if report_type == 'daily':
             grouping = TruncDate('order_date')
         elif report_type == 'weekly':
@@ -1821,7 +1637,6 @@ def download_sales_report(request):
         else:  # yearly
             grouping = TruncYear('order_date')
 
-        # Detailed sales aggregation
         sales_data = orders.annotate(
             period=grouping
         ).annotate(
@@ -1850,7 +1665,7 @@ def download_sales_report(request):
             )
         ).order_by('period')
 
-        # Convert to list for DataFrame
+        
         sales_list = [
             {
                 'period': item.period.strftime('%Y-%m-%d') if item.period else None,
@@ -1864,10 +1679,8 @@ def download_sales_report(request):
             for item in sales_data
         ]
 
-        # Create DataFrame
         df = pd.DataFrame(sales_list)
 
-        # Rename columns for clarity
         df.columns = [
             'Period',
             'Total Orders',
@@ -1878,13 +1691,11 @@ def download_sales_report(request):
             'Total Return Amount'
         ]
 
-        # Format currency values
         currency_columns = ['Total Revenue', 'Total Base Price', 'Total Return Amount']
         for col in currency_columns:
             df[col] = df[col].apply(lambda x: f'₹{x:,.2f}' if pd.notnull(x) else '₹0.00')
 
         if file_format == 'excel':
-            # Excel export
             response = HttpResponse(
                 content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             )
@@ -1894,13 +1705,10 @@ def download_sales_report(request):
             
             buffer = io.BytesIO()
             with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-                # Write main data
                 df.to_excel(writer, index=False, sheet_name='Sales Report')
                 
-                # Get the worksheet
                 worksheet = writer.sheets['Sales Report']
                 
-                # Adjust column widths
                 for idx, col in enumerate(df.columns):
                     max_length = max(
                         df[col].astype(str).apply(len).max(),
@@ -1911,18 +1719,16 @@ def download_sales_report(request):
             response.write(buffer.getvalue())
             return response
             
-        else:  # PDF
+        else:  
             response = HttpResponse(content_type='application/pdf')
             response['Content-Disposition'] = (
                 f'attachment; filename=sales_report_{datetime.now().strftime("%Y%m%d")}.pdf'
             )
 
-            # Create PDF using matplotlib
             plt.figure(figsize=(12, len(df) * 0.5 + 2))  # Adjust figure size based on data
             plt.axis('tight')
             plt.axis('off')
             
-            # Create table
             table = plt.table(
                 cellText=df.values,
                 colLabels=df.columns,
@@ -1931,12 +1737,10 @@ def download_sales_report(request):
                 colColours=['#f2f2f2'] * len(df.columns)
             )
             
-            # Adjust table style
             table.auto_set_font_size(False)
             table.set_fontsize(9)
-            table.scale(1.2, 1.5)  # Adjust cell size
+            table.scale(1.2, 1.5)  
             
-            # Save to buffer
             buffer = io.BytesIO()
             plt.savefig(buffer, format='pdf', bbox_inches='tight', dpi=300)
             buffer.seek(0)
@@ -1951,15 +1755,13 @@ def download_sales_report(request):
             'error': str(e)
         }, status=500)
 # ----------------------------------------
-# added here
+
 @admin_required
 def add_product_offer(request, product_id):
-    # Get the specific product
     product = get_object_or_404(Product, id=product_id)
     
     if request.method == 'POST':
         try:
-            # Extract form data
             offer_name = request.POST.get('offer_name')
             description = request.POST.get('description')
             discount_percentage = request.POST.get('discount_percentage')
@@ -1967,12 +1769,10 @@ def add_product_offer(request, product_id):
             end_date = request.POST.get('end_date')
             is_active = request.POST.get('is_active') == 'on'
 
-            # Validate required fields
             if not offer_name:
                 messages.error(request, 'Offer name is required.')
                 return render(request, 'add_product_offer.html', {'product': product})
 
-            # Convert and validate discount percentage
             try:
                 discount_percentage = float(discount_percentage)
                 if discount_percentage < 0 or discount_percentage > 100:
@@ -1981,7 +1781,6 @@ def add_product_offer(request, product_id):
                 messages.error(request, 'Invalid discount percentage. Please enter a number between 0 and 100.')
                 return render(request, 'add_product_offer.html', {'product': product})
 
-            # Validate dates
             try:
                 start_date = timezone.datetime.strptime(start_date, '%Y-%m-%d').date()
                 end_date = timezone.datetime.strptime(end_date, '%Y-%m-%d').date()
@@ -1989,7 +1788,6 @@ def add_product_offer(request, product_id):
                 messages.error(request, 'Invalid date format. Please use YYYY-MM-DD format.')
                 return render(request, 'add_product_offer.html', {'product': product})
 
-            # Additional date validations
             today = timezone.now().date()
             if start_date < today:
                 messages.error(request, 'Start date cannot be in the past.')
@@ -1999,11 +1797,9 @@ def add_product_offer(request, product_id):
                 messages.error(request, 'End date must be after start date.')
                 return render(request, 'add_product_offer.html', {'product': product})
 
-            # Check for existing offer for this product
             existing_offer = Offer.objects.filter(product=product).first()
 
             if existing_offer:
-                # Update existing offer
                 existing_offer.offer_name = offer_name
                 existing_offer.description = description
                 existing_offer.discount_percentage = discount_percentage
@@ -2014,7 +1810,6 @@ def add_product_offer(request, product_id):
                 
                 messages.success(request, f'Offer for {product.name} has been successfully updated.')
             else:
-                # Create new offer
                 new_offer = Offer.objects.create(
                     product=product,
                     offer_name=offer_name,
@@ -2028,37 +1823,31 @@ def add_product_offer(request, product_id):
                 
                 messages.success(request, f'New offer for {product.name} has been successfully created.')
 
-            # Update product's offer price if the offer is active
             if is_active:
                 discount_factor = Decimal(discount_percentage) / Decimal(100)  # Convert to Decimal
                 product.offer_price = product.base_price * (1 - discount_factor)  # Perform Decimal-safe calculation
                 product.save()
                 messages.info(request, f'Product price updated to {product.offer_price} with {discount_percentage}% discount.')
 
-            # Redirect to product list or wherever appropriate
             return redirect('admin_product')  # Replace with your actual product list view name
 
         except Exception as e:
-            # Catch any unexpected errors
             messages.error(request, f'An unexpected error occurred: {str(e)}. Please try again.')
             return render(request, 'add_product_offer.html', {'product': product})
 
-    # GET request: render the form
     return render(request, 'add_product_offer.html', {'product': product})
 
 
 
 
 
-# added here
+
 
 @admin_required
 def edit_product_offer(request, offer_id):
-    # Retrieve the offer based on the provided offer_id
     offer = get_object_or_404(Offer, id=offer_id)
 
     if request.method == 'POST':
-        # Collect the form data
         offer_name = request.POST.get('offer_name')
         description = request.POST.get('description')
         discount_percentage = request.POST.get('discount_percentage')
@@ -2066,7 +1855,6 @@ def edit_product_offer(request, offer_id):
         end_date = request.POST.get('end_date')
         is_active = request.POST.get('is_active') == 'on'
 
-        # Update the offer instance with the new values
         offer.offer_name = offer_name if offer_name else offer.offer_name
         offer.description = description if description else offer.description
         offer.discount_percentage = discount_percentage if discount_percentage else offer.discount_percentage
@@ -2074,13 +1862,10 @@ def edit_product_offer(request, offer_id):
         offer.end_date = end_date if end_date else offer.end_date
         offer.is_active = is_active
 
-        # Save the updated offer
         offer.save()
 
-        # Redirect to a relevant page (e.g., admin_product or the offer list)
         return redirect('admin_product')
 
-    # Pass the existing offer data to the template for placeholders
     return render(request, 'edit_product_offer.html', {'offer': offer, 'product': offer.product})
 
 
@@ -2101,13 +1886,11 @@ def delete_product_offer(request):
 
 
 # ----------add_offer_to_category----------------------------------------------------------------------------------------
-# added here
 
 @admin_required
 def add_offer_to_category(request, category_id):
     category = get_object_or_404(Catogery, id=category_id)
     
-    # Check if offer already exists
     if category.offers.exists():
         return HttpResponse("Offer already exists for this category", status=400)
     
@@ -2130,7 +1913,7 @@ def add_offer_to_category(request, category_id):
 
         messages.success(request, f"Offer added to the {category.name} category successfully!")
         
-        return redirect('admin_category')  # Redirect to the category offers list page
+        return redirect('admin_category')  
 
     return render(request, 'add_cetegory_offer.html', {'category': category})
 
@@ -2149,10 +1932,9 @@ def edit_offer_for_category(request, offer_id):
 
         offer.save()
 
-        # Optionally, add a success message
         messages.success(request, f"Offer for category '{offer.category.name}' has been updated successfully.")
 
-        return redirect('admin_category')  # Replace with your category offers list URL name
+        return redirect('admin_category') 
 
     return render(request, 'edit_offer_for_category.html', {'offer': offer})
 
@@ -2164,10 +1946,9 @@ def delete_offer_for_category(request, offer_id):
 
     if request.method == 'POST':
         offer.delete()
-        # Optionally, add a success message
         messages.success(request, f"Offer '{offer.offer_name}' for '{offer.category.name}' has been deleted successfully.")
 
-    return redirect('admin_category')  # Replace 'admin_category' with the correct URL name for your category list page
+    return redirect('admin_category')  
 
 
 # --------------------------------------------------------------

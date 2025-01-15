@@ -22,14 +22,14 @@ class Offer(models.Model):
         'Product', 
         on_delete=models.CASCADE, 
         related_name='offers', 
-        null=True,  # Allow null to prevent issues with existing records
+        null=True,  
         blank=True
     )
     category = models.ForeignKey(
         'Catogery', 
         on_delete=models.CASCADE, 
         related_name='offers', 
-        null=True,  # Allow null to prevent issues with existing records
+        null=True,  
         blank=True
     )
 
@@ -78,8 +78,8 @@ class Product(models.Model):
     id = models.AutoField(primary_key  = True)
     name = models.CharField(max_length=255)
     base_price = models.DecimalField(max_digits=10, decimal_places=2, null=True)
-    discount_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True)  # Allow null values initially
-    offer_price = models.DecimalField(max_digits=10, decimal_places=2, null=True)  # Allow null values initially
+    discount_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True)  
+    offer_price = models.DecimalField(max_digits=10, decimal_places=2, null=True)  
     stock_quantity = models.PositiveBigIntegerField(default=0)
     created_at = models.DateField(auto_now_add=True, null=True)
     
@@ -88,7 +88,7 @@ class Product(models.Model):
         on_delete=models.CASCADE,
         related_name = 'products'
     )
-    is_delete = models.BooleanField(default=False) #for handling soft delete
+    is_delete = models.BooleanField(default=False) 
 
     def __str__(self):
         return self.name
@@ -101,25 +101,21 @@ class Product(models.Model):
         return None
     # --------------------------added after varient came------------------------
     def get_default_variant(self):
-        # Get the variant with the smallest weight
         variants = self.variants.all()
         
         if not variants.exists():
             return None
         
-        # Sort variants by weight in ascending order
         def extract_weight(variant):
             try:
-                # Extract numeric value from weight string
                 return float(variant.weight.replace('kg', ''))
             except (ValueError, AttributeError):
-                return float('inf')  # Put non-numeric weights at the end
+                return float('inf')  
         
         smallest_variant = min(variants, key=extract_weight)
         return smallest_variant
 
     def get_display_price(self):
-        # Use offer_price if available, otherwise use base_price
         if self.offer_price:
             return self.offer_price
         return self.base_price
@@ -131,7 +127,6 @@ class Product(models.Model):
             return self.base_price * (1 - self.final_discount / 100)
         return self.base_price
     
-     # Add a property to maintain backward compatibility
     @property
     def category(self):
         return self.catogery
@@ -262,7 +257,6 @@ class Variant(models.Model):
         return self.variant_name
 
     def save(self, *args, **kwargs):
-        # Automatically set variant name based on category
         if self.category == 'WEIGHT' and self.weight:
             self.variant_name = self.get_weight_display()
         elif self.category == 'VOLUME' and self.volume:
@@ -273,22 +267,19 @@ class Variant(models.Model):
 # --------------------------------------------------------newly added for transaction
  
     
-# ---------------------------------------------------------------------------
     from decimal import Decimal
 
     def calculate_price(self):
-        base_price = self.product.base_price  # Decimal
-        base_variant_weight = Decimal('0.5')  # Convert to Decimal
+        base_price = self.product.base_price  
+        base_variant_weight = Decimal('0.5')  
     
-    # Weight-based pricing (10% increment)
         if self.category == 'WEIGHT':
-            weight = Decimal(self.weight)  # Convert to Decimal
+            weight = Decimal(self.weight)  
         
             if weight > base_variant_weight:
                 price_multiplier = Decimal('1') + (Decimal('0.1') * (weight / base_variant_weight - Decimal('1')))
                 return base_price * price_multiplier
     
-    # Volume-based pricing (similar changes)
         elif self.category == 'VOLUME':
             base_variant_volume = Decimal('0.5')
             volume = Decimal(self.volume)
@@ -301,7 +292,6 @@ class Variant(models.Model):
     
 
     def save(self, *args, **kwargs):
-        # Automatically calculate and set variant price
         self.variant_price = self.calculate_price()
         super().save(*args, **kwargs)
 
@@ -309,10 +299,10 @@ class Variant(models.Model):
 # ---------------------------------------------------------------------------------------------------------------------------------------------
 
 from django.db import models
-from uuid import uuid4  # For UUID generation
+from uuid import uuid4  
 
 class CouponTable(models.Model):
-    code = models.CharField(max_length=20, unique=True, null=True, blank=True)  # Unique code for the coupon
+    code = models.CharField(max_length=20, unique=True, null=True, blank=True)  
     coupon_type = models.CharField(
         max_length=20,
         choices=[('percentage', 'Percentage'), ('fixed', 'Fixed Amount')],
@@ -331,7 +321,7 @@ class CouponTable(models.Model):
         return f"Coupon {self.code} ({self.coupon_type}: {self.discount_value})"
 
 class CouponUsage(models.Model):
-    user = models.ForeignKey('user.CustomUser', on_delete=models.CASCADE, null=True, blank=True)  # Links to your custom user model
+    user = models.ForeignKey('user.CustomUser', on_delete=models.CASCADE, null=True, blank=True)  
     coupon = models.ForeignKey(CouponTable, on_delete=models.CASCADE, null=True, blank=True)  
     discount_value = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)  
     used_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)  

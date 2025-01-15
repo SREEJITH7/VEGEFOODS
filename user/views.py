@@ -105,13 +105,13 @@ def welcome(request):
     
     
     response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-    response['Pragma'] = 'no-cache, no-store, must-revalidate'  # Fixed typo in 'revalidate'
-    response['Expires'] = '0'  # Fixed typo in 'Expires'
+    response['Pragma'] = 'no-cache, no-store, must-revalidate'  
+    response['Expires'] = '0'  
     
     return response
 
 ##################################################################################################################################################
-# this view is for signup page 
+ 
 
 def registrationPage(request):
     if request.method == 'POST':
@@ -172,7 +172,6 @@ def verify_otp(request):
 
 
 
-# to ensure the user sessions are cleared after logout 
 ##################################################################################################################################################
 
 
@@ -185,7 +184,6 @@ def logout_view(request):
 
 ##################################################################################################################################################
 
-# for resending otp after timeout 
 
 def resend_otp(request):
     if request.method == "POST":
@@ -660,7 +658,7 @@ def shopjuice(request):
     
     paginate = products.count() > 16
     if paginate:
-        paginator = Paginator(products, 16)  # 16 products per page
+        paginator = Paginator(products, 16)  
         page = request.GET.get('page', 1)
         
         try:
@@ -782,7 +780,7 @@ def shopdried(request):
     
     paginate = products.count() > 16
     if paginate:
-        paginator = Paginator(products, 16)  # 16 products per page
+        paginator = Paginator(products, 16)  
         page = request.GET.get('page', 1)
         
         try:
@@ -855,7 +853,6 @@ def shopdried(request):
 
 
 def product_details(request, product_id):
-    # Fetch the product with its images and offers
 
     cart_count = 0
     if request.user.is_authenticated:
@@ -871,24 +868,19 @@ def product_details(request, product_id):
         is_delete=False
     )
 
-    # Fetch all active category offers
     active_category_offers = Offer.objects.filter(
         is_active=True,
         offer_type='CATEGORY'
     )
 
-    # Initialize discount variables
     product_offer_discount = 0
     category_offer_discount = 0
 
-    # Check product-specific offers
     if hasattr(product, 'active_product_offer') and product.active_product_offer:
         product_offer_discount = product.active_product_offer[0].discount_percentage
 
-    # Check category offers
     category_offers = active_category_offers.filter(category=product.catogery)
     
-    # Only apply category offer if product belongs to the category
     valid_category_offers = [
         offer for offer in category_offers 
         if offer.category == product.catogery
@@ -899,17 +891,14 @@ def product_details(request, product_id):
             offer.discount_percentage for offer in valid_category_offers
         )
 
-    # Compare all discounts and set the final discount
     product.final_discount = max(
         product.discount_percentage or 0,
         product_offer_discount,
         category_offer_discount
     )
 
-    # Calculate the final price after discount
     product.final_price = product.base_price - (product.base_price * product.final_discount / 100)
 
-    # Determine size options based on category
     category_name = product.catogery.name.lower()
     if category_name in ['vegetables', 'fruits', 'dried']:
         size_options = ['0.1kg', '0.5kg', '1kg', '1.5kg', '2kg']
@@ -918,19 +907,15 @@ def product_details(request, product_id):
     else:
         size_options = ['Small', 'Medium', 'Large', 'Extra Large']
 
-    # Get the primary image (if exists)
     main_image = product.images.filter(is_primary=True).first() or product.images.first()
 
-    # Fetch related products
     related_products = Product.objects.filter(
         catogery=product.catogery,
         is_delete=False
     ).exclude(id=product_id).prefetch_related('images')[:4]
 
-    # Get variants for the product
     variants = product.variants.all()
 
-    # Select the first variant as the default (if exists)
     selected_variant = variants.first() if variants.exists() else None
 
     return render(request, 'singleproduct.html', {
@@ -947,38 +932,13 @@ def product_details(request, product_id):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 from django.contrib import messages
 from django.utils.timezone import now
 
 import random
 
-# Simulating email sending function (you can integrate an email service)
 def send_otp_via_email(email, otp):
-    print(f"OTP sent to {email}: {otp}")  # Replace with actual email sending code
+    print(f"OTP sent to {email}: {otp}")  
 
 
 # -----------------------------------------------------------------
@@ -990,15 +950,12 @@ def forgotpassword(request):
         email = request.POST.get("email")
         user = CustomUser.objects.filter(email=email).first()
         if user:
-            # Generate OTP
             otp = random.randint(1000, 9999)
             
-            # Store OTP and expiration in session
             request.session['reset_otp'] = otp
             request.session['reset_otp_expiration'] = (now() + timedelta(seconds=20)).isoformat()
             request.session['reset_email'] = email
             
-            # Send OTP to email
             send_otp_via_email(email, otp)
             messages.success(request, "OTP sent successfully!")
             return redirect("validate_email", email=email)
@@ -1008,7 +965,6 @@ def forgotpassword(request):
     return render(request, "forgotpassword.html")
 
 def validate_email(request, email):
-    # Retrieve session data
     session_email = request.session.get('reset_email')
     session_otp = request.session.get('reset_otp')
     session_otp_expiration = request.session.get('reset_otp_expiration')
@@ -1020,11 +976,9 @@ def validate_email(request, email):
     if request.method == "POST":
         entered_otp = request.POST.get('otp')
         
-        # Check if OTP is correct and not expired
         if session_otp == int(entered_otp):
             otp_expiration = datetime.fromisoformat(session_otp_expiration)
             if otp_expiration > now():
-                # Clear OTP from session
                 del request.session['reset_otp']
                 del request.session['reset_otp_expiration']
                 
@@ -1057,11 +1011,9 @@ def enter_new_password(request):
             messages.error(request, "Passwords do not match!")
             return render(request, 'enter_new_password.html')
 
-        # Update the user's password
         user.password = make_password(new_password)
         user.save()
 
-        # Clear session after password reset
         del request.session['reset_email']
 
         messages.success(request, "Password updated successfully!")
@@ -1090,9 +1042,8 @@ def update_profile(request):
     User = get_user_model()
 
     if request.method == 'POST':
-        user = request.user  # Get the currently logged-in user
+        user = request.user  
 
-        # Fetch data from the POST request, stripping any unnecessary whitespace
         first_name = request.POST.get('firstName', '').strip()
         last_name = request.POST.get('lastName', '').strip()
         username = request.POST.get('UserName', '').strip()
@@ -1101,20 +1052,16 @@ def update_profile(request):
         password = request.POST.get('password', '').strip()
         confirm_password = request.POST.get('confirmPassword', '').strip()
 
-        # Flag to track if any changes were made
         changes_made = False
 
-        # Validate password and confirmation
         if password:
             if password != confirm_password:
                 messages.error(request, "Passwords do not match.")
                 return redirect('profile')
             
-            # If passwords match, update password
             user.set_password(password)
             changes_made = True
 
-        # Update fields only if they are provided and different from current values
         if first_name and first_name != user.first_name:
             user.first_name = first_name
             changes_made = True
@@ -1124,7 +1071,6 @@ def update_profile(request):
             changes_made = True
         
         if username and username != user.username:
-            # Optional: Add a check to ensure username is unique
             if User.objects.exclude(pk=user.pk).filter(username=username).exists():
                 messages.error(request, "Username already exists.")
                 return redirect('profile')
@@ -1132,7 +1078,6 @@ def update_profile(request):
             changes_made = True
         
         if email and email != user.email:
-            # Optional: Add a check to ensure email is unique
             if User.objects.exclude(pk=user.pk).filter(email=email).exists():
                 messages.error(request, "Email already in use.")
                 return redirect('profile')
@@ -1143,11 +1088,9 @@ def update_profile(request):
             user.phone_number = phone_number
             changes_made = True
 
-        # Save only if changes were made
         if changes_made:
             user.save()
 
-            # Re-authenticate the user if password was updated
             if password:
                 update_session_auth_hash(request, user)
 
@@ -1198,10 +1141,8 @@ def add_address(request):
 def set_default_address(request, address_id):
     address = get_object_or_404(Address, id=address_id, user=request.user)
     
-    # Set all other addresses as not default
     Address.objects.filter(user=request.user, is_default=True).update(is_default=False)
     
-    # Set the selected address as default
     address.is_default = True
     address.save()
     
@@ -1303,13 +1244,10 @@ def calculate_best_discount(product, variant_price):
     Current Date: {today}
     """)
     
-    # Convert to Decimal for precise calculations
     variant_price = Decimal(str(variant_price))
     
-    # 1. Product's base discount
     base_discount = Decimal(str(product.discount_percentage or '0'))
     
-    # 2. Active Product Offers - Get the best one
     product_offer_discount = Decimal('0')
     product_offers = Offer.objects.filter(
         product=product,
@@ -1328,7 +1266,6 @@ def calculate_best_discount(product, variant_price):
     if product_offers.exists():
         product_offer_discount = Decimal(str(max(offer.discount_percentage for offer in product_offers)))
     
-    # 3. Active Category Offers - Get the best one
     category_offer_discount = Decimal('0')
     category_offers = Offer.objects.filter(
         category=product.catogery,
@@ -1340,14 +1277,11 @@ def calculate_best_discount(product, variant_price):
     if category_offers.exists():
         category_offer_discount = Decimal(str(max(offer.discount_percentage for offer in category_offers)))
     
-    # Get the best discount percentage
     best_discount_percentage = max(base_discount, product_offer_discount, category_offer_discount)
     
-    # If there's any discount, return the discount info
     if best_discount_percentage > 0:
         discount_amount = (variant_price * best_discount_percentage) / Decimal('100')
         
-        # Determine the discount type
         if best_discount_percentage == base_discount:
             discount_type = 'Product Discount'
         elif best_discount_percentage == product_offer_discount:
@@ -1357,8 +1291,8 @@ def calculate_best_discount(product, variant_price):
             
         return {
             'type': discount_type,
-            'percentage': float(best_discount_percentage),  # Convert to float for JSON serialization
-            'amount': float(discount_amount)  # Convert to float for JSON serialization
+            'percentage': float(best_discount_percentage),  
+            'amount': float(discount_amount)  
         }
     
     return None
@@ -1380,25 +1314,20 @@ def cart(request):
             if coupon_code:
                 try:
                     coupon = CouponTable.objects.get(code=coupon_code, is_active=True)
-                    # First get base prices and calculate initial subtotal
                     cart_items = Cart.objects.select_related(
                         'product', 
                         'variant', 
                         'product__catogery'
                     ).filter(user=request.user)
                     
-                    # Calculate initial subtotal before any discounts
                     temp_subtotal = Decimal('0')
                     
-                    # Log initial cart state
                     logger.debug("Initial cart state:")
                     for item in cart_items:
                         base_price = item.variant.variant_price if item.variant else item.product.base_price
-                        # Calculate any existing product/category discounts
                         best_discount = calculate_best_discount(item.product, base_price)
                         item_discount = Decimal(str(best_discount['amount'])) if best_discount else Decimal('0')
                         
-                        # Calculate actual price after existing discounts
                         actual_price = base_price - item_discount
                         item_total = actual_price * item.quantity
                         temp_subtotal += item_total
@@ -1415,7 +1344,6 @@ def cart(request):
                     
                     if coupon.max_uses is None or coupon.max_uses > 0:
                         if temp_subtotal >= coupon.min_purchase_amount:
-                            # Calculate coupon discount
                             if coupon.coupon_type == 'percentage':
                                 discount_amount = round(temp_subtotal * (Decimal(str(coupon.discount_value)) / Decimal('100')), 2)
                             else:
@@ -1424,7 +1352,6 @@ def cart(request):
                             logger.debug(f"Calculated coupon discount: {discount_amount}")
                             
                             if cart_items.exists():
-                                # Distribute coupon discount across items
                                 discount_per_item = round(discount_amount / len(cart_items), 2)
                                 for item in cart_items:
                                     item.applied_coupon = coupon
@@ -1432,7 +1359,6 @@ def cart(request):
                                     item.save()
                                     logger.debug(f"Applied discount per item: {discount_per_item} to {item.product.name}")
 
-                            # Record coupon usage
                             CouponUsage.objects.create(
                                 user=request.user,
                                 coupon=coupon,
@@ -1443,7 +1369,6 @@ def cart(request):
                                 coupon.max_uses -= 1
                                 coupon.save()
 
-                            # Calculate final totals
                             delivery_charge = Decimal('10')
                             final_subtotal = temp_subtotal - discount_amount
                             final_total = final_subtotal + delivery_charge
@@ -1490,7 +1415,6 @@ def cart(request):
                     'message': "Please enter a coupon code."
                 })
 
-        # GET request handling
         Cart.objects.filter(user=request.user).update(applied_coupon=None, discount_amount=0)
 
         cart_items = Cart.objects.select_related(
@@ -1507,17 +1431,13 @@ def cart(request):
         logger.debug("Processing GET request - calculating cart totals")
         
         for item in cart_items:
-            # Get base price
             item_price = item.variant.variant_price if item.variant else item.product.base_price
             
-            # Calculate product/category discounts
             best_discount = calculate_best_discount(item.product, item_price)
             item_discount = Decimal(str(best_discount['amount'])) if best_discount else Decimal('0')
             
-            # Add coupon discount if any
             coupon_discount_per_item = Decimal(str(item.discount_amount)) if item.applied_coupon else Decimal('0')
             
-            # Calculate final price and total
             discounted_price = item_price - item_discount - coupon_discount_per_item
             item_total = discounted_price * item.quantity
 
@@ -1532,7 +1452,6 @@ def cart(request):
             Item total: {item_total}
             """)
             
-            # Get variant display info
             variant_display = ''
             if item.variant:
                 if item.product.category.name.lower() in ['vegetables', 'fruits', 'dried']:
@@ -1542,7 +1461,6 @@ def cart(request):
                 else:
                     variant_display = item.variant.weight or ''
             
-            # Update running totals
             cart_subtotal += item_total
             total_discount += (item_discount * item.quantity)
             coupon_discount += (coupon_discount_per_item * item.quantity)
@@ -1632,7 +1550,6 @@ def add_to_cart_ajax(request):
         product = get_object_or_404(Product, id=product_id)
         variant = get_object_or_404(Variant, id=variant_id, product=product)
 
-        # Check for existing cart item
         cart_item = Cart.objects.filter(
             user=request.user,
             product=product,
@@ -1641,11 +1558,9 @@ def add_to_cart_ajax(request):
 
         try:
             if cart_item:
-                # Update existing cart item
                 cart_item.quantity += quantity
                 cart_item.save()
             else:
-                # Create new cart item
                 cart_item = Cart.objects.create(
                     user=request.user,
                     product=product,
@@ -1703,25 +1618,19 @@ def update_cart_quantity_ajax(request, cart_id):
 
         cart_item = get_object_or_404(Cart, id=cart_id, user=request.user)
         
-        # Update quantity
         cart_item.quantity = quantity
         cart_item.save()
 
-        # Get base price
         item_price = cart_item.variant.variant_price if cart_item.variant else cart_item.product.base_price
         
-        # Calculate best discount
         best_discount = calculate_best_discount(cart_item.product, item_price)
         item_discount = Decimal(str(best_discount['amount'])) if best_discount else Decimal('0')
         
-        # Add coupon discount if any
         coupon_discount = Decimal(str(cart_item.discount_amount)) if cart_item.applied_coupon else Decimal('0')
         
-        # Calculate discounted price
         discounted_price = item_price - item_discount - coupon_discount
         item_total = discounted_price * quantity
 
-        # Recalculate cart totals
         cart_items = Cart.objects.filter(user=request.user)
         cart_subtotal = sum(
             (item.variant.variant_price if item.variant else item.product.base_price) * item.quantity
@@ -1762,36 +1671,7 @@ def update_cart_quantity_ajax(request, cart_id):
 # ------------------------------------------------------------------------------------------------------------
 
 # ----CART DELETION -----------------------------------------------------------------------------------------------------
-# ----------transaction-----------------------------------------------------------------------------------------------------------------------
-#------actually the stck quantity in models updations is hanlded in methods under model cart so here no need to again add to stock ----------------------
-# -------commented code is again adding to stock quantity even its handled in cart model method ---------------------------
 
-
-
-# def remove_cart_item(request, item_id):
-#     if request.method == "POST" and request.headers.get("X-Requested-With") == "XMLHttpRequest":
-#         try:
-#             with transaction.atomic():
-#                 # Fetch the cart item
-#                 cart_item = get_object_or_404(Cart, id=item_id, user=request.user)
-                
-#                 # Restore stock if variant exists
-#                 if cart_item.variant:
-#                     cart_item.variant.stock_quantity += cart_item.quantity
-#                     cart_item.variant.save()
-                    
-#                     cart_item.product.stock_quantity += cart_item.quantity
-#                     cart_item.product.save()
-                
-#                 # Delete the cart item
-#                 cart_item.delete()
-                
-#                 return JsonResponse({"success": True})
-        
-#         except Exception as e:
-#             return JsonResponse({"success": False, "error": str(e)}, status=500)
-    
-#     return JsonResponse({"success": False, "error": "Invalid request method or not AJAX."}, status=400)
 
 def remove_cart_item(request, item_id):
     if request.method == "POST" and request.headers.get("X-Requested-With") == "XMLHttpRequest":
@@ -1833,7 +1713,6 @@ def checkout(request):
             'applied_coupon'
         ).filter(user=request.user)
         
-        # First calculate subtotal before coupon discount
         temp_subtotal = Decimal('0')
         total_product_discount = Decimal('0')
         
@@ -1841,18 +1720,14 @@ def checkout(request):
         
         formatted_cart_items = []
         for item in cart_items:
-            # Get base price
             item_price = item.variant.variant_price if item.variant else item.product.base_price
             
-            # Calculate product discount first
             best_discount = calculate_best_discount(item.product, item_price)
             item_discount = Decimal(str(best_discount['amount'])) if best_discount else Decimal('0')
             
-            # Calculate price after product discount but before coupon
             price_after_product_discount = item_price - item_discount
             item_subtotal = price_after_product_discount * item.quantity
             
-            # Add to running totals
             temp_subtotal += item_subtotal
             total_product_discount += (item_discount * item.quantity)
             
@@ -1866,7 +1741,6 @@ def checkout(request):
             Running subtotal: {temp_subtotal}
             """)
         
-        # Calculate coupon discount from the subtotal
         coupon_discount = Decimal('0')
         if any(item.applied_coupon for item in cart_items):
             coupon = cart_items.first().applied_coupon
@@ -1877,7 +1751,6 @@ def checkout(request):
             
             logger.debug(f"Calculated coupon discount: {coupon_discount}")
         
-        # Calculate final values
         delivery_charge = Decimal('10')
         cart_subtotal = temp_subtotal - coupon_discount
         final_total = cart_subtotal + delivery_charge
@@ -1892,7 +1765,6 @@ def checkout(request):
         Final total: {final_total}
         """)
         
-        # Format cart items for display
         formatted_cart_items = []
         coupon_discount_per_item = Decimal('0')
         if cart_items.exists() and coupon_discount > 0:
@@ -1915,7 +1787,6 @@ def checkout(request):
                 'item_total': float(item_total)
             })
         
-        # Fetch user addresses
         addresses = Address.objects.filter(user=request.user)
         
         context = {
@@ -1967,7 +1838,6 @@ def place_order(request):
             ).filter(user=user)
             default_address = Address.objects.filter(user=user, is_default=True).first()
 
-            # Validate cart and address
             if not cart_items.exists():
                 return JsonResponse({'success': False, 'message': 'Your cart is empty.'})
 
@@ -1978,28 +1848,22 @@ def place_order(request):
             if not payment_method:
                 return JsonResponse({'success': False, 'message': 'Please select a payment method.'})
 
-            # Calculate subtotal before coupon discount
             temp_subtotal = Decimal('0')
             total_product_discount = Decimal('0')
             
             order_items_data = []
             for item in cart_items:
-                # Get base price
                 item_price = item.variant.variant_price if item.variant else item.product.base_price
                 
-                # Calculate product discount first
                 best_discount = calculate_best_discount(item.product, item_price)
                 item_discount = Decimal(str(best_discount['amount'])) if best_discount else Decimal('0')
                 
-                # Calculate price after product discount but before coupon
                 price_after_product_discount = item_price - item_discount
                 item_subtotal = price_after_product_discount * item.quantity
                 
-                # Add to running totals
                 temp_subtotal += item_subtotal
                 total_product_discount += (item_discount * item.quantity)
 
-            # Calculate coupon discount from the subtotal
             coupon_discount = Decimal('0')
             applied_coupon = None
             if any(item.applied_coupon for item in cart_items):
@@ -2009,12 +1873,10 @@ def place_order(request):
                 else:
                     coupon_discount = round(min(Decimal(str(applied_coupon.discount_value)), temp_subtotal), 2)
 
-            # Calculate final totals
             delivery_charge = Decimal('10')
             cart_subtotal = temp_subtotal - coupon_discount
             final_total = cart_subtotal + delivery_charge
 
-            # Prepare order items data with correct price distribution
             coupon_discount_per_item = Decimal('0')
             if cart_items.exists() and coupon_discount > 0:
                 coupon_discount_per_item = round(coupon_discount / len(cart_items), 2)
@@ -2036,7 +1898,6 @@ def place_order(request):
                     'total_price': float(item_total)
                 })
 
-            # Check COD limit
             if payment_method == 'COD' and final_total > 1000:
                 return JsonResponse({
                     'success': False,
@@ -2044,7 +1905,6 @@ def place_order(request):
                     'cod_limit_exceeded': True
                 })
 
-            # Handle Wallet Payment
             if payment_method == 'Wallet':
                 try:
                     wallet = Wallet.objects.get(user=user)
@@ -2064,10 +1924,8 @@ def place_order(request):
                         coupon_discount=coupon_discount
                     )
                     
-                    # Create order address
                     OrderAddress.create_from_address(order, default_address)
 
-                    # Create order items
                     for item_data in order_items_data:
                         OrderItem.objects.create(
                             order=order,
@@ -2078,7 +1936,6 @@ def place_order(request):
                             total_price=item_data['total_price']
                         )
 
-                    # Create wallet transaction
                     WalletTransaction.objects.create(
                         wallet=wallet,
                         transaction_type='DEBIT',
@@ -2103,7 +1960,6 @@ def place_order(request):
                         'message': 'Wallet not found for this user.'
                     })
 
-            # Create order for COD
             elif payment_method == 'COD':
                 order = Order.objects.create(
                     user=user,
@@ -2115,10 +1971,8 @@ def place_order(request):
                     coupon_discount=coupon_discount
                 )
 
-                # Create order address
                 OrderAddress.create_from_address(order, default_address)
 
-                # Create order items
                 for item_data in order_items_data:
                     OrderItem.objects.create(
                         order=order,
@@ -2137,7 +1991,6 @@ def place_order(request):
                     'is_cod': True
                 })
 
-            # Handle Online Payment
             elif payment_method == 'Online':
                 env = environ.Env()
                 client = razorpay.Client(
@@ -2154,7 +2007,6 @@ def place_order(request):
                     coupon_discount=coupon_discount
                 )
 
-                # Create order address
                 OrderAddress.create_from_address(order, default_address)
 
                 razorpay_order = client.order.create({
@@ -2167,7 +2019,6 @@ def place_order(request):
                 order.razorpay_order_id = razorpay_order['id']
                 order.save()
 
-                # Create order items
                 for item_data in order_items_data:
                     OrderItem.objects.create(
                         order=order,
@@ -2199,42 +2050,34 @@ def place_order(request):
     return JsonResponse({'success': False, 'message': 'Invalid request method.'})
 
 
-# Razorpay Payment Verification View
 def verify_payment(request):
     if request.method == "POST":
         try:
-            # Get payment details from request
             razorpay_payment_id = request.POST.get('razorpay_payment_id')
             razorpay_order_id = request.POST.get('razorpay_order_id')
             razorpay_signature = request.POST.get('razorpay_signature')
 
-            # Initialize Razorpay client
             env = environ.Env()
             client = razorpay.Client(
                 auth=(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET'))
             )
 
-            # Verify payment signature
             params_dict = {
                 'razorpay_order_id': razorpay_order_id,
                 'razorpay_payment_id': razorpay_payment_id,
                 'razorpay_signature': razorpay_signature
             }
 
-            # Verify signature
             try:
                 client.utility.verify_payment_signature(params_dict)
                 
-                # Find the order
                 order = Order.objects.get(razorpay_order_id=razorpay_order_id)
                 
-                # Mark payment as successful
                 order.payment_status = 'success'
                 order.razorpay_payment_id = razorpay_payment_id
                 order.razorpay_signature = razorpay_signature
                 order.save()
 
-                # Clear cart items
                 Cart.objects.filter(user=request.user).delete()
 
                 return JsonResponse({
@@ -2243,7 +2086,6 @@ def verify_payment(request):
                 })
 
             except Exception as e:
-                # Signature verification failed
                 return JsonResponse({
                     'success': False,
                     'message': 'Payment verification failed'
@@ -2275,7 +2117,6 @@ def order_details(request):
         user=request.user
     ).order_by('-order_date')
     
-    # Initialize payment windows
     for order in user_orders:
         if not order.payment_retry_window:
             order.payment_retry_window = order.order_date + timedelta(minutes=10)
@@ -2293,11 +2134,9 @@ def retry_payment(request, order_id):
     """
     View to handle both payment initialization and verification
     """
-    # Get the order or return 404
     order = get_object_or_404(Order, id=order_id)
     
     if request.method == "GET":
-        # Initialize new payment
         if order.payment_status == 'success':
             return JsonResponse({
                 'status': 'error',
@@ -2305,10 +2144,8 @@ def retry_payment(request, order_id):
             }, status=400)
 
         try:
-            # Initialize Razorpay client
             client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
-            # Create new order in Razorpay
             payment_data = {
                 'amount': int(order.total_amount * 100),  # Convert to paise
                 'currency': 'INR',
@@ -2320,11 +2157,9 @@ def retry_payment(request, order_id):
             
             razorpay_order = client.order.create(data=payment_data)
 
-            # Update order with new Razorpay order ID
             order.razorpay_order_id = razorpay_order['id']
             order.save()
 
-            # Return the necessary data to initialize payment
             return JsonResponse({
                 'status': 'success',
                 'razorpay_key': settings.RAZORPAY_KEY_ID,
@@ -2339,16 +2174,13 @@ def retry_payment(request, order_id):
             }, status=500)
             
     elif request.method == "POST":
-        # Verify payment
         razorpay_payment_id = request.POST.get('razorpay_payment_id')
         razorpay_order_id = request.POST.get('razorpay_order_id')
         razorpay_signature = request.POST.get('razorpay_signature')
 
-        # Initialize Razorpay client
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
         try:
-            # Verify the payment signature
             params_dict = {
                 'razorpay_payment_id': razorpay_payment_id,
                 'razorpay_order_id': razorpay_order_id,
@@ -2357,7 +2189,6 @@ def retry_payment(request, order_id):
             
             client.utility.verify_payment_signature(params_dict)
             
-            # Update order payment details
             order.payment_status = 'success'
             order.razorpay_payment_id = razorpay_payment_id
             order.razorpay_signature = razorpay_signature
@@ -2370,7 +2201,6 @@ def retry_payment(request, order_id):
             })
                 
         except razorpay.errors.SignatureVerificationError:
-            # Mark payment as failed
             order.payment_status = 'failed'
             order.save()
             
@@ -2394,15 +2224,12 @@ def retry_payment(request, order_id):
 
 
 def single_order_detail(request, order_id):
-    # Fetch the specific order for the user
     order = get_object_or_404(Order, id=order_id, user=request.user)
     order_items = order.order_items.select_related('product').prefetch_related('product__images')
 
-    # Add primary image to each order item
     for item in order_items:
-        # Retrieve the primary image for the product
         primary_image = item.product.images.filter(is_primary=True).first()
-        item.primary_image = primary_image  # Attach it as an attribute for easy template access
+        item.primary_image = primary_image  
 
     context = {
         'order': order,
@@ -2421,7 +2248,6 @@ def single_order_detail(request, order_id):
 @require_POST
 def cancel_order_item(request, order_item_id):
     try:
-        # Use select_related to optimize queries
         order_item = OrderItem.objects.select_related(
             'order', 
             'product', 
@@ -2432,29 +2258,27 @@ def cancel_order_item(request, order_item_id):
             order__user=request.user
         )
         
-        # Check if the order is still cancellable
+       
         if order_item.order.order_status in ['delivered', 'shipped']:
             return JsonResponse({
                 'success': False, 
                 'message': 'Cannot cancel items in delivered or shipped orders'
             }, status=400)
             
-        # Check if item is already cancelled
+       
         if order_item.is_cancelled:
             return JsonResponse({
                 'success': False, 
                 'message': 'This item is already cancelled'
             }, status=400)
 
-        # Start database transaction
+        
         with transaction.atomic():
-            # Get or create user wallet
+            
             wallet, created = Wallet.objects.get_or_create(user=request.user)
             
-            # Calculate refund amount (includes any discounts applied during order)
             refund_amount = order_item.total_price + 10
             
-            # Create wallet transaction for refund
             WalletTransaction.objects.create(
                 wallet=wallet,
                 transaction_type='REFUND',
@@ -2462,26 +2286,21 @@ def cancel_order_item(request, order_item_id):
                 payment_method='INTERNAL'
             )
             
-            # Update wallet balance
             wallet.balance += refund_amount
             wallet.save()
             
-            # Mark the order item as cancelled
             order_item.is_cancelled = True
             order_item.save()
             
-            # Recalculate order total
             order = order_item.order
             order.calculate_total()
             
-            # If all items in order are cancelled, mark order as cancelled
             if not order.order_items.filter(is_cancelled=False).exists():
                 order.order_status = 'cancelled'
                 order.is_canceled = True
                 order.cancel_date = timezone.now()
                 order.save()
             
-            # Update product stock quantity
             order_item.product.stock_quantity += order_item.quantity
             order_item.product.save()
         
@@ -2509,7 +2328,6 @@ def cancel_order_item(request, order_item_id):
 @login_required
 def wishlist(request):
     if request.user.is_authenticated:
-        # Get the wishlist items for the logged-in user
         wishlist_items = Wishlist.objects.filter(user=request.user).select_related('product')
         context = {
             "wishlist_items": wishlist_items,
@@ -2517,11 +2335,10 @@ def wishlist(request):
         }
         return render(request, "User_wishlist.html", context)
     else:
-        # Redirect to login page if user is not authenticated
         return redirect("login")
 
 # ------------------------------------------------------------------------------------------
-# Use only if you don't want CSRF token validation (not recommended for production)
+
 def add_to_wishlist(request):
     if request.method == "POST":
         product_id = request.POST.get("product_id")
@@ -2532,7 +2349,6 @@ def add_to_wishlist(request):
 
         product = get_object_or_404(Product, id=product_id)
 
-        # Check if the product is already in the user's wishlist
         wishlist_item, created = Wishlist.objects.get_or_create(user=user, product=product)
 
         if not created:
@@ -2584,7 +2400,6 @@ def wallet(request):
 
     wallet_balance = user_wallet.update_balance()
     
-    # Calculate different wallet components
     wallet_balance = user_wallet.balance
     total_refunds = user_wallet.get_total_refunds()
     total_added_funds = user_wallet.get_total_added_funds()
@@ -2594,12 +2409,10 @@ def wallet(request):
         user=request.user
     ).order_by('-created_at')[:10] 
 
-    # Razorpay client setup
     client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
     
-    # Generate Razorpay order for adding funds
     razorpay_order = client.order.create({
-        'amount': int(1000),  # Amount in paise (e.g., 1000 paise = 10 INR)
+        'amount': int(1000),  
         'currency': 'INR',
         'payment_capture': 1
     })
@@ -2619,7 +2432,7 @@ def wallet(request):
 def verify_razorpay_payment(request):
     if request.method == 'POST':
         try:
-            # Determine the input method (JSON or form data)
+            
             if request.content_type == 'application/json':
                 data = json.loads(request.body)
                 payment_id = data.get('razorpay_payment_id')
@@ -2627,24 +2440,20 @@ def verify_razorpay_payment(request):
                 signature = data.get('razorpay_signature')
                 amount = data.get('amount')
             else:
-                # Fallback to form data
                 payment_id = request.POST.get('razorpay_payment_id')
                 order_id = request.POST.get('razorpay_order_id')
                 signature = request.POST.get('razorpay_signature')
                 amount = request.POST.get('amount')
 
-            # Validate required parameters
             if not all([payment_id, order_id, signature, amount]):
                 return JsonResponse({
                     'status': 'error', 
                     'message': 'Missing required payment parameters'
                 }, status=400)
 
-            # Verify payment details
             client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
             
             try:
-                # Verify payment signature
                 client.utility.verify_payment_signature({
                     'razorpay_order_id': order_id,
                     'razorpay_payment_id': payment_id,
@@ -2656,23 +2465,18 @@ def verify_razorpay_payment(request):
                     'message': 'Payment signature verification failed'
                 }, status=400)
 
-            # Fetch the payment details from Razorpay to double-check
             payment_details = client.payment.fetch(payment_id)
             
-            # Additional verification
             if payment_details['status'] != 'captured':
                 return JsonResponse({
                     'status': 'error', 
                     'message': 'Payment not captured'
                 }, status=400)
 
-            # Create wallet transaction
             user_wallet = Wallet.objects.get(user=request.user)
             
-            # Convert amount from paise to rupees (assuming amount is in paise)
             amount_in_rupees = Decimal(amount) / 100
 
-            # Check if this payment has already been processed
             if WalletTransaction.objects.filter(
                 razorpay_payment_id=payment_id,
                 transaction_type='FUND_ADDED'
@@ -2682,16 +2486,13 @@ def verify_razorpay_payment(request):
                     'message': 'Payment already processed'
                 }, status=400)
 
-            # Create wallet transaction
             wallet_transaction = WalletTransaction.create_razorpay_fund_transaction(
                 wallet=user_wallet, 
                 amount=amount_in_rupees,
                 razorpay_payment_id=payment_id
             )
 
-            # Update wallet balance
-            # user_wallet.balance += wallet_transaction.amount
-            # user_wallet.save()
+           
 
             new_balance = user_wallet.update_balance()
 
@@ -2708,7 +2509,6 @@ def verify_razorpay_payment(request):
             }, status=404)
         
         except Exception as e:
-            # Log the full error for debugging
             import traceback
             traceback.print_exc()
             
@@ -2722,7 +2522,7 @@ def verify_razorpay_payment(request):
 def generate_razorpay_order(request):
     if request.method == 'POST':
         data = json.loads(request.body)
-        amount = int(data.get('amount'))  # Amount in paise
+        amount = int(data.get('amount')) 
         
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
         
@@ -2751,31 +2551,27 @@ from django.contrib.auth.decorators import login_required
 @require_POST
 def submit_return_request(request):
     try:
-        # Get form data
         order_item_id = request.POST.get('order_item_id')
-        return_reason = request.POST.get('return_reason')  # Matches the name in HTML form
-        return_explanation = request.POST.get('explanation')  # Matches the name in HTML form
-        return_proof = request.FILES.get('proof_image')  # Matches the name in HTML form
+        return_reason = request.POST.get('return_reason')  
+        return_explanation = request.POST.get('explanation')  
+        return_proof = request.FILES.get('proof_image') 
 
-        # Validate data
         if not order_item_id or not return_reason:
             return JsonResponse({
                 'status': 'error', 
                 'message': 'Missing required information'
             }, status=400)
 
-        # Fetch the order item
         order_item = OrderItem.objects.get(
             id=order_item_id, 
             order__user=request.user
         )
 
-        # Create return request
         return_request = OrderReturn.objects.create(
             order_item=order_item,
-            return_reason=return_reason,  # Correct field name
-            return_explanation=return_explanation,  # Correct field name
-            return_proof=return_proof,  # Correct field name
+            return_reason=return_reason,  
+            return_explanation=return_explanation,  
+            return_proof=return_proof,  
             status='REQUESTED'
         )
 
@@ -2820,33 +2616,25 @@ import os
 @user_required
 def generate_invoice(request, order_id):
     try:
-        # Fetch the order with related data including shipping_address
         order = Order.objects.select_related('user', 'shipping_address').get(id=order_id)
         order_items = order.order_items.select_related('product', 'variant', 'product__catogery').all()
 
-        # Calculate totals using the same logic as checkout
         cart_subtotal = Decimal('0')
         total_discount = Decimal('0')
         
-        # Calculate item-wise totals and discounts
         item_details = []
         for item in order_items:
-            # Get base price from variant or product
             item_price = item.variant.variant_price if item.variant else item.product.base_price
             
-            # Calculate best discount
             best_discount = calculate_best_discount(item.product, item_price)
             item_discount = Decimal(str(best_discount['amount'])) if best_discount else Decimal('0')
             
-            # Calculate final price for item
             discounted_price = item_price - item_discount
             item_total = discounted_price * item.quantity
             
-            # Add to running totals
             cart_subtotal += item_total
             total_discount += (item_discount * item.quantity)
             
-            # Store item details for display
             item_details.append({
                 'item': item,
                 'original_price': item_price,
@@ -2855,37 +2643,30 @@ def generate_invoice(request, order_id):
                 'discount': item_discount * item.quantity
             })
 
-        # Fixed delivery charge
         delivery_charge = Decimal('10')
         final_total = cart_subtotal + delivery_charge
 
-        # Calculate refund if any
         refunded_amount = sum(
             detail['total'] for detail in item_details 
             if detail['item'].is_cancelled
         )
         remaining_amount = final_total - refunded_amount
 
-        # Create PDF
         buffer = BytesIO()
         p = canvas.Canvas(buffer, pagesize=letter)
         width, height = letter
 
-        # Title and Header
         p.setFont("Helvetica-Bold", 24)
         p.drawCentredString(width / 2, height - 30, "VEGEFOODS")
         p.setFont("Helvetica-Bold", 14)
         p.drawCentredString(width / 2, height - 60, f"Invoice for Order-{order_id}")
 
-        # Customer Info with OrderAddress in multiple lines
         p.setFont("Helvetica", 12)
         shipping_address = order.shipping_address
         
-        # Customer name and phone
         p.drawCentredString(width / 2, height - 80, 
             f"Customer: {shipping_address.full_name} ({shipping_address.phone_number})")
 
-        # Format address in two lines
         line1_parts = [
             shipping_address.street_address,
             shipping_address.apartment_suite,
@@ -2900,15 +2681,12 @@ def generate_invoice(request, order_id):
         ]
         line2 = ', '.join(filter(None, line2_parts))
 
-        # Draw address lines
         p.drawCentredString(width / 2, height - 100, f"Shipping Address:")
         p.drawCentredString(width / 2, height - 120, line1)
         p.drawCentredString(width / 2, height - 140, line2)
 
-        # Adjust the line separator position
         p.line(50, height - 160, width - 50, height - 160)
 
-        # Adjust Order Items Header position
         y = height - 190
         p.setFont("Helvetica-Bold", 12)
         p.drawString(50, y, "Product")
@@ -2919,20 +2697,17 @@ def generate_invoice(request, order_id):
         p.drawString(500, y, "Total")
         y -= 20
 
-        # Order Items
         p.setFont("Helvetica", 10)
         for detail in item_details:
             item = detail['item']
             product_name = item.product.name
             
-            # Get variant display info
             if item.variant:
                 variant_info = item.variant.display_name
             else:
                 default_variant = item.product.get_default_variant()
                 variant_info = default_variant.display_name if default_variant else "Standard"
             
-            # Draw item information
             p.drawString(50, y, f"{product_name}")
             p.drawString(200, y, variant_info)
             p.drawString(300, y, f"{item.quantity}")
@@ -2941,39 +2716,32 @@ def generate_invoice(request, order_id):
             p.drawString(500, y, f"₹{detail['total']:.2f}")
             y -= 20
 
-        # Line Separator
         p.line(50, y, width - 50, y)
         y -= 20
 
-        # Summary Section
         p.setFont("Helvetica-Bold", 12)
         p.drawString(300, y, "Order Summary")
         y -= 20
 
-        # Subtotal
         p.setFont("Helvetica", 12)
         p.drawString(300, y, "Subtotal:")
         p.drawString(500, y, f"₹{cart_subtotal:.2f}")
         y -= 20
 
-        # Total Discount
         if total_discount > 0:
             p.drawString(300, y, "Total Discount:")
             p.drawString(500, y, f"₹{total_discount:.2f}")
             y -= 20
 
-        # Delivery Charge
         p.drawString(300, y, "Delivery Charge:")
         p.drawString(500, y, f"₹{delivery_charge:.2f}")
         y -= 20
 
-        # Final Total
         p.setFont("Helvetica-Bold", 12)
         p.drawString(300, y, "Total Amount:")
         p.drawString(500, y, f"₹{final_total:.2f}")
         y -= 20
 
-        # Refunded Amount (if any)
         if refunded_amount > 0:
             p.setFont("Helvetica", 12)
             p.drawString(300, y, "Refunded Amount:")
@@ -2985,7 +2753,6 @@ def generate_invoice(request, order_id):
             p.drawString(500, y, f"₹{remaining_amount:.2f}")
             y -= 20
 
-        # Payment Details
         y -= 20
         p.setFont("Helvetica-Bold", 12)
         p.drawString(50, y, "Payment Details")
@@ -2998,22 +2765,19 @@ def generate_invoice(request, order_id):
         y -= 20
         p.drawString(50, y, f"Order Status: {order.get_order_status_display()}")
 
-        # Cancellation Details if applicable
         if order.is_canceled:
             y -= 20
             p.drawString(50, y, f"Canceled on: {order.cancel_date}")
             y -= 20
             p.drawString(50, y, f"Reason: {order.cancel_description}")
 
-        # Footer
+        
         p.setFont("Helvetica", 10)
         p.drawCentredString(width / 2, 30, "Thank you for shopping with us!")
 
-        # Save PDF
         p.save()
         buffer.seek(0)
 
-        # Create the HTTP response
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="invoice_{order_id}.pdf"'
         response.write(buffer.getvalue())
@@ -3049,21 +2813,18 @@ def request_withdrawal(request):
 def process_withdrawal(request):
     if request.method == 'POST':
         try:
-            # Fetch data from the form
             amount = Decimal(request.POST.get('amount'))
             account_holder = request.POST.get('account_holder_name')
             account_number = request.POST.get('bank_account_number')
             ifsc_code = request.POST.get('bank_ifsc_code')
             remarks = request.POST.get('remarks', '')
 
-            # Validate and process
             wallet = request.user.wallet
             if amount <= 0:
                 return JsonResponse({'status': 'error', 'message': 'Invalid withdrawal amount'})
             if amount > wallet.balance:
                 return JsonResponse({'status': 'error', 'message': 'Insufficient wallet balance'})
 
-            # Create withdrawal request
             withdrawal = WalletWithdrawal.objects.create(
                 user=request.user,
                 wallet=wallet,
@@ -3075,7 +2836,6 @@ def process_withdrawal(request):
                 remarks=remarks
             )
 
-            # Create wallet transaction
             WalletTransaction.objects.create(
                 wallet=wallet,
                 amount=amount,
@@ -3083,7 +2843,6 @@ def process_withdrawal(request):
                 payment_method='BANK_TRANSFER'
             )
 
-            # Update wallet balance
             wallet.update_balance()
 
             return JsonResponse({

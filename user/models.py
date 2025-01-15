@@ -2,8 +2,11 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 import uuid
 from django.db import models
-from django.conf import settings  # Import the user model if not directly referenced
+from django.conf import settings  
 from django.utils import timezone
+from django.db import transaction
+from django.core.exceptions import ValidationError
+from decimal import Decimal
 
 class CustomUser(AbstractUser):
     user_id = models.UUIDField(primary_key=True, unique=True, default=uuid.uuid4, editable=False)
@@ -13,17 +16,17 @@ class CustomUser(AbstractUser):
 
     groups = models.ManyToManyField(
         'auth.Group',
-        related_name='customuser_set',  # Custom related name to avoid conflict
+        related_name='customuser_set',  
         blank=True,
     )
     user_permissions = models.ManyToManyField(
         'auth.Permission',
-        related_name='customuser_permissions',  # Custom related name to avoid conflict
+        related_name='customuser_permissions',  
         blank=True,
     )
 
     class Meta:
-        db_table = 'Custom_User'  # Change the table name if needed
+        db_table = 'Custom_User'  
 
     def __str__(self):
         return self.username
@@ -34,9 +37,9 @@ class CustomUser(AbstractUser):
 
 class Address(models.Model):
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,  # Refers to the custom user model
-        on_delete=models.CASCADE,  # Delete addresses when the user is deleted
-        related_name='addresses'  # Allows accessing addresses as user.addresses
+        settings.AUTH_USER_MODEL,  
+        on_delete=models.CASCADE,  
+        related_name='addresses'  
     )
     full_name = models.CharField(max_length=255, null=True, blank=True)
     street_address = models.TextField(null=True, blank=True)
@@ -44,15 +47,15 @@ class Address(models.Model):
     landmark = models.CharField(max_length=255, null=True, blank=True)
     city = models.CharField(max_length=100, null=True, blank=True)
     postal_code = models.CharField(max_length=20, null=True, blank=True)
-    phone_number = models.CharField(max_length=15, null=True, blank=True)  # Added per your mention
+    phone_number = models.CharField(max_length=15, null=True, blank=True)  
     state = models.CharField(max_length=100, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)  # Automatically set on creation
-    updated_at = models.DateTimeField(auto_now=True)  # Automatically set on updates
-    is_default = models.BooleanField(default=False)  # For marking default address
+    created_at = models.DateTimeField(auto_now_add=True)  
+    updated_at = models.DateTimeField(auto_now=True)  
+    is_default = models.BooleanField(default=False)  
 
     class Meta:
-        db_table = 'user_address'  # Custom table name (optional)
-        ordering = ['-created_at']  # Sort by creation date, newest first
+        db_table = 'user_address'  
+        ordering = ['-created_at']  
 
     def __str__(self):
         return f"{self.full_name}, {self.city}"
@@ -60,86 +63,42 @@ class Address(models.Model):
 
 
 #----- CART MODEL ----- working og -----------------------------------------------------------------------------------------------------------------------
-from django.db import transaction
-from django.core.exceptions import ValidationError
-
-# class Cart(models.Model):
-#     id = models.AutoField(primary_key=True)
-#     user = models.ForeignKey(
-#         'CustomUser',  # Reference the CustomUser model in the same app
-#         on_delete=models.SET_NULL,  # Set to NULL if the user is deleted
-#         related_name="cart_items",
-#         null=True,
-#         blank=True
-#     )
-#     product = models.ForeignKey(
-#         'admin_panel.Product',  # Reference the Product model in the admin_panel app
-#         on_delete=models.CASCADE,  # Cascade delete the cart item when the product is deleted
-#         related_name="cart_entries",
-#         null=True,
-#         blank=True
-#     )
-
-#     variant = models.ForeignKey(
-#         'admin_panel.Variant',  # Reference to the new Variant model
-#         on_delete=models.CASCADE,
-#         related_name="cart_items",
-#         null=True,
-#         blank=True
-#     )
 
 
-#     quantity = models.PositiveIntegerField(default=1, null=True, blank=True)  # Quantity of the product in the cart
-#     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)  # When the item was added to the cart
-
-#     class Meta:
-#         db_table = "Cart"  # Optional: Define a custom table name
-#         unique_together = ("user", "product", "variant")  # Optional constraint
-
-#     def __str__(self):
-#         return f"Cart({self.user}, {self.product}, {self.quantity})"
-
-#     @property
-#     def total_price(self):
-
-#         """Calculates the total price of this cart item."""
-#         price = self.variant.variant_price if self.variant else self.product.base_price
-#         return price * self.quantity
 
 
-# --------------------------------------------------------------------------------------------------------------------------------------------------
 from decimal import Decimal, InvalidOperation
 class Cart(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(
-        'CustomUser',  # Reference the CustomUser model in the same app
-        on_delete=models.SET_NULL,  # Set to NULL if the user is deleted
+        'CustomUser',  
+        on_delete=models.SET_NULL,  
         related_name="cart_items",
         null=True,
         blank=True
     )
     product = models.ForeignKey(
-        'admin_panel.Product',  # Reference the Product model in the admin_panel app
-        on_delete=models.CASCADE,  # Cascade delete the cart item when the product is deleted
+        'admin_panel.Product',  
+        on_delete=models.CASCADE,  
         related_name="cart_entries",
         null=True,
         blank=True
     )
 
     variant = models.ForeignKey(
-        'admin_panel.Variant',  # Reference to the new Variant model
+        'admin_panel.Variant',  
         on_delete=models.CASCADE,
         related_name="cart_items",
         null=True,
         blank=True
     )
 
-    quantity = models.PositiveIntegerField(default=1, null=True, blank=True)  # Quantity of the product in the cart
-    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)  # When the item was added to the cart
+    quantity = models.PositiveIntegerField(default=1, null=True, blank=True)  
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)  
 
 
     applied_coupon = models.ForeignKey(
-        'admin_panel.CouponTable',  # Adjust this to match your actual coupon model
+        'admin_panel.CouponTable',  
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -161,8 +120,8 @@ class Cart(models.Model):
 
 
     class Meta:
-        db_table = "Cart"  # Optional: Define a custom table name
-        unique_together = ("user", "product", "variant")  # Optional constraint
+        db_table = "Cart"  
+        unique_together = ("user", "product", "variant")  
 
     def __str__(self):
         return f"Cart({self.user}, {self.product}, {self.quantity})"
@@ -241,7 +200,7 @@ class Cart(models.Model):
         if not self.variant or not self.product:
             return
 
-        # Check variant stock
+        
         if quantity_difference > 0:
             if self.variant.stock_quantity < quantity_difference:
                 raise ValidationError(f"Cannot increase quantity. Only {self.variant.stock_quantity} items available.")
@@ -273,14 +232,12 @@ class Cart(models.Model):
                 except Cart.DoesNotExist:
                     old_quantity = 0
 
-            # Basic validation
             if not self.quantity or self.quantity < 1:
                 raise ValidationError("Quantity must be at least 1")
 
             if not self.variant or not self.product:
                 raise ValidationError("Both product and variant must be specified")
 
-            # Stock validation
             if is_new_item:
                 if self.variant.stock_quantity < self.quantity:
                     raise ValidationError(f"Insufficient variant stock. Only {self.variant.stock_quantity} available.")
@@ -314,27 +271,12 @@ class Cart(models.Model):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     @property
     def total_price(self):
         """
         Calculates the total price with dynamic pricing based on variant
         """
         try:
-            # Start with base price from variant or product
             if self.variant and self.variant.variant_price:
                 base_price = Decimal(str(self.variant.variant_price))
             elif self.product and self.product.base_price:
@@ -342,21 +284,17 @@ class Cart(models.Model):
             else:
                 return Decimal('0.00')
 
-            # Apply dynamic pricing based on variant weight
             if self.variant and self.variant.weight:
                 base_weight = float(self.variant.weight)
                 standard_weight = 0.1  # 0.1 kg as base
 
-                # 10% price increase for each 0.1 kg increment
                 price_multiplier = 1 + (base_weight / standard_weight - 1) * 0.1
                 base_price *= Decimal(str(price_multiplier))
 
-            # Multiply by quantity
             quantity = Decimal(str(self.quantity or 1))
             return base_price * quantity
 
         except (TypeError, InvalidOperation, AttributeError) as e:
-            # Log the error for debugging
             print(f"Price calculation error: {e}")
             return Decimal('0.00')
 
@@ -364,11 +302,9 @@ class Cart(models.Model):
         """
         Additional validation method
         """
-        # Ensure quantity is positive
         if self.quantity and self.quantity < 1:
             raise ValidationError("Quantity must be at least 1")
 
-        # Validate stock availability
         if self.variant and self.quantity:
             if self.variant.stock_quantity < self.quantity:
                 raise ValidationError(f"Insufficient stock. Only {self.variant.stock_quantity} available.")
@@ -457,44 +393,12 @@ class Cart(models.Model):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #-----Order--------------------------------------------------------------------------------------------------------
 
 
 
 
-from decimal import Decimal
+
 
 
 class Order(models.Model):
@@ -523,7 +427,6 @@ class Order(models.Model):
     coupon_discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
 
-    # Use your CustomUser model
     user = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
@@ -532,7 +435,7 @@ class Order(models.Model):
     )
     
     address = models.ForeignKey(
-        Address,  # Now directly referencing the Address model
+        Address,  
         on_delete=models.SET_NULL,
         null=True, blank=True
     )
@@ -572,7 +475,6 @@ class Order(models.Model):
         blank=True
     )
     
-    # Payment status field
     payment_status = models.CharField(
         max_length=20,
         choices=PAYMENT_STATUS_CHOICES,
@@ -613,7 +515,6 @@ class Order(models.Model):
 
     @property
     def dynamic_status(self):
-        # Check if there are return requests with 'APPROVED' status
         if self.orderreturn_set.filter(status='APPROVED').exists():
             return "Returning"
         return self.get_order_status_display()
@@ -671,20 +572,20 @@ from datetime import timedelta
 
 class OrderItem(models.Model):
     order = models.ForeignKey(
-        'Order',  # Referring to the Order model
+        'Order',  
         on_delete=models.CASCADE,
-        related_name='order_items'  # Access related items from the Order model
+        related_name='order_items'  
     )
     product = models.ForeignKey(
-        'admin_panel.Product',  # Assuming you have a Product model in the admin_panel app
+        'admin_panel.Product',  
         on_delete=models.CASCADE,
-        related_name='order_items'  # Access related items from the Product model
+        related_name='order_items'  
     )
 
     is_cancelled = models.BooleanField(default=False, null=True)
     
     variant = models.ForeignKey(
-        'admin_panel.Variant',  # New field for variant reference
+        'admin_panel.Variant',  
         on_delete=models.SET_NULL,
         related_name='order_items',
         null=True,
@@ -701,7 +602,7 @@ class OrderItem(models.Model):
 
     
     class Meta:
-        db_table = 'order_items'  # Custom table name (optional)
+        db_table = 'order_items'  
 
 
     def __str__(self):
@@ -710,7 +611,6 @@ class OrderItem(models.Model):
 
     def save(self, *args, **kwargs):
         """Override save method to calculate total price automatically."""
-        # Use variant price if available, otherwise use product base price
         if self.variant:
             self.price_per_unit = self.variant.variant_price
         else:
@@ -737,19 +637,19 @@ class Wishlist(models.Model):
         CustomUser,
         on_delete=models.CASCADE,
         related_name='wishlists',
-        null=True  # Allow null values for the user field
+        null=True  
     )
     product = models.ForeignKey(
-        'admin_panel.Product',  # Use string-based reference to avoid direct dependency
+        'admin_panel.Product',  
         on_delete=models.CASCADE,
         related_name='wishlisted_by',
-        null=True  # Allow null values for the product field
+        null=True  
     )
-    added_at = models.DateTimeField(auto_now_add=True, null=True)  # Timestamp of when the product was added to the wishlist
-    is_deleted = models.BooleanField(default=False, null=True)  # Soft delete field
+    added_at = models.DateTimeField(auto_now_add=True, null=True)  
+    is_deleted = models.BooleanField(default=False, null=True)  
 
     class Meta:
-        db_table = 'Wishlist'  # Optional custom table name
+        db_table = 'Wishlist'  
 
     def __str__(self):
         return f"Wishlist of {self.user} for {self.product}"
@@ -776,13 +676,13 @@ class OrderReturn(models.Model):
         OrderItem, 
         on_delete=models.CASCADE,
         related_name='return_request',
-        null=True  # Added null=True
+        null=True  
     )
     
     return_reason = models.CharField(
         max_length=20, 
         choices=RETURN_REASON_CHOICES,
-        null=True  # Added null=True
+        null=True  
     )
     
     return_explanation = models.TextField(
@@ -794,20 +694,19 @@ class OrderReturn(models.Model):
         max_length=20, 
         choices=RETURN_STATUS_CHOICES, 
         default='REQUESTED',
-        null=True  # Added null=True
+        null=True 
     )
     
     created_at = models.DateTimeField(
         auto_now_add=True,
-        null=True  # Added null=True
+        null=True  
     )
     
     updated_at = models.DateTimeField(
         auto_now=True,
-        null=True  # Added null=True
+        null=True  
     )
 
-    # Optional: Add image proof for return
     return_proof = models.ImageField(
         upload_to='return_proofs/', 
         null=True, 
@@ -822,18 +721,13 @@ class OrderReturn(models.Model):
         return f"Return for {self.order_item} - {self.status}"
 
     def save(self, *args, **kwargs):
-        # When return is approved, update related models
         if self.status == 'APPROVED':
-            # Update order item as cancelled
             if self.order_item:
                 self.order_item.is_cancelled = True
                 self.order_item.save()
 
-                # Update parent order's total amount
                 order = self.order_item.order
-                order.calculate_total()  # Recalculate total after item cancellation
-
-                # Check if all items in the order are cancelled
+                order.calculate_total()  
                 order_items = order.order_items.all()
                 if all(item.is_cancelled for item in order_items):
                     order.order_status = 'cancelled'
@@ -849,12 +743,8 @@ class OrderReturn(models.Model):
         Can be extended to integrate with payment systems
         """
         if self.status == 'APPROVED' and self.order_item:
-            # Refund logic can be implemented here
-            # For example, refund to original payment method or store credit
             refund_amount = self.order_item.total_price
             
-            # You can add specific refund processing logic
-            # Such as integrating with a payment gateway or wallet system
             
             return True
         return False
@@ -866,24 +756,18 @@ class OrderReturn(models.Model):
         Considers product price, variant price, and quantity
         """
         try:
-            # Ensure we have an order item
             if not self.order_item:
                 return Decimal('0.00')
             
-            # Determine the price to use
             if self.order_item.variant:
-                # Use variant price if available
                 item_price = self.order_item.variant.variant_price or self.order_item.product.base_price
             else:
-                # Fallback to product base price
                 item_price = self.order_item.product.base_price
             
-            # Calculate total refund amount
             refund = item_price * self.order_item.quantity
             return Decimal(refund)
         
         except Exception as e:
-            # Log the error or handle it appropriately
             print(f"Error calculating refund amount: {e}")
             return Decimal('0.00')
 
@@ -895,17 +779,16 @@ class Wallet(models.Model):
         on_delete=models.CASCADE, 
         null=True, 
         blank=True
-    )  # Allow null user relationships
+    )  
     balance = models.DecimalField(
         max_digits=10, 
         decimal_places=2, 
         default=0.00, 
         null=True, 
         blank=True
-    )  # Allow balance to be null
+    )  
     
     def __str__(self) -> str:
-        # Safely handle null users
         if self.user:
             return f"{self.user.first_name} {self.user.last_name}'s Wallet"
         return "Wallet (No User Assigned)"
@@ -916,21 +799,18 @@ class Wallet(models.Model):
         Update wallet balance based on all transactions.
         Balance = (Refunds + Credits) - Debits
         """
-        # Get all credits (including refunds and added funds)
         credits = self.wallettransaction_set.filter(
             transaction_type__in=['REFUND', 'CREDIT']
         ).aggregate(
             total=models.Sum('amount')
         )['total'] or Decimal('0.00')
 
-        # Get all debits
         debits = self.wallettransaction_set.filter(
             transaction_type='DEBIT'
         ).aggregate(
             total=models.Sum('amount')
         )['total'] or Decimal('0.00')
 
-        # Calculate new balance
         self.balance = credits - debits
         self.save()
         return self.balance
@@ -1003,24 +883,24 @@ class WalletTransaction(models.Model):
         on_delete=models.CASCADE, 
         null=True, 
         blank=True
-    )  # Allow null wallet relationships
+    )  
     transaction_type = models.CharField(
         max_length=20, 
         choices=TRANSACTION_TYPE_CHOICES, 
         null=True, 
         blank=True
-    )  # Allow null transaction types
+    )  
     amount = models.DecimalField(
         max_digits=10, 
         decimal_places=2, 
         null=True, 
         blank=True
-    )  # Allow null amounts
+    )  
     created_at = models.DateTimeField(
         auto_now_add=True, 
         null=True, 
         blank=True
-    )  # Allow null creation timestamps
+    )  
 
     payment_method = models.CharField(
         max_length=20, 
@@ -1047,7 +927,7 @@ class WalletTransaction(models.Model):
             wallet=wallet,
             transaction_type='REFUND',
             amount=refund_amount,
-            # Optional: link to specific order return
+            
             order_return=order_return
         )
 
@@ -1095,13 +975,13 @@ class Refund(models.Model):
         related_name='refunds', 
         null=True, 
         blank=True
-    )  # Allow null or blank for order_return
+    )  
     refund_amount = models.DecimalField(
         max_digits=10, 
         decimal_places=2, 
         null=True, 
         blank=True
-    )  # Allow null or blank for refund amount
+    )  
     refund_method = models.CharField(
         max_length=20, 
         choices=[
@@ -1111,12 +991,12 @@ class Refund(models.Model):
         ], 
         null=True, 
         blank=True
-    )  # Allow null or blank for refund method
+    )  
     refund_date = models.DateTimeField(
         auto_now_add=True, 
         null=True, 
         blank=True
-    )  # Allow null or blank for refund date
+    )  
     refund_status = models.CharField(
         max_length=20,
         choices=[
@@ -1127,10 +1007,9 @@ class Refund(models.Model):
         default='PENDING', 
         null=True, 
         blank=True
-    )  # Allow null or blank for refund status
-
+    )  
     def __str__(self):
-        # Handle cases where fields may be null
+        
         if self.order_return and self.order_return.order_item and self.order_return.order_item.product:
             return f"Refund for {self.order_return.order_item.product.name}" 
         return "Refund (Incomplete Data)"
@@ -1148,7 +1027,6 @@ class WalletWithdrawal(models.Model):
         ('FAILED', 'Failed')
     ]
     
-    # Add direct user reference
     user = models.ForeignKey(
         CustomUser,  # Your user model
         on_delete=models.CASCADE,
