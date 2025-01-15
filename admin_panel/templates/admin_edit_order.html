@@ -105,7 +105,7 @@
     <!-- Section 3: Order Items Table -->
     <div class="section">
         <h2 class="section-title">Order Items</h2>
-        <table class="table table-striped">
+        {% comment %} <table class="table table-striped">
             <thead>
                 <tr>
                     <th>Product</th>
@@ -141,6 +141,74 @@
                     <td>₹{{ item.total_price|floatformat:2 }}</td>
     
                     <!-- Product Status -->
+                    <td>
+                        {% if item.available_stock > 0 %}
+                            In Stock ({{ item.available_stock }})
+                        {% else %}
+                            Out of Stock
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table> {% endcomment %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Image</th>
+                    <th>Quantity</th>
+                    <th>Original Price</th>
+                    <th>Discount</th>
+                    <th>Final Price</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order_items %}
+                <tr>
+                    
+                    <td>
+                        {{ item.order_item.product.name }}
+                        {% if item.variant_display %}
+                            <br><small>({{ item.variant_display }})</small>
+                        {% endif %}
+                    </td>
+        
+                    
+                    <td>
+                        {% if item.primary_image %}
+                            <img src="{{ item.primary_image.images.url }}" alt="{{ item.order_item.product.name }}" class="product-image">
+                        {% else %}
+                            <img src="/static/img/placeholder.png" alt="{{ item.order_item.product.name }}" class="product-image">
+                        {% endif %}
+                    </td>
+        
+                    
+                    <td>{{ item.order_item.quantity }}</td>
+        
+                    
+                    <td>₹{{ item.original_price|floatformat:2 }}</td>
+        
+                    
+                    <td>
+                        {% if item.discount_info %}
+                            ₹{{ item.item_discount|floatformat:2 }}
+                            <br>
+                            <small>({{ item.discount_info.percentage }}% {{ item.discount_info.type }})</small>
+                        {% else %}
+                            ₹0.00
+                        {% endif %}
+                    </td>
+        
+                    
+                    <td>₹{{ item.discounted_price|floatformat:2 }}</td>
+        
+                    
+                    <td>₹{{ item.item_total|floatformat:2 }}</td>
+        
+                    
                     <td>
                         {% if item.available_stock > 0 %}
                             In Stock ({{ item.available_stock }})

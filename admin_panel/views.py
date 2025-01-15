@@ -995,47 +995,103 @@ def admin_orderdetails(request, order_id):
 
 @admin_required
 def admin_edit_order(request, order_id):
-    
-    order = get_object_or_404(Order, id=order_id)
-    user = order.user  
-    address = Address.objects.filter(user=user, is_default=True).first()  
-    order_items = order.order_items.all()  
+    try:
+        order = get_object_or_404(Order, id=order_id)
+        user = order.user
+        shipping_address = order.shipping_address
+        
+        order_items = order.order_items.select_related(
+            'product',
+            'variant',
+            'product__catogery'
+        ).prefetch_related(
+            'product__images'
+        ).all()
 
-    
-    for item in order_items:
-        item.primary_image = (
-            item.product.images.filter(is_primary=True).first()  
-        )
+        # Initialize totals
+        temp_subtotal = Decimal('0')
+        total_product_discount = Decimal('0')
+        formatted_order_items = []
+        
+        # Calculate number of non-cancelled items for coupon distribution
+        active_items = sum(1 for item in order_items if not item.is_cancelled)
+        coupon_discount_per_item = Decimal('0')
+        if active_items > 0 and order.coupon_discount:
+            coupon_discount_per_item = order.coupon_discount / active_items
 
-    
-    subtotal = sum(item.product.base_price * item.quantity for item in order_items)
-    
-    shipping = 0  
-    total_discount = sum(
-        ((item.product.base_price * item.product.discount_percentage / 100) if item.product.discount_percentage else 0) * item.quantity
-        for item in order_items
-    )
-    total_amount = subtotal + shipping - total_discount
+        for item in order_items:
+            # Get primary image
+            primary_image = item.product.images.filter(is_primary=True).first()
+            
+            # Get base price
+            item_price = item.variant.variant_price if item.variant else item.product.base_price
+            
+            # Calculate product discount
+            best_discount = calculate_best_discount(item.product, item_price)
+            item_discount = Decimal(str(best_discount['amount'])) if best_discount else Decimal('0')
+            
+            # Calculate price after product discount
+            price_after_product_discount = item_price - item_discount
+            
+            # Add coupon discount if item is not cancelled
+            final_price = price_after_product_discount
+            if not item.is_cancelled:
+                final_price -= coupon_discount_per_item
+            
+            item_total = final_price * item.quantity
+            
+            # Calculate available stock
+            stock_quantity = item.product.stock_quantity - item.quantity
+            
+            # Add to running totals (only if not cancelled)
+            if not item.is_cancelled:
+                temp_subtotal += item_total
+                total_product_discount += (item_discount * item.quantity)
 
+            # Set variant display
+            variant_display = ''
+            if item.variant:
+                if item.product.catogery.name.lower() in ['vegetables', 'fruits', 'dried']:
+                    variant_display = f"{item.variant.weight} kg"
+                elif item.product.catogery.name.lower() == 'juice':
+                    variant_display = f"{item.variant.volume} liter"
+                else:
+                    variant_display = str(item.variant.weight) if item.variant.weight else ''
 
-    for item in order_items:
-        product = item.product
-        stock_quantity = product.stock_quantity - item.quantity  
-        item.available_stock = stock_quantity  
+            formatted_item = {
+                'order_item': item,
+                'primary_image': primary_image,
+                'variant_display': variant_display,
+                'original_price': float(item_price),
+                'discount_info': best_discount,
+                'discounted_price': float(final_price),
+                'item_total': float(item_total),
+                'item_discount': float(item_discount),
+                'available_stock': stock_quantity
+            }
+            formatted_order_items.append(formatted_item)
 
-    
-    context = {
-        'order': order,
-        'user': user,
-        'address': address,
-        'order_items': order_items,
-        'subtotal': subtotal,
-        'shipping': shipping,
-        'total_discount': total_discount,
-        'total_amount': total_amount,
-    }
+        shipping = Decimal('10')
+        final_total = temp_subtotal + shipping
 
-    return render(request, 'admin_edit_order.html', context)
+        context = {
+            'order': order,
+            'user': user,
+            'address': shipping_address,
+            'order_items': formatted_order_items,
+            'subtotal': float(temp_subtotal),
+            'shipping': float(shipping),
+            'total_discount': float(total_product_discount),
+            'coupon_discount': float(order.coupon_discount),
+            'total_amount': float(final_total)
+        }
+        
+        return render(request, 'admin_edit_order.html', context)
+
+    except Exception as e:
+        logger.error(f"Error in admin_edit_order view: {traceback.format_exc()}")
+        messages.error(request, f"An error occurred: {str(e)}")
+        return redirect('admin_order')
 
 # ----------------------------------------------------------------------------
 
